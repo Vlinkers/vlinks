@@ -50,13 +50,13 @@ const Footer = () => {
           <div className="col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
               <Shield className="w-8 h-8 text-primary" />
-              <span className="font-display text-xl font-bold">
-                <span className="text-gradient">VIN</span>
-                <span className="text-foreground">munity</span>
+            <span className="font-display text-xl font-bold">
+                <span className="text-gradient">V</span>
+                <span className="text-foreground">LINKS</span>
               </span>
             </Link>
             <p className="text-sm text-muted-foreground mb-6 max-w-xs">
-              La plateforme communautaire qui restaure la transparence dans l'achat de véhicules d'occasion.
+              Truth is a chain. You are the link.
             </p>
             {/* Social Links */}
             <div className="flex gap-4">
@@ -82,7 +82,7 @@ const Footer = () => {
                 <Github className="w-5 h-5" />
               </a>
               <a
-                href="mailto:contact@vinmunity.com"
+                href="mailto:contact@vlinks.com"
                 className="p-2 rounded-lg bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 aria-label="Email"
               >
@@ -114,7 +114,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-border/50 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            © 2024 VINmunity. Tous droits réservés.
+            © 2024 VLINKS. Tous droits réservés.
           </p>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Fait avec</span>

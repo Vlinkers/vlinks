@@ -38,8 +38,8 @@ const Header = () => {
               <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             <span className="font-display text-xl md:text-2xl font-bold">
-              <span className="text-gradient">VIN</span>
-              <span className="text-foreground">munity</span>
+              <span className="text-gradient">V</span>
+              <span className="text-foreground">LINKS</span>
             </span>
           </Link>
 

@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import VINDetail from "./pages/VINDetail";
 import Auth from "./pages/Auth";
+import WhyVlinks from "./pages/WhyVlinks";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/why" element={<WhyVlinks />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/vin/:vin" element={<VINDetail />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

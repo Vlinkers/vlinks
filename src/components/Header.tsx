@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Shield, Search, Users, FileText, LogOut, User } from "lucide-react";
+import { Menu, X, Shield, Search, Users, FileText, LogOut, User, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   DropdownMenu,
@@ -17,6 +17,7 @@ const Header = () => {
   const navigate = useNavigate();
 
   const navLinks = [
+    { label: "Pourquoi VLINKS", href: "/why", icon: Heart },
     { label: "Rechercher VIN", href: "/search", icon: Search },
     { label: "Communauté", href: "/community", icon: Users },
     { label: "Inspecteurs", href: "/inspectors", icon: FileText },

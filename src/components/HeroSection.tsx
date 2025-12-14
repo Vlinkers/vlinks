@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Shield, Users, Eye, ArrowRight } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const HeroSection = () => {
   const [vinInput, setVinInput] = useState("");
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,9 +18,9 @@ const HeroSection = () => {
   };
 
   const stats = [
-    { value: "50K+", label: "VINs documentés" },
-    { value: "12K+", label: "Contributeurs actifs" },
-    { value: "98%", label: "Taux de confiance" },
+    { value: "50K+", label: t("hero.stat1") },
+    { value: "12K+", label: t("hero.stat2") },
+    { value: "98%", label: t("hero.stat3") },
   ];
 
   return (
@@ -42,39 +44,33 @@ const HeroSection = () => {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 animate-fade-in-up">
             <Shield className="w-4 h-4 text-success" />
             <span className="text-sm text-muted-foreground">
-              Plateforme communautaire indépendante
+              {t("hero.badge")}
             </span>
           </div>
 
           {/* Main Headline */}
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in-up stagger-1">
-            Every VIN has a story.
+            {t("hero.headline1")}
             <br />
-            <span className="text-gradient">VLINKS connects the missing pieces.</span>
+            <span className="text-gradient">{t("hero.headline2")}</span>
           </h1>
 
           {/* Explanatory Content */}
           <div className="max-w-3xl mx-auto mb-10 space-y-5 animate-fade-in-up stagger-2">
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-              When searching for a used vehicle, the truth is rarely found in a single document.
-              It is spread across inspection reports, vehicle history records, conversations with sellers, 
-              discussions with mechanics, photos, notes, and decisions made by previous buyers.
+              {t("hero.p1")}
             </p>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-              VLINKS centralizes all these contributions around a single VIN number.
-              Buyers who investigated a vehicle before you can share what they discovered — 
-              professional inspection reports, Carfax data, written exchanges, warnings, red flags, 
-              and insights that don't always appear in formal documents.
+              {t("hero.p2")}
             </p>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-              By connecting these individual experiences, VLINKS helps reveal a clearer, 
-              more transparent picture of a vehicle's real condition and history.
+              {t("hero.p3")}
             </p>
           </div>
 
           {/* Guiding sentence */}
           <p className="text-lg md:text-xl font-medium text-foreground/90 mb-8 animate-fade-in-up stagger-3">
-            Search a VIN to see what others have already uncovered.
+            {t("hero.cta")}
           </p>
 
           {/* Search Bar */}
@@ -88,26 +84,26 @@ const HeroSection = () => {
                 <Search className="w-6 h-6 text-muted-foreground ml-4" />
                 <Input
                   variant="vin"
-                  placeholder="Enter a VIN number (e.g., WVWZZZ3CZWE123456)"
+                  placeholder={t("hero.searchPlaceholder")}
                   value={vinInput}
                   onChange={(e) => setVinInput(e.target.value)}
                   className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                   maxLength={17}
                 />
                 <Button type="submit" variant="hero" size="lg" className="shrink-0">
-                  Search
+                  {t("hero.search")}
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </div>
             </div>
             <p className="text-sm text-muted-foreground mt-3">
-              The VIN is located on the dashboard, door jamb, or vehicle documents
+              {t("hero.vinLocation")}
             </p>
           </form>
 
           {/* Tagline */}
           <p className="text-sm text-muted-foreground/70 italic mb-10 animate-fade-in-up stagger-4">
-            "Truth is a chain. You are the link."
+            {t("hero.tagline")}
           </p>
 
           {/* Stats */}
@@ -128,15 +124,15 @@ const HeroSection = () => {
           <div className="flex justify-center gap-8 mt-12 animate-fade-in-up stagger-5">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Users className="w-5 h-5" />
-              <span className="text-sm">Communauté vérifiée</span>
+              <span className="text-sm">{t("hero.trust1")}</span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Eye className="w-5 h-5" />
-              <span className="text-sm">Données anonymisées</span>
+              <span className="text-sm">{t("hero.trust2")}</span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Shield className="w-5 h-5" />
-              <span className="text-sm">100% indépendant</span>
+              <span className="text-sm">{t("hero.trust3")}</span>
             </div>
           </div>
         </div>

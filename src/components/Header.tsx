@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Shield, LogOut, User, Home, BookOpen, CreditCard, Heart } from "lucide-react";
+import { Menu, X, Shield, LogOut, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/hooks/useLanguage";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,13 +16,14 @@ import {
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const navLinks = [
-    { label: "Accueil", href: "/", icon: Home },
-    { label: "Comment ça marche", href: "/how-it-works", icon: BookOpen },
-    { label: "Tarifs", href: "/pricing", icon: CreditCard },
-    { label: "Pourquoi VLINKS", href: "/why", icon: Heart },
+    { label: t("nav.home"), href: "/" },
+    { label: t("nav.howItWorks"), href: "/how-it-works" },
+    { label: t("nav.pricing"), href: "/pricing" },
+    { label: t("nav.why"), href: "/why" },
   ];
 
   const handleSignOut = async () => {
@@ -50,9 +53,8 @@ const Header = () => {
               <Link
                 key={link.href}
                 to={link.href}
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
-                <link.icon className="w-4 h-4" />
                 {link.label}
               </Link>
             ))}
@@ -60,35 +62,36 @@ const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
+            <LanguageSwitcher />
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="gap-2">
                     <User className="w-4 h-4" />
-                    {user.email?.split('@')[0]}
+                    {user.email?.split("@")[0]}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem asChild>
                     <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
                       <User className="w-4 h-4" />
-                      Mon profil
+                      {t("nav.profile")}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-danger cursor-pointer">
                     <LogOut className="w-4 h-4 mr-2" />
-                    Déconnexion
+                    {t("nav.logout")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link to="/auth">Connexion</Link>
+                  <Link to="/auth">{t("nav.login")}</Link>
                 </Button>
                 <Button variant="hero" size="sm" asChild>
-                  <Link to="/auth">Contribuer</Link>
+                  <Link to="/auth">{t("nav.contribute")}</Link>
                 </Button>
               </>
             )}
@@ -115,10 +118,12 @@ const Header = () => {
                   className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <link.icon className="w-5 h-5" />
                   {link.label}
                 </Link>
               ))}
+              <div className="px-4 py-2">
+                <LanguageSwitcher />
+              </div>
               <div className="flex flex-col gap-2 pt-4 mt-2 border-t border-border/50">
                 {user ? (
                   <>
@@ -128,10 +133,10 @@ const Header = () => {
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <User className="w-5 h-5" />
-                      Mon profil
+                      {t("nav.profile")}
                     </Link>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       className="justify-start text-danger"
                       onClick={() => {
                         handleSignOut();
@@ -139,19 +144,19 @@ const Header = () => {
                       }}
                     >
                       <LogOut className="w-5 h-5 mr-2" />
-                      Déconnexion
+                      {t("nav.logout")}
                     </Button>
                   </>
                 ) : (
                   <>
                     <Button variant="ghost" className="justify-start" asChild>
                       <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
-                        Connexion
+                        {t("nav.login")}
                       </Link>
                     </Button>
                     <Button variant="hero" className="justify-start" asChild>
                       <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
-                        Contribuer
+                        {t("nav.contribute")}
                       </Link>
                     </Button>
                   </>

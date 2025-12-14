@@ -2,88 +2,71 @@ import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/hooks/useLanguage";
 import { Check, Gift, Star, Crown } from "lucide-react";
 
 const Pricing = () => {
+  const { t } = useLanguage();
+
   const plans = [
     {
-      name: "Gratuit",
+      nameKey: "pricing.plan1.name",
       icon: Gift,
-      price: "0 $",
-      period: "",
-      description: "Accès de base pour découvrir la plateforme",
+      priceKey: "pricing.plan1.price",
+      periodKey: "",
+      descKey: "pricing.plan1.desc",
       features: [
-        "Recherche illimitée de VINs",
-        "Aperçu des contributions disponibles",
-        "Nombre de contributions visible",
-        "Résumé général du véhicule"
+        "pricing.plan1.f1",
+        "pricing.plan1.f2",
+        "pricing.plan1.f3",
+        "pricing.plan1.f4"
       ],
-      cta: "Commencer gratuitement",
+      ctaKey: "pricing.plan1.cta",
       variant: "outline" as const,
       highlighted: false
     },
     {
-      name: "Accès VIN",
+      nameKey: "pricing.plan2.name",
       icon: Star,
-      price: "4,99 $",
-      period: "par VIN",
-      description: "Accès complet aux informations d'un véhicule spécifique",
+      priceKey: "pricing.plan2.price",
+      periodKey: "pricing.plan2.period",
+      descKey: "pricing.plan2.desc",
       features: [
-        "Toutes les contributions détaillées",
-        "Photos et documents partagés",
-        "Historique des observations",
-        "Signaux d'alerte identifiés",
-        "Résumés d'inspection"
+        "pricing.plan2.f1",
+        "pricing.plan2.f2",
+        "pricing.plan2.f3",
+        "pricing.plan2.f4",
+        "pricing.plan2.f5"
       ],
-      cta: "Débloquer un VIN",
+      ctaKey: "pricing.plan2.cta",
       variant: "hero" as const,
       highlighted: true
     },
     {
-      name: "Contributeur",
+      nameKey: "pricing.plan3.name",
       icon: Crown,
-      price: "Gratuit",
-      period: "avec contributions",
-      description: "Accès gratuit en échange de vos contributions",
+      priceKey: "pricing.plan3.price",
+      periodKey: "pricing.plan3.period",
+      descKey: "pricing.plan3.desc",
       features: [
-        "1 contribution validée = 1 accès VIN gratuit",
-        "Points cumulables",
-        "Badge contributeur",
-        "Accès prioritaire aux nouvelles fonctionnalités",
-        "Reconnaissance communautaire"
+        "pricing.plan3.f1",
+        "pricing.plan3.f2",
+        "pricing.plan3.f3",
+        "pricing.plan3.f4",
+        "pricing.plan3.f5"
       ],
-      cta: "Contribuer maintenant",
+      ctaKey: "pricing.plan3.cta",
       variant: "outline" as const,
       highlighted: false
     }
   ];
 
   const contributorCredits = [
-    {
-      type: "Rapport d'inspection partagé",
-      points: "50 points",
-      access: "= 5 accès VIN"
-    },
-    {
-      type: "Historique véhicule (Carfax, etc.)",
-      points: "30 points",
-      access: "= 3 accès VIN"
-    },
-    {
-      type: "Photos avec description",
-      points: "10 points",
-      access: "= 1 accès VIN"
-    },
-    {
-      type: "Observation ou signal d'alerte",
-      points: "5 points",
-      access: "= 0.5 accès VIN"
-    },
-    {
-      type: "Échange documenté avec vendeur",
-      points: "15 points",
-      access: "= 1.5 accès VIN"
-    }
+    { typeKey: "pricing.credit1.type", pointsKey: "pricing.credit1.points", accessKey: "pricing.credit1.access" },
+    { typeKey: "pricing.credit2.type", pointsKey: "pricing.credit2.points", accessKey: "pricing.credit2.access" },
+    { typeKey: "pricing.credit3.type", pointsKey: "pricing.credit3.points", accessKey: "pricing.credit3.access" },
+    { typeKey: "pricing.credit4.type", pointsKey: "pricing.credit4.points", accessKey: "pricing.credit4.access" },
+    { typeKey: "pricing.credit5.type", pointsKey: "pricing.credit5.points", accessKey: "pricing.credit5.access" }
   ];
 
   return (
@@ -94,11 +77,10 @@ const Pricing = () => {
         <section className="container mx-auto px-4 mb-16">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-6">
-              Tarifs <span className="text-gradient">simples et transparents</span>
+              {t("pricing.title")} <span className="text-gradient">{t("pricing.titleGradient")}</span>
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Accédez aux informations dont vous avez besoin, ou contribuez pour obtenir 
-              des accès gratuits. Pas d'abonnement obligatoire, pas de frais cachés.
+              {t("pricing.subtitle")}
             </p>
           </div>
         </section>
@@ -112,45 +94,45 @@ const Pricing = () => {
                   key={index}
                   className={`relative p-6 rounded-xl ${
                     plan.highlighted 
-                      ? 'bg-gradient-to-b from-primary/10 to-background border-2 border-primary/50' 
-                      : 'glass border border-border/50'
+                      ? "bg-gradient-to-b from-primary/10 to-background border-2 border-primary/50" 
+                      : "glass border border-border/50"
                   }`}
                 >
                   {plan.highlighted && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                      Populaire
+                      {t("pricing.popular")}
                     </div>
                   )}
                   
                   <div className="flex items-center gap-3 mb-4">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      plan.highlighted ? 'bg-primary/20' : 'bg-muted'
+                      plan.highlighted ? "bg-primary/20" : "bg-muted"
                     }`}>
-                      <plan.icon className={`w-5 h-5 ${plan.highlighted ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <plan.icon className={`w-5 h-5 ${plan.highlighted ? "text-primary" : "text-muted-foreground"}`} />
                     </div>
-                    <h3 className="font-display text-xl font-bold">{plan.name}</h3>
+                    <h3 className="font-display text-xl font-bold">{t(plan.nameKey)}</h3>
                   </div>
                   
                   <div className="mb-4">
-                    <span className="font-display text-3xl font-bold">{plan.price}</span>
-                    {plan.period && (
-                      <span className="text-muted-foreground ml-1">{plan.period}</span>
+                    <span className="font-display text-3xl font-bold">{t(plan.priceKey)}</span>
+                    {plan.periodKey && (
+                      <span className="text-muted-foreground ml-1">{t(plan.periodKey)}</span>
                     )}
                   </div>
                   
-                  <p className="text-sm text-muted-foreground mb-6">{plan.description}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t(plan.descKey)}</p>
                   
                   <ul className="space-y-3 mb-6">
-                    {plan.features.map((feature, featureIndex) => (
+                    {plan.features.map((featureKey, featureIndex) => (
                       <li key={featureIndex} className="flex items-start gap-2">
                         <Check className="w-5 h-5 text-success shrink-0 mt-0.5" />
-                        <span className="text-sm text-foreground">{feature}</span>
+                        <span className="text-sm text-foreground">{t(featureKey)}</span>
                       </li>
                     ))}
                   </ul>
                   
                   <Button variant={plan.variant} className="w-full" asChild>
-                    <Link to="/auth">{plan.cta}</Link>
+                    <Link to="/auth">{t(plan.ctaKey)}</Link>
                   </Button>
                 </div>
               ))}
@@ -162,27 +144,27 @@ const Pricing = () => {
         <section className="container mx-auto px-4 mb-16">
           <div className="max-w-3xl mx-auto">
             <h2 className="font-display text-2xl md:text-3xl font-bold mb-4 text-center">
-              Barème des contributions
+              {t("pricing.creditsTitle")}
             </h2>
             <p className="text-muted-foreground text-center mb-8">
-              Plus votre contribution est complète et utile, plus elle vous rapporte.
+              {t("pricing.creditsSubtitle")}
             </p>
             
             <div className="overflow-hidden rounded-xl border border-border/50">
               <table className="w-full">
                 <thead>
                   <tr className="bg-muted/50">
-                    <th className="text-left px-4 py-3 text-sm font-medium text-foreground">Type de contribution</th>
-                    <th className="text-center px-4 py-3 text-sm font-medium text-foreground">Points</th>
-                    <th className="text-right px-4 py-3 text-sm font-medium text-foreground">Équivalent</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-foreground">{t("pricing.tableType")}</th>
+                    <th className="text-center px-4 py-3 text-sm font-medium text-foreground">{t("pricing.tablePoints")}</th>
+                    <th className="text-right px-4 py-3 text-sm font-medium text-foreground">{t("pricing.tableEquivalent")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {contributorCredits.map((credit, index) => (
                     <tr key={index} className="border-t border-border/50">
-                      <td className="px-4 py-3 text-sm text-foreground">{credit.type}</td>
-                      <td className="px-4 py-3 text-sm text-center font-medium text-primary">{credit.points}</td>
-                      <td className="px-4 py-3 text-sm text-right text-muted-foreground">{credit.access}</td>
+                      <td className="px-4 py-3 text-sm text-foreground">{t(credit.typeKey)}</td>
+                      <td className="px-4 py-3 text-sm text-center font-medium text-primary">{t(credit.pointsKey)}</td>
+                      <td className="px-4 py-3 text-sm text-right text-muted-foreground">{t(credit.accessKey)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -190,7 +172,7 @@ const Pricing = () => {
             </div>
             
             <p className="text-xs text-muted-foreground text-center mt-4">
-              10 points = 1 accès VIN complet. Les points n'expirent jamais.
+              {t("pricing.creditsNote")}
             </p>
           </div>
         </section>
@@ -198,10 +180,9 @@ const Pricing = () => {
         {/* FAQ or Note */}
         <section className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto text-center p-6 rounded-xl glass">
-            <h3 className="font-semibold text-foreground mb-2">Pourquoi ce modèle ?</h3>
+            <h3 className="font-semibold text-foreground mb-2">{t("pricing.faqTitle")}</h3>
             <p className="text-sm text-muted-foreground">
-              VLINKS fonctionne grâce à la communauté. Les frais d'accès permettent de maintenir 
-              la plateforme et de récompenser les contributeurs. Plus vous contribuez, moins vous payez.
+              {t("pricing.faqDesc")}
             </p>
           </div>
         </section>

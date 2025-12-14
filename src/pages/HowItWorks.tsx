@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { useLanguage } from "@/hooks/useLanguage";
 import { 
   FileText, 
   Camera, 
@@ -14,83 +15,53 @@ import {
 } from "lucide-react";
 
 const HowItWorks = () => {
+  const { t } = useLanguage();
+
   const contributionTypes = [
     {
       icon: ClipboardCheck,
-      title: "Rapports d'inspection professionnels",
-      description: "Partagez les résumés de vos inspections pré-achat (CAA, garages certifiés, etc.) pour que d'autres acheteurs bénéficient de vos découvertes."
+      titleKey: "how.type1.title",
+      descKey: "how.type1.desc"
     },
     {
       icon: FileText,
-      title: "Historiques de véhicule (Carfax, CarProof)",
-      description: "Les données que vous avez payées peuvent aider d'autres acheteurs à éviter les mêmes frais et découvrir les mêmes informations."
+      titleKey: "how.type2.title",
+      descKey: "how.type2.desc"
     },
     {
       icon: MessageSquare,
-      title: "Échanges avec le vendeur",
-      description: "Documentez les conversations importantes : ce que le vendeur a affirmé, promis ou omis de mentionner."
+      titleKey: "how.type3.title",
+      descKey: "how.type3.desc"
     },
     {
       icon: Wrench,
-      title: "Discussions avec des mécaniciens",
-      description: "Les avis techniques informels d'un mécanicien peuvent révéler des problèmes que les rapports officiels ne mentionnent pas."
+      titleKey: "how.type4.title",
+      descKey: "how.type4.desc"
     },
     {
       icon: Camera,
-      title: "Photos et vidéos",
-      description: "Images du véhicule, de son état réel, des défauts constatés ou des réparations effectuées."
+      titleKey: "how.type5.title",
+      descKey: "how.type5.desc"
     },
     {
       icon: AlertTriangle,
-      title: "Signaux d'alerte et observations",
-      description: "Tout ce qui vous a semblé suspect : comportement du vendeur, incohérences, problèmes cachés."
+      titleKey: "how.type6.title",
+      descKey: "how.type6.desc"
     }
   ];
 
   const howItBuilds = [
-    {
-      step: "01",
-      title: "Un acheteur découvre des informations",
-      description: "Lors de sa recherche, un acheteur paie une inspection, obtient un historique, ou découvre des informations importantes sur un véhicule."
-    },
-    {
-      step: "02",
-      title: "Il partage ce qu'il a appris",
-      description: "Plutôt que de laisser cette information disparaître, il la contribue sur VLINKS, associée au numéro VIN du véhicule."
-    },
-    {
-      step: "03",
-      title: "Les contributions s'accumulent",
-      description: "Avec le temps, plusieurs acheteurs, anciens propriétaires et mécaniciens ajoutent leurs propres informations au même VIN."
-    },
-    {
-      step: "04",
-      title: "Une image complète émerge",
-      description: "La combinaison de ces fragments de vérité révèle une vision transparente et fiable de l'historique réel du véhicule."
-    }
+    { step: "01", titleKey: "how.step1.title", descKey: "how.step1.desc" },
+    { step: "02", titleKey: "how.step2.title", descKey: "how.step2.desc" },
+    { step: "03", titleKey: "how.step3.title", descKey: "how.step3.desc" },
+    { step: "04", titleKey: "how.step4.title", descKey: "how.step4.desc" }
   ];
 
   const contributorBenefits = [
-    {
-      icon: Gift,
-      title: "Crédits et récompenses",
-      description: "Chaque contribution validée vous rapporte des points échangeables contre des accès gratuits ou des avantages."
-    },
-    {
-      icon: Users,
-      title: "Reconnaissance communautaire",
-      description: "Les contributeurs actifs sont reconnus et valorisés au sein de la communauté VLINKS."
-    },
-    {
-      icon: TrendingUp,
-      title: "Accès prioritaire",
-      description: "Les contributeurs réguliers bénéficient d'un accès élargi aux informations de la plateforme."
-    },
-    {
-      icon: Shield,
-      title: "Protection de la vie privée",
-      description: "Vos informations personnelles sont automatiquement anonymisées. Seules les informations techniques sont partagées."
-    }
+    { icon: Gift, titleKey: "how.benefit1.title", descKey: "how.benefit1.desc" },
+    { icon: Users, titleKey: "how.benefit2.title", descKey: "how.benefit2.desc" },
+    { icon: TrendingUp, titleKey: "how.benefit3.title", descKey: "how.benefit3.desc" },
+    { icon: Shield, titleKey: "how.benefit4.title", descKey: "how.benefit4.desc" }
   ];
 
   return (
@@ -101,12 +72,10 @@ const HowItWorks = () => {
         <section className="container mx-auto px-4 mb-20">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-6">
-              Comment fonctionne <span className="text-gradient">VLINKS</span>
+              {t("how.title")} <span className="text-gradient">VLINKS</span>
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              VLINKS repose sur un principe simple : les informations que vous découvrez 
-              sur un véhicule ne devraient pas disparaître après votre recherche. 
-              Elles peuvent aider le prochain acheteur.
+              {t("how.subtitle")}
             </p>
           </div>
         </section>
@@ -115,10 +84,10 @@ const HowItWorks = () => {
         <section className="container mx-auto px-4 mb-20">
           <div className="max-w-4xl mx-auto">
             <h2 className="font-display text-2xl md:text-3xl font-bold mb-4 text-center">
-              Quelles informations pouvez-vous partager ?
+              {t("how.typesTitle")}
             </h2>
             <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-              Toute information qui vous a aidé à évaluer un véhicule peut être précieuse pour d'autres.
+              {t("how.typesSubtitle")}
             </p>
             
             <div className="grid md:grid-cols-2 gap-6">
@@ -132,8 +101,8 @@ const HowItWorks = () => {
                       <type.icon className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">{type.title}</h3>
-                      <p className="text-sm text-muted-foreground">{type.description}</p>
+                      <h3 className="font-semibold text-foreground mb-2">{t(type.titleKey)}</h3>
+                      <p className="text-sm text-muted-foreground">{t(type.descKey)}</p>
                     </div>
                   </div>
                 </div>
@@ -146,10 +115,10 @@ const HowItWorks = () => {
         <section className="container mx-auto px-4 mb-20">
           <div className="max-w-4xl mx-auto">
             <h2 className="font-display text-2xl md:text-3xl font-bold mb-4 text-center">
-              Comment la transparence se construit
+              {t("how.buildTitle")}
             </h2>
             <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-              Chaque contribution est un maillon. Ensemble, elles forment une chaîne de vérité.
+              {t("how.buildSubtitle")}
             </p>
             
             <div className="space-y-8">
@@ -162,8 +131,8 @@ const HowItWorks = () => {
                     <span className="font-display text-lg font-bold text-primary-foreground">{item.step}</span>
                   </div>
                   <div className="pt-2">
-                    <h3 className="font-semibold text-lg text-foreground mb-2">{item.title}</h3>
-                    <p className="text-muted-foreground">{item.description}</p>
+                    <h3 className="font-semibold text-lg text-foreground mb-2">{t(item.titleKey)}</h3>
+                    <p className="text-muted-foreground">{t(item.descKey)}</p>
                   </div>
                 </div>
               ))}
@@ -175,10 +144,10 @@ const HowItWorks = () => {
         <section className="container mx-auto px-4 mb-20">
           <div className="max-w-4xl mx-auto">
             <h2 className="font-display text-2xl md:text-3xl font-bold mb-4 text-center">
-              Ce que vous gagnez en contribuant
+              {t("how.benefitsTitle")}
             </h2>
             <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-              VLINKS valorise les contributeurs qui partagent leurs découvertes.
+              {t("how.benefitsSubtitle")}
             </p>
             
             <div className="grid md:grid-cols-2 gap-6">
@@ -192,8 +161,8 @@ const HowItWorks = () => {
                       <benefit.icon className="w-5 h-5 text-success" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-1">{benefit.title}</h3>
-                      <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                      <h3 className="font-semibold text-foreground mb-1">{t(benefit.titleKey)}</h3>
+                      <p className="text-sm text-muted-foreground">{t(benefit.descKey)}</p>
                     </div>
                   </div>
                 </div>
@@ -206,7 +175,7 @@ const HowItWorks = () => {
         <section className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto text-center">
             <p className="text-muted-foreground/70 italic">
-              « La vérité est une chaîne. Vous êtes le maillon. »
+              {t("common.tagline")}
             </p>
           </div>
         </section>

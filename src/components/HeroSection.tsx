@@ -48,21 +48,39 @@ const HeroSection = () => {
 
           {/* Main Headline */}
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in-up stagger-1">
-            L'historique véhicule
+            Every VIN has a story.
             <br />
-            <span className="text-gradient">par ceux qui savent</span>
+            <span className="text-gradient">VLINKS connects the missing pieces.</span>
           </h1>
 
-          {/* Subheadline */}
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-fade-in-up stagger-2">
-            Accédez aux avis, inspections et historiques partagés par la communauté. 
-            Fini les mauvaises surprises lors de l'achat d'un véhicule d'occasion.
+          {/* Explanatory Content */}
+          <div className="max-w-3xl mx-auto mb-10 space-y-5 animate-fade-in-up stagger-2">
+            <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+              When searching for a used vehicle, the truth is rarely found in a single document.
+              It is spread across inspection reports, vehicle history records, conversations with sellers, 
+              discussions with mechanics, photos, notes, and decisions made by previous buyers.
+            </p>
+            <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+              VLINKS centralizes all these contributions around a single VIN number.
+              Buyers who investigated a vehicle before you can share what they discovered — 
+              professional inspection reports, Carfax data, written exchanges, warnings, red flags, 
+              and insights that don't always appear in formal documents.
+            </p>
+            <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+              By connecting these individual experiences, VLINKS helps reveal a clearer, 
+              more transparent picture of a vehicle's real condition and history.
+            </p>
+          </div>
+
+          {/* Guiding sentence */}
+          <p className="text-lg md:text-xl font-medium text-foreground/90 mb-8 animate-fade-in-up stagger-3">
+            Search a VIN to see what others have already uncovered.
           </p>
 
           {/* Search Bar */}
           <form 
             onSubmit={handleSearch}
-            className="max-w-2xl mx-auto mb-12 animate-fade-in-up stagger-3"
+            className="max-w-2xl mx-auto mb-8 animate-fade-in-up stagger-4"
           >
             <div className="relative group">
               <div className="absolute -inset-1 bg-gradient-primary rounded-2xl opacity-20 blur group-hover:opacity-30 transition-opacity" />
@@ -70,22 +88,27 @@ const HeroSection = () => {
                 <Search className="w-6 h-6 text-muted-foreground ml-4" />
                 <Input
                   variant="vin"
-                  placeholder="Entrez un numéro VIN (ex: WVWZZZ3CZWE123456)"
+                  placeholder="Enter a VIN number (e.g., WVWZZZ3CZWE123456)"
                   value={vinInput}
                   onChange={(e) => setVinInput(e.target.value)}
                   className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                   maxLength={17}
                 />
                 <Button type="submit" variant="hero" size="lg" className="shrink-0">
-                  Rechercher
+                  Search
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </div>
             </div>
             <p className="text-sm text-muted-foreground mt-3">
-              Le VIN se trouve sur le tableau de bord, la portière ou les documents du véhicule
+              The VIN is located on the dashboard, door jamb, or vehicle documents
             </p>
           </form>
+
+          {/* Tagline */}
+          <p className="text-sm text-muted-foreground/70 italic mb-10 animate-fade-in-up stagger-4">
+            "Truth is a chain. You are the link."
+          </p>
 
           {/* Stats */}
           <div className="flex flex-wrap justify-center gap-8 md:gap-16 animate-fade-in-up stagger-4">

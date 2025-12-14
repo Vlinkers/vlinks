@@ -1,8 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables, Enums } from "@/integrations/supabase/types";
+import type { Enums } from "@/integrations/supabase/types";
 
 export type ContributionType = Enums<"contribution_type">;
+
+export interface ContributionPhoto {
+  id: string;
+  url: string;
+  caption: string | null;
+  fileName: string;
+}
 
 export interface ContributionWithDetails {
   id: string;
@@ -18,6 +25,7 @@ export interface ContributionWithDetails {
   documentCount: number;
   hasPhotos: boolean;
   photoCount: number;
+  photos: ContributionPhoto[];
   tags: string[];
   decision: "purchased" | "passed" | null;
   passReason?: string;
@@ -58,7 +66,7 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
     .select(`
       *,
       contribution_documents (id),
-      contribution_photos (id),
+      contribution_photos (id, file_path, file_name, caption),
       contribution_tags (tag)
     `)
     .eq("vin_id", vinRecord.id)
@@ -89,8 +97,19 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
   const transformedContributions: ContributionWithDetails[] = (contributions || []).map(c => {
     const profile = profilesMap[c.user_id];
     const docCount = (c.contribution_documents as { id: string }[])?.length || 0;
-    const photoCount = (c.contribution_photos as { id: string }[])?.length || 0;
+    const photosRaw = c.contribution_photos as { id: string; file_path: string; file_name: string; caption: string | null }[] || [];
     const tags = (c.contribution_tags as { tag: string }[])?.map(t => t.tag) || [];
+
+    // Generate public URLs for photos
+    const photos: ContributionPhoto[] = photosRaw.map(photo => {
+      const { data: urlData } = supabase.storage.from("vin-photos").getPublicUrl(photo.file_path);
+      return {
+        id: photo.id,
+        url: urlData.publicUrl,
+        caption: photo.caption,
+        fileName: photo.file_name,
+      };
+    });
 
     // Extract decision from details if contribution_type is purchase_decision
     let decision: "purchased" | "passed" | null = null;
@@ -127,8 +146,9 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       helpful: c.points_awarded || 0,
       hasDocuments: docCount > 0,
       documentCount: docCount,
-      hasPhotos: photoCount > 0,
-      photoCount: photoCount,
+      hasPhotos: photos.length > 0,
+      photoCount: photos.length,
+      photos,
       tags,
       decision,
       passReason,

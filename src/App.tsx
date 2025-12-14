@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import VINDetail from "./pages/VINDetail";
 import Auth from "./pages/Auth";
 import WhyVlinks from "./pages/WhyVlinks";
+import HowItWorks from "./pages/HowItWorks";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +23,8 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="/why" element={<WhyVlinks />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/vin/:vin" element={<VINDetail />} />

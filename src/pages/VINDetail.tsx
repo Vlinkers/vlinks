@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ContributionForm } from "@/components/ContributionForm";
 import { 
   Shield, 
   AlertTriangle, 
@@ -284,6 +285,7 @@ const VINDetail = () => {
   const data = mockVINData;
   const [expandedContribution, setExpandedContribution] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<ContributionType | "all">("all");
+  const [showContributionForm, setShowContributionForm] = useState(false);
 
   const getTrustColor = (score: number) => {
     if (score >= 80) return "text-success";
@@ -365,7 +367,7 @@ const VINDetail = () => {
                     <ExternalLink className="w-4 h-4 mr-2" />
                     Partager
                   </Button>
-                  <Button variant="hero" size="sm">
+                  <Button variant="hero" size="sm" onClick={() => setShowContributionForm(true)}>
                     <Plus className="w-4 h-4 mr-2" />
                     Contribuer
                   </Button>
@@ -810,6 +812,14 @@ const VINDetail = () => {
       </main>
 
       <Footer />
+
+      {/* Contribution Form Modal */}
+      <ContributionForm
+        vinId="mock-vin-id"
+        vin={vin || ""}
+        open={showContributionForm}
+        onOpenChange={setShowContributionForm}
+      />
     </div>
   );
 };

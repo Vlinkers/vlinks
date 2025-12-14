@@ -26,7 +26,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Hero Section
     "hero.badge": "Plateforme communautaire indépendante",
     "hero.headline1": "Chaque VIN a une histoire.",
-    "hero.headline2": "VLINKS relie les pièces manquantes.",
+    "hero.headline2": "VLINKS relie les données existantes.",
     "hero.p1": "Quand vous cherchez un véhicule d'occasion, la vérité se trouve rarement dans un seul document. Elle est dispersée entre les rapports d'inspection, les historiques de véhicule, les conversations avec les vendeurs, les discussions avec les mécaniciens, les photos, les notes et les décisions des acheteurs précédents.",
     "hero.p2": "VLINKS centralise toutes ces contributions autour d'un seul numéro VIN. Les acheteurs qui ont enquêté sur un véhicule avant vous peuvent partager ce qu'ils ont découvert — rapports d'inspection professionnels, données Carfax, échanges écrits, avertissements, signaux d'alerte et observations qui n'apparaissent pas toujours dans les documents officiels.",
     "hero.p3": "En connectant ces expériences individuelles, VLINKS aide à révéler une image plus claire et plus transparente de l'état réel et de l'historique d'un véhicule.",

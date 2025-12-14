@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ContributionForm } from "@/components/ContributionForm";
+import { PhotoGallery } from "@/components/PhotoGallery";
 import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { 
   Shield, 
@@ -470,6 +471,13 @@ const VINDetail = () => {
                             {isExpanded && contribution.details && (
                               <div className="p-4 rounded-lg bg-muted/20 mb-3 text-sm text-foreground/70 border-l-2 border-primary/50">
                                 {contribution.details}
+                              </div>
+                            )}
+
+                            {/* Photo Gallery */}
+                            {contribution.photos.length > 0 && (
+                              <div className="mb-3">
+                                <PhotoGallery photos={contribution.photos} />
                               </div>
                             )}
 

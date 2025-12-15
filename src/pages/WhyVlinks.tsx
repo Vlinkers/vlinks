@@ -144,75 +144,8 @@ const WhyVlinks = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden">
-        {/* Background Effects */}
-        <div className="absolute inset-0 bg-gradient-hero" />
-        <div className="absolute inset-0 opacity-5">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }}
-          />
-        </div>
-
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 animate-fade-in-up">
-              <Heart className="w-4 h-4 text-primary" />
-              <span className="text-sm text-muted-foreground">Notre mission</span>
-            </div>
-
-            {/* Main Title */}
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in-up stagger-1">
-              <span className="text-foreground">La vérité ne devrait pas </span>
-              <span className="text-gradient">disparaître</span>
-              <span className="text-foreground"> avec chaque inspection</span>
-            </h1>
-
-            {/* Subtitle */}
-            <p className="text-lg md:text-xl text-muted-foreground mb-4 max-w-2xl mx-auto animate-fade-in-up stagger-2">
-              VLINKS est né d'une frustration réelle : payer cher pour une inspection, découvrir des problèmes, renoncer à l'achat — et savoir que le prochain acheteur vivra exactement la même chose.
-            </p>
-
-            {/* Tagline */}
-            <p className="font-display text-xl md:text-2xl text-primary font-semibold mb-10 animate-fade-in-up stagger-3">
-              "Truth is a chain. You are the link."
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up stagger-4">
-              <form onSubmit={handleSearch} className="flex w-full max-w-md">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <input
-                    type="text"
-                    value={vin}
-                    onChange={(e) => setVin(e.target.value.toUpperCase())}
-                    placeholder="Rechercher un VIN..."
-                    className="w-full pl-12 pr-4 py-3 rounded-l-xl bg-background/80 border border-border/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                    maxLength={17}
-                  />
-                </div>
-                <Button type="submit" variant="hero" className="rounded-l-none rounded-r-xl px-6">
-                  Rechercher
-                </Button>
-              </form>
-            </div>
-
-            <div className="mt-6 animate-fade-in-up stagger-5">
-              <Button variant="outline" size="lg" asChild>
-                <Link to="/auth" className="gap-2">
-                  <Users className="w-5 h-5" />
-                  Rejoindre la communauté
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Spacer for header */}
+      <div className="pt-24 md:pt-32" />
 
       {/* Problem Section */}
       <section className="py-20 md:py-32 bg-muted/30">
@@ -558,6 +491,15 @@ const WhyVlinks = () => {
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </form>
+            </div>
+
+            <div className="mt-8">
+              <Button variant="outline" size="lg" asChild>
+                <Link to="/auth" className="gap-2">
+                  <Users className="w-5 h-5" />
+                  Rejoindre la communauté
+                </Link>
+              </Button>
             </div>
 
             <p className="mt-10 text-sm text-muted-foreground">

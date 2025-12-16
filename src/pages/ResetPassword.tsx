@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,6 @@ const ResetPassword = () => {
   const [emailSent, setEmailSent] = useState(false);
   const [error, setError] = useState<string>();
   
-  const { resetPassword } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,11 +31,14 @@ const ResetPassword = () => {
     setError(undefined);
 
     try {
-      const { error } = await resetPassword(email);
+      const { data, error } = await supabase.functions.invoke("request-password-reset", {
+        body: { email: email.trim().toLowerCase() }
+      });
+
       if (error) {
         toast({
           title: "Erreur",
-          description: error.message,
+          description: "Une erreur s'est produite. Veuillez réessayer.",
           variant: "destructive",
         });
       } else {
@@ -94,7 +96,7 @@ const ResetPassword = () => {
                   Si un compte existe avec cette adresse, vous recevrez un lien pour réinitialiser votre mot de passe.
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Vérifiez également votre dossier spam.
+                  Vérifiez également votre dossier spam. Le lien expire dans 1 heure.
                 </p>
                 <Link to="/auth">
                   <Button variant="outline" className="mt-4">

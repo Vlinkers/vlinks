@@ -8,6 +8,8 @@ import { LanguageProvider } from "@/hooks/useLanguage";
 import Index from "./pages/Index";
 import VINDetail from "./pages/VINDetail";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
+import UpdatePassword from "./pages/UpdatePassword";
 import WhyVlinks from "./pages/WhyVlinks";
 import HowItWorks from "./pages/HowItWorks";
 import Pricing from "./pages/Pricing";
@@ -29,6 +31,8 @@ const App = () => (
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/why" element={<WhyVlinks />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/update-password" element={<UpdatePassword />} />
               <Route path="/vin/:vin" element={<VINDetail />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

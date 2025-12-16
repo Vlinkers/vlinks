@@ -122,6 +122,24 @@ export type Database = {
           },
         ]
       }
+      password_reset_requests: {
+        Row: {
+          email_hash: string
+          id: string
+          requested_at: string
+        }
+        Insert: {
+          email_hash: string
+          id?: string
+          requested_at?: string
+        }
+        Update: {
+          email_hash?: string
+          id?: string
+          requested_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

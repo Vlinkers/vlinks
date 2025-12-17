@@ -332,11 +332,22 @@ export function ContributionForm({
           </DialogDescription>
         </DialogHeader>
 
+        {/* Texte pédagogique */}
+        <div className="bg-muted/30 border border-border rounded-xl p-4 space-y-2">
+          <p className="text-sm text-foreground">
+            Vous avez déjà payé pour cette information. En la partageant, vous aidez les prochains acheteurs et gagnez des crédits.
+          </p>
+          <p className="text-xs text-muted-foreground flex items-center gap-2">
+            <span>⏱️</span>
+            <span>2–5 minutes · Contribution anonyme possible</span>
+          </p>
+        </div>
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Contribution Type Selection */}
           <div className="space-y-3">
             <Label className="text-base font-semibold">
-              Type de contribution
+              Que souhaitez-vous partager ?
             </Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {contributionTypes.map((type) => {
@@ -387,6 +398,11 @@ export function ContributionForm({
                 Veuillez sélectionner un type
               </p>
             )}
+            {/* Indicateur de valeur */}
+            <p className="text-sm text-muted-foreground flex items-center gap-2 pt-1">
+              <span>🎁</span>
+              <span>Cette contribution peut vous rapporter des crédits</span>
+            </p>
           </div>
 
           {/* Title */}
@@ -639,7 +655,7 @@ export function ContributionForm({
               disabled={isSubmitting}
               className="flex-1"
             >
-              {isSubmitting ? "Envoi en cours..." : "Contribuer"}
+              {isSubmitting ? "Envoi en cours..." : "Ajouter ce maillon"}
             </Button>
           </div>
         </form>

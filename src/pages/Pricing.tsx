@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Check, Unlock, Eye, Gift, Sparkles, Award, Users } from "lucide-react";
@@ -38,9 +39,15 @@ const Pricing = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="pt-24 pb-16">
+    <>
+      <SEO 
+        title="Tarifs - VLINKS"
+        description="Accédez aux rapports véhicules pour 9,90$ par VIN ou économisez avec nos packs de crédits. Gagnez des crédits en contribuant à la communauté VLINKS."
+        canonical="https://vlinks.ca/pricing"
+      />
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-24 pb-16">
         {/* Hero Section */}
         <section className="container mx-auto px-4 mb-20">
           <div className="max-w-3xl mx-auto text-center">
@@ -261,9 +268,10 @@ const Pricing = () => {
             </p>
           </div>
         </section>
-      </main>
-      <Footer />
-    </div>
+        </main>
+        <Footer />
+      </div>
+    </>
   );
 };
 

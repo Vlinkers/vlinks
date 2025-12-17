@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import {
   Search,
   DollarSign,
@@ -141,11 +142,17 @@ const WhyVlinks = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <>
+      <SEO 
+        title="Pourquoi VLINKS - Notre mission"
+        description="VLINKS résout le problème des inspections coûteuses et des informations perdues. Découvrez notre philosophie communautaire pour un marché automobile plus transparent."
+        canonical="https://vlinks.ca/why"
+      />
+      <div className="min-h-screen bg-background">
+        <Header />
 
-      {/* Spacer for header */}
-      <div className="pt-24 md:pt-32" />
+        {/* Spacer for header */}
+        <div className="pt-24 md:pt-32" />
 
       {/* Problem Section */}
       <section className="py-20 md:py-32 bg-muted/30">
@@ -436,6 +443,7 @@ const WhyVlinks = () => {
 
       <Footer />
     </div>
+    </>
   );
 };
 

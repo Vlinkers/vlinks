@@ -405,45 +405,62 @@ export function ContributionForm({
             </p>
           </div>
 
-          {/* Title */}
+          {/* Message de réassurance */}
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">Vos textes ne sont jamais publiés tels quels.</span>{" "}
+              VLINKS transforme les contributions en résumés techniques anonymisés et vérifiés.
+            </p>
+          </div>
+
+          {/* Point clé observé (anciennement Titre) */}
           <div className="space-y-2">
-            <Label htmlFor="title">Titre *</Label>
+            <Label htmlFor="title">Point clé observé *</Label>
             <Input
               id="title"
               {...register("title")}
-              placeholder="Résumez votre contribution en une phrase"
+              placeholder="Ex: Traces de rouille sous le châssis"
               className="bg-muted/30"
             />
+            <p className="text-xs text-muted-foreground">
+              Indiquez simplement l'élément principal que vous avez découvert. VLINKS reformulera et intégrera l'information de façon neutre.
+            </p>
             {errors.title && (
               <p className="text-sm text-danger">{errors.title.message}</p>
             )}
           </div>
 
-          {/* Summary */}
+          {/* Ce que vous avez constaté (anciennement Résumé) */}
           <div className="space-y-2">
-            <Label htmlFor="summary">Résumé *</Label>
+            <Label htmlFor="summary">Ce que vous avez constaté *</Label>
             <Textarea
               id="summary"
               {...register("summary")}
-              placeholder="Décrivez brièvement ce que vous avez découvert..."
+              placeholder="Décrivez librement ce que vous avez observé, sans vous soucier de la forme."
               rows={3}
               className="bg-muted/30 resize-none"
             />
+            <p className="text-xs text-muted-foreground">
+              Votre texte n'est pas publié tel quel. Il sert à produire un résumé technique objectif.
+            </p>
             {errors.summary && (
               <p className="text-sm text-danger">{errors.summary.message}</p>
             )}
           </div>
 
-          {/* Details */}
+          {/* Contexte et précisions (anciennement Détails) */}
           <div className="space-y-2">
-            <Label htmlFor="details">Détails (optionnel)</Label>
+            <Label htmlFor="details">Contexte et précisions (optionnel)</Label>
             <Textarea
               id="details"
               {...register("details")}
-              placeholder="Ajoutez tous les détails pertinents: observations techniques, contexte de la visite, conversations importantes..."
+              placeholder="Ajoutez le contexte : circonstances de la visite, échanges avec le vendeur, impressions générales..."
               rows={5}
               className="bg-muted/30 resize-none"
             />
+            <p className="text-xs text-muted-foreground">
+              Ces informations aident à comprendre la situation mais ne sont pas affichées publiquement.
+            </p>
             {errors.details && (
               <p className="text-sm text-danger">{errors.details.message}</p>
             )}

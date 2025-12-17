@@ -210,27 +210,31 @@ const VINDetail = () => {
 
             <div className="max-w-2xl mx-auto">
               {/* BLOC D'ACTION PRINCIPAL - Visible sans scroll */}
-              <div className="text-center mb-12 p-8 rounded-2xl glass border border-border/50">
+              <div className="text-center mb-8 p-6 rounded-2xl glass border border-border/50">
                 <h1 className="font-display text-2xl md:text-3xl font-bold mb-2">
                   Ce VIN n'a pas encore de dossier
                 </h1>
-                <p className="font-mono text-base text-muted-foreground mb-8">{vin}</p>
+                <p className="font-mono text-base text-muted-foreground mb-4">{vin}</p>
+                
+                {/* Message central */}
+                <p className="text-muted-foreground max-w-md mx-auto mb-6 text-sm">
+                  Si personne ne contribue, l'information disparaît à nouveau.<br />
+                  Votre expérience peut éviter une inspection inutile au prochain acheteur.
+                </p>
                 
                 {/* Deux boutons côte à côte - même hiérarchie */}
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Button 
-                    variant="outline" 
                     size="lg"
-                    className="flex-1 sm:flex-none sm:min-w-[200px] h-14 text-base"
+                    className="flex-1 sm:flex-none sm:min-w-[200px] h-12 text-base bg-success hover:bg-success/90 text-success-foreground"
                     onClick={() => setShowOwnerVerificationForm(true)}
                   >
                     <User className="w-5 h-5 mr-2" />
                     Je suis propriétaire
                   </Button>
                   <Button 
-                    variant="outline" 
                     size="lg"
-                    className="flex-1 sm:flex-none sm:min-w-[200px] h-14 text-base"
+                    className="flex-1 sm:flex-none sm:min-w-[200px] h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
                     onClick={() => setShowContributionForm(true)}
                   >
                     <Link2 className="w-5 h-5 mr-2" />
@@ -238,18 +242,13 @@ const VINDetail = () => {
                   </Button>
                 </div>
                 
-                <p className="text-xs text-muted-foreground mt-4">
+                <p className="text-xs text-muted-foreground mt-3">
                   Anonyme • Gratuit • Sans engagement
                 </p>
               </div>
 
               {/* CONTENU EXPLICATIF - Sous les boutons */}
-              <div className="space-y-6">
-                {/* Message central */}
-                <p className="text-center text-muted-foreground max-w-md mx-auto">
-                  Si personne ne contribue, l'information disparaît à nouveau.<br />
-                  Votre expérience peut éviter une inspection inutile au prochain acheteur.
-                </p>
+              <div className="space-y-4">
 
                 {/* Pourquoi contribuer */}
                 <div className="bg-muted/30 rounded-xl p-6 text-left">

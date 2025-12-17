@@ -4,8 +4,7 @@ import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Check, Unlock, Eye, Gift, Sparkles, Award, Users } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Check, Unlock, Eye, Gift, Sparkles, Award, Users, Search, Heart } from "lucide-react";
 
 const Pricing = () => {
   const { t } = useLanguage();
@@ -15,18 +14,21 @@ const Pricing = () => {
       nameKey: "pricing.pack1.name",
       credits: 5,
       priceKey: "pricing.pack1.price",
+      descKey: "pricing.pack1.desc",
       highlighted: false
     },
     {
       nameKey: "pricing.pack2.name",
       credits: 10,
       priceKey: "pricing.pack2.price",
+      descKey: "pricing.pack2.desc",
       highlighted: true
     },
     {
       nameKey: "pricing.pack3.name",
       credits: 20,
       priceKey: "pricing.pack3.price",
+      descKey: "pricing.pack3.desc",
       highlighted: false
     }
   ];
@@ -48,54 +50,60 @@ const Pricing = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <main className="pt-24 pb-16">
-        {/* Hero Section */}
-        <section className="container mx-auto px-4 mb-20">
+        
+        {/* SECTION 1 - Reassuring Introduction */}
+        <section className="container mx-auto px-4 mb-16">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-6">
-              {t("pricing.title")} <span className="text-gradient">{t("pricing.titleGradient")}</span>
+              {t("pricing.intro.title")}
             </h1>
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              {t("pricing.subtitle")}
+            <p className="text-lg text-muted-foreground leading-relaxed mb-4">
+              {t("pricing.intro.p1")}
+            </p>
+            <p className="text-muted-foreground leading-relaxed">
+              {t("pricing.intro.p2")}
             </p>
           </div>
         </section>
 
-        {/* SECTION 1 - Free Access */}
+        {/* SECTION 2 - Pedagogical Steps */}
         <section className="container mx-auto px-4 mb-20">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center">
-                <Eye className="w-6 h-6 text-success" />
-              </div>
-              <h2 className="font-display text-2xl md:text-3xl font-bold">
-                {t("pricing.free.title")}
-              </h2>
-            </div>
-            
-            <div className="p-8 rounded-2xl glass border border-success/20">
-              <p className="text-lg text-foreground/90 mb-6 leading-relaxed">
-                {t("pricing.free.desc")}
-              </p>
-              
-              <div className="grid sm:grid-cols-3 gap-4">
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-success/5">
-                  <Check className="w-5 h-5 text-success shrink-0 mt-0.5" />
-                  <span className="text-sm text-foreground">{t("pricing.free.f1")}</span>
+          <div className="max-w-3xl mx-auto">
+            <div className="p-8 rounded-2xl glass border border-border/50">
+              <div className="grid gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
+                    <Search className="w-6 h-6 text-success" />
+                  </div>
+                  <div>
+                    <span className="font-display font-bold text-lg">{t("pricing.step1.title")}</span>
+                    <span className="text-success font-medium ml-2">→ {t("pricing.step1.status")}</span>
+                  </div>
                 </div>
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-success/5">
-                  <Check className="w-5 h-5 text-success shrink-0 mt-0.5" />
-                  <span className="text-sm text-foreground">{t("pricing.free.f2")}</span>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
+                    <Eye className="w-6 h-6 text-success" />
+                  </div>
+                  <div>
+                    <span className="font-display font-bold text-lg">{t("pricing.step2.title")}</span>
+                    <span className="text-success font-medium ml-2">→ {t("pricing.step2.status")}</span>
+                  </div>
                 </div>
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-success/5">
-                  <Check className="w-5 h-5 text-success shrink-0 mt-0.5" />
-                  <span className="text-sm text-foreground">{t("pricing.free.f3")}</span>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Unlock className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <span className="font-display font-bold text-lg">{t("pricing.step3.title")}</span>
+                    <span className="text-primary font-medium ml-2">→ {t("pricing.step3.status")}</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* SECTION 2 - Pay per VIN */}
+        {/* SECTION 3 - VIN Access */}
         <section className="container mx-auto px-4 mb-20">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3 mb-6">
@@ -121,6 +129,10 @@ const Pricing = () => {
                 </Button>
               </div>
               
+              <p className="text-foreground/80 mb-6 leading-relaxed">
+                {t("pricing.unlock.desc")}
+              </p>
+              
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 <div className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
@@ -144,14 +156,55 @@ const Pricing = () => {
                 </div>
               </div>
               
-              <p className="text-sm text-muted-foreground text-center italic">
-                {t("pricing.unlock.support")}
+              <p className="text-sm text-muted-foreground text-center">
+                {t("pricing.unlock.reassurance")}
               </p>
             </div>
           </div>
         </section>
 
-        {/* SECTION 3 - Credit Packs */}
+        {/* SECTION 4 - Contribute Alternative (Same Level as Payment) */}
+        <section className="container mx-auto px-4 mb-20">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center">
+                <Gift className="w-6 h-6 text-warning" />
+              </div>
+              <h2 className="font-display text-2xl md:text-3xl font-bold">
+                {t("pricing.contribute.title")}
+              </h2>
+            </div>
+            
+            <div className="p-8 rounded-2xl glass border border-warning/20">
+              <p className="text-lg text-foreground/90 mb-4 leading-relaxed">
+                {t("pricing.contribute.p1")}
+              </p>
+              <p className="text-lg text-foreground/90 mb-6 leading-relaxed font-medium">
+                {t("pricing.contribute.p2")}
+              </p>
+              
+              <div className="grid sm:grid-cols-2 gap-4 mb-8">
+                {earnCredits.map((item, index) => (
+                  <div key={index} className="flex items-center gap-3 p-4 rounded-xl bg-warning/5">
+                    <span className="text-2xl">{item.icon}</span>
+                    <span className="text-sm text-foreground">{t(item.key)}</span>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Button variant="secondary" size="lg" asChild>
+                  <Link to="/auth">
+                    <Gift className="w-4 h-4 mr-2" />
+                    {t("pricing.earn.cta")}
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 5 - Credit Packs (Humanized) */}
         <section className="container mx-auto px-4 mb-20">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3 mb-6">
@@ -163,10 +216,6 @@ const Pricing = () => {
               </h2>
             </div>
             
-            <p className="text-muted-foreground mb-8 max-w-2xl">
-              {t("pricing.packs.desc")}
-            </p>
-            
             <div className="grid md:grid-cols-3 gap-6 mb-8">
               {creditPacks.map((pack, index) => (
                 <div 
@@ -177,15 +226,8 @@ const Pricing = () => {
                       : "glass border border-border/50 hover:shadow-elevated"
                   }`}
                 >
-                  {pack.highlighted && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge variant="premium" className="px-3 py-1 text-xs">
-                        {t("pricing.packs.bestValue")}
-                      </Badge>
-                    </div>
-                  )}
-                  
-                  <h3 className="font-display text-lg font-bold mb-3">{t(pack.nameKey)}</h3>
+                  <h3 className="font-display text-lg font-bold mb-1">{t(pack.nameKey)}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">{t(pack.descKey)}</p>
                   
                   <div className="flex items-center gap-2 mb-4">
                     <span className={`font-display text-4xl font-bold ${pack.highlighted ? "text-primary" : ""}`}>
@@ -217,51 +259,30 @@ const Pricing = () => {
           </div>
         </section>
 
-        {/* SECTION 4 - Earn Credits */}
-        <section className="container mx-auto px-4 mb-16">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center">
-                <Award className="w-6 h-6 text-warning" />
-              </div>
-              <h2 className="font-display text-2xl md:text-3xl font-bold">
-                {t("pricing.earn.title")}
-              </h2>
-            </div>
-            
-            <div className="p-8 rounded-2xl glass border border-warning/20">
-              <p className="text-lg text-foreground/90 mb-6 leading-relaxed">
-                {t("pricing.earn.desc")}
-              </p>
-              
-              <div className="grid sm:grid-cols-2 gap-4 mb-8">
-                {earnCredits.map((item, index) => (
-                  <div key={index} className="flex items-center gap-3 p-4 rounded-xl bg-warning/5">
-                    <span className="text-2xl">{item.icon}</span>
-                    <span className="text-sm text-foreground">{t(item.key)}</span>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Button variant="secondary" size="lg" asChild>
-                  <Link to="/auth">
-                    <Gift className="w-4 h-4 mr-2" />
-                    {t("pricing.earn.cta")}
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Bottom Philosophy Note */}
+        {/* SECTION 6 - Moral Justification */}
         <section className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto text-center p-8 rounded-2xl glass">
-            <Users className="w-10 h-10 text-primary mx-auto mb-4" />
-            <h3 className="font-display text-xl font-bold mb-3">{t("pricing.philosophy.title")}</h3>
+            <Heart className="w-10 h-10 text-primary mx-auto mb-4" />
+            <h3 className="font-display text-xl font-bold mb-4">{t("pricing.philosophy.title")}</h3>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              {t("pricing.philosophy.desc")}
+              {t("pricing.philosophy.intro")}
+            </p>
+            <ul className="text-left max-w-md mx-auto mb-6 space-y-2">
+              <li className="flex items-start gap-2 text-muted-foreground">
+                <span className="text-primary">•</span>
+                <span>{t("pricing.philosophy.reason1")}</span>
+              </li>
+              <li className="flex items-start gap-2 text-muted-foreground">
+                <span className="text-primary">•</span>
+                <span>{t("pricing.philosophy.reason2")}</span>
+              </li>
+              <li className="flex items-start gap-2 text-muted-foreground">
+                <span className="text-primary">•</span>
+                <span>{t("pricing.philosophy.reason3")}</span>
+              </li>
+            </ul>
+            <p className="text-muted-foreground mb-6">
+              {t("pricing.philosophy.conclusion")}
             </p>
             <p className="text-sm text-primary font-medium italic">
               {t("common.tagline")}

@@ -171,13 +171,21 @@ const VINDetail = () => {
               <h1 className="font-display text-3xl font-bold mb-2">
                 Ce VIN n'a pas encore de dossier
               </h1>
-              <p className="text-lg text-muted-foreground mb-4">
-                Soyez le premier à ne pas laisser l'information disparaître.
+              <p className="font-mono text-base text-muted-foreground mb-4">{vin}</p>
+              
+              {/* CTA immédiat - visible sans scroll */}
+              <Button variant="outline" size="lg" onClick={() => setShowContributionForm(true)} className="mb-2">
+                <Plus className="w-5 h-5 mr-2" />
+                Créer le premier maillon
+              </Button>
+              <p className="text-xs text-muted-foreground mb-8">
+                Anonyme • Gratuit • Sans engagement
               </p>
-              <p className="font-mono text-base text-muted-foreground mb-6">{vin}</p>
-              <p className="text-muted-foreground mb-8">
-                Vous avez inspecté, observé ou échangé à propos de ce véhicule ?<br />
-                Cette information a de la valeur — pour vous aujourd'hui, et pour les autres demain.
+
+              {/* Message central reformulé */}
+              <p className="text-muted-foreground mb-8 max-w-md">
+                Si personne ne contribue, l'information disparaît à nouveau.<br />
+                Votre expérience peut éviter une inspection inutile au prochain acheteur.
               </p>
 
               {/* Pourquoi contribuer maintenant */}

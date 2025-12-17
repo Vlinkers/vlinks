@@ -4,8 +4,6 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ContributionForm } from "@/components/ContributionForm";
-import { OwnerVerificationForm } from "@/components/OwnerVerificationForm";
-import { OwnerContributionForm } from "@/components/OwnerContributionForm";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { 
@@ -107,8 +105,7 @@ const VINDetail = () => {
   const [expandedContribution, setExpandedContribution] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<ContributionType | "all">("all");
   const [showContributionForm, setShowContributionForm] = useState(false);
-  const [showOwnerVerificationForm, setShowOwnerVerificationForm] = useState(false);
-  const [showOwnerContributionForm, setShowOwnerContributionForm] = useState(false);
+  const [isOwnerClaim, setIsOwnerClaim] = useState(false);
   const [ownerVerificationStatus, setOwnerVerificationStatus] = useState<'none' | 'pending' | 'verified' | 'rejected'>('none');
   const [isCheckingOwner, setIsCheckingOwner] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -226,19 +223,25 @@ const VINDetail = () => {
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Button 
                     size="lg"
-                    className="flex-1 sm:flex-none sm:min-w-[200px] h-12 text-base bg-success hover:bg-success/90 text-success-foreground"
-                    onClick={() => setShowOwnerVerificationForm(true)}
+                    className="flex-1 sm:flex-none sm:min-w-[220px] h-12 text-base bg-success hover:bg-success/90 text-success-foreground"
+                    onClick={() => {
+                      setIsOwnerClaim(true);
+                      setShowContributionForm(true);
+                    }}
                   >
                     <User className="w-5 h-5 mr-2" />
-                    Je suis propriétaire
+                    Je suis propriétaire de ce véhicule
                   </Button>
                   <Button 
                     size="lg"
-                    className="flex-1 sm:flex-none sm:min-w-[200px] h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
-                    onClick={() => setShowContributionForm(true)}
+                    className="flex-1 sm:flex-none sm:min-w-[180px] h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
+                    onClick={() => {
+                      setIsOwnerClaim(false);
+                      setShowContributionForm(true);
+                    }}
                   >
                     <Link2 className="w-5 h-5 mr-2" />
-                    Je suis contributeur
+                    Je souhaite contribuer
                   </Button>
                 </div>
                 
@@ -299,18 +302,11 @@ const VINDetail = () => {
           vinId={null}
           vin={vin || ""}
           open={showContributionForm}
-          onOpenChange={setShowContributionForm}
-        />
-
-        <OwnerVerificationForm
-          vinId={null}
-          vin={vin || ""}
-          open={showOwnerVerificationForm}
-          onOpenChange={setShowOwnerVerificationForm}
-          onSuccess={() => {
-            setOwnerVerificationStatus('pending');
-            setShowOwnerVerificationForm(false);
+          onOpenChange={(open) => {
+            setShowContributionForm(open);
+            if (!open) setIsOwnerClaim(false);
           }}
+          isOwnerClaim={isOwnerClaim}
         />
       </div>
     );
@@ -492,10 +488,13 @@ const VINDetail = () => {
                     <Button 
                       variant="outline" 
                       className="border-success/30 text-success hover:bg-success/10 shrink-0"
-                      onClick={() => setShowOwnerVerificationForm(true)}
+                      onClick={() => {
+                        setIsOwnerClaim(true);
+                        setShowContributionForm(true);
+                      }}
                     >
-                      <Shield className="w-4 h-4 mr-2" />
-                      Déclarer ma propriété
+                      <User className="w-4 h-4 mr-2" />
+                      Contribuer en tant que propriétaire
                     </Button>
                   </div>
                 </div>
@@ -514,17 +513,20 @@ const VINDetail = () => {
                         </h3>
                         <p className="text-sm text-muted-foreground">
                           Votre demande de vérification propriétaire est en cours de traitement.
-                          Vous pouvez déjà commencer à documenter l'historique.
+                          Vous pouvez continuer à contribuer.
                         </p>
                       </div>
                     </div>
                     <Button 
                       variant="outline" 
                       className="border-success/30 text-success hover:bg-success/10 shrink-0"
-                      onClick={() => setShowOwnerContributionForm(true)}
+                      onClick={() => {
+                        setIsOwnerClaim(true);
+                        setShowContributionForm(true);
+                      }}
                     >
-                      <Wrench className="w-4 h-4 mr-2" />
-                      Documenter un entretien
+                      <Link2 className="w-4 h-4 mr-2" />
+                      Ajouter une contribution
                     </Button>
                   </div>
                 </div>
@@ -554,10 +556,13 @@ const VINDetail = () => {
                     <Button 
                       variant="hero" 
                       className="bg-success hover:bg-success/90 shrink-0"
-                      onClick={() => setShowOwnerContributionForm(true)}
+                      onClick={() => {
+                        setIsOwnerClaim(true);
+                        setShowContributionForm(true);
+                      }}
                     >
-                      <Wrench className="w-4 h-4 mr-2" />
-                      Ajouter un entretien
+                      <Link2 className="w-4 h-4 mr-2" />
+                      Ajouter une contribution
                     </Button>
                   </div>
                 </div>
@@ -893,26 +898,12 @@ const VINDetail = () => {
         vinId={data.id}
         vin={vin || ""}
         open={showContributionForm}
-        onOpenChange={setShowContributionForm}
-        onSuccess={() => refetch()}
-      />
-
-      <OwnerVerificationForm
-        vinId={data.id}
-        vin={vin || ""}
-        open={showOwnerVerificationForm}
-        onOpenChange={setShowOwnerVerificationForm}
-        onSuccess={() => {
-          setOwnerVerificationStatus('pending');
+        onOpenChange={(open) => {
+          setShowContributionForm(open);
+          if (!open) setIsOwnerClaim(false);
         }}
-      />
-
-      <OwnerContributionForm
-        vinId={data.id}
-        vin={vin || ""}
-        open={showOwnerContributionForm}
-        onOpenChange={setShowOwnerContributionForm}
         onSuccess={() => refetch()}
+        isOwnerClaim={isOwnerClaim}
       />
     </div>
   );

@@ -656,6 +656,11 @@ export function ContributionForm({
             />
           </div>
 
+          {/* Mention de revue */}
+          <p className="text-xs text-muted-foreground text-center">
+            Votre contribution sera revue et analysée avant publication.
+          </p>
+
           {/* Submit */}
           <div className="flex gap-3 pt-4">
             <Button

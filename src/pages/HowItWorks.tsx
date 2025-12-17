@@ -1,7 +1,11 @@
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import { useLanguage } from "@/hooks/useLanguage";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { 
   FileText, 
   Camera, 
@@ -12,11 +16,21 @@ import {
   Users,
   TrendingUp,
   Shield,
-  Gift
+  Gift,
+  Search
 } from "lucide-react";
 
 const HowItWorks = () => {
   const { t } = useLanguage();
+  const [vinInput, setVinInput] = useState("");
+  const navigate = useNavigate();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (vinInput.trim()) {
+      navigate(`/vin/${vinInput.toUpperCase()}`);
+    }
+  };
 
   const contributionTypes = [
     {
@@ -194,9 +208,33 @@ const HowItWorks = () => {
             <p className="text-muted-foreground leading-relaxed mb-4">
               {t("how.conclusionP1")}
             </p>
-            <p className="text-muted-foreground/80 text-sm">
+            <p className="text-muted-foreground/80 text-sm mb-8">
               {t("how.conclusionP2")}
             </p>
+
+            {/* VIN Search Bar */}
+            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto mb-6">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder={t("hero.searchPlaceholder")}
+                  value={vinInput}
+                  onChange={(e) => setVinInput(e.target.value)}
+                  className="pl-12 h-12 bg-background/80 border-border/50 text-base"
+                />
+              </div>
+              <Button type="submit" size="lg" className="h-12 px-6">
+                {t("hero.search")}
+              </Button>
+            </form>
+
+            {/* Contribute Button */}
+            <Link to="/contribute">
+              <Button variant="outline" size="lg" className="h-12 px-8">
+                {t("nav.contribute")}
+              </Button>
+            </Link>
           </div>
         </section>
 

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Shield, Users, Eye, ArrowRight } from "lucide-react";
+import { Search, Shield, EyeOff, Building2, ArrowRight, Check } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 
 const HeroSection = () => {
@@ -17,10 +17,10 @@ const HeroSection = () => {
     }
   };
 
-  const stats = [
-    { value: "50K+", label: t("hero.stat1") },
-    { value: "12K+", label: t("hero.stat2") },
-    { value: "98%", label: t("hero.stat3") },
+  const trustPoints = [
+    { icon: EyeOff, label: t("hero.trust1") },
+    { icon: Shield, label: t("hero.trust2") },
+    { icon: Building2, label: t("hero.trust3") },
   ];
 
   return (
@@ -40,20 +40,15 @@ const HeroSection = () => {
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 animate-fade-in-up">
-            <Shield className="w-4 h-4 text-success" />
-            <span className="text-sm text-muted-foreground">
-              {t("hero.badge")}
-            </span>
-          </div>
-
-          {/* Main Headline */}
-          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in-up stagger-1">
+          {/* Main Headline - H1 */}
+          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in-up">
             {t("hero.headline1")}
-            <br />
-            <span className="text-gradient">{t("hero.headline2")}</span>
           </h1>
+
+          {/* Subtitle - H2 */}
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-medium text-foreground/90 mb-10 animate-fade-in-up stagger-1">
+            {t("hero.subtitle")}
+          </h2>
 
           {/* Explanatory Content */}
           <div className="max-w-3xl mx-auto mb-10 space-y-5 animate-fade-in-up stagger-2">
@@ -63,20 +58,30 @@ const HeroSection = () => {
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
               {t("hero.p2")}
             </p>
-            <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-              {t("hero.p3")}
-            </p>
           </div>
 
           {/* Guiding sentence */}
-          <p className="text-lg md:text-xl font-medium text-foreground/90 mb-8 animate-fade-in-up stagger-3">
+          <p className="text-lg md:text-xl font-medium text-foreground/90 mb-6 animate-fade-in-up stagger-3">
             {t("hero.cta")}
           </p>
+
+          {/* Micro-reassurance badges */}
+          <div className="flex flex-wrap justify-center gap-4 md:gap-6 mb-8 animate-fade-in-up stagger-3">
+            {trustPoints.map((point, index) => (
+              <div 
+                key={index} 
+                className="flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-muted-foreground"
+              >
+                <Check className="w-4 h-4 text-success" />
+                <span>{point.label}</span>
+              </div>
+            ))}
+          </div>
 
           {/* Search Bar */}
           <form 
             onSubmit={handleSearch}
-            className="max-w-2xl mx-auto mb-8 animate-fade-in-up stagger-4"
+            className="max-w-2xl mx-auto mb-6 animate-fade-in-up stagger-4"
           >
             <div className="relative group">
               <div className="absolute -inset-1 bg-gradient-primary rounded-2xl opacity-20 blur group-hover:opacity-30 transition-opacity" />
@@ -105,36 +110,6 @@ const HeroSection = () => {
           <p className="text-sm text-muted-foreground/70 italic mb-10 animate-fade-in-up stagger-4">
             {t("hero.tagline")}
           </p>
-
-          {/* Stats */}
-          <div className="flex flex-wrap justify-center gap-8 md:gap-16 animate-fade-in-up stagger-4">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="font-display text-3xl md:text-4xl font-bold text-gradient">
-                  {stat.value}
-                </div>
-                <div className="text-sm text-muted-foreground mt-1">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Trust Icons */}
-          <div className="flex justify-center gap-8 mt-12 animate-fade-in-up stagger-5">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Users className="w-5 h-5" />
-              <span className="text-sm">{t("hero.trust1")}</span>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Eye className="w-5 h-5" />
-              <span className="text-sm">{t("hero.trust2")}</span>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Shield className="w-5 h-5" />
-              <span className="text-sm">{t("hero.trust3")}</span>
-            </div>
-          </div>
         </div>
       </div>
     </section>

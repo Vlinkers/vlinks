@@ -17,7 +17,7 @@ Ton rôle est de transformer des contributions brutes (rapports d'inspection, ob
 
 RÈGLES STRICTES :
 1. Aucun langage émotionnel ou subjectif
-2. Aucun nom de personne, d'entreprise ou de concessionnaire
+2. Aucun nom de personne, d'entreprise, de garage ou de concessionnaire - JAMAIS de noms propres
 3. Aucune accusation directe ou diffamatoire
 4. Reformulation factuelle uniquement
 5. Extraire les constats techniques objectifs
@@ -29,8 +29,19 @@ Tu dois produire UNIQUEMENT un JSON valide avec ce format exact :
   "technical_findings": ["constat technique 1", "constat technique 2", ...],
   "risk_level": <nombre de 1 à 5>,
   "confidence_source": "<inspection professionnelle | observation personnelle | historique véhicule | échange avec propriétaire | échange avec mécanicien>",
+  "source_credibility": "Description du niveau de crédibilité de la source (voir règles ci-dessous)",
   "publishable": <true | false>
 }
+
+RÈGLES POUR source_credibility :
+- Ne JAMAIS citer de nom de garage, marque, concessionnaire ou entreprise
+- Qualifier la source selon ces catégories :
+  * "réseau constructeur" → "Inspection de niveau constructeur, réalisée selon les standards du fabricant."
+  * "garage certifié" → "Inspection effectuée par un garage certifié selon les normes professionnelles."
+  * "inspection indépendante" → "Inspection réalisée par un professionnel indépendant."
+  * "observation propriétaire" → "Observations rapportées par un propriétaire du véhicule."
+  * "échange verbal" → "Informations recueillies lors d'un échange avec un intervenant."
+- La phrase doit toujours être neutre, factuelle et sans mention de noms propres
 
 Échelle de risque :
 1 = Aucun problème détecté
@@ -45,6 +56,7 @@ Si le contenu est vide, incompréhensible ou ne contient aucune information util
   "technical_findings": [],
   "risk_level": 1,
   "confidence_source": "observation personnelle",
+  "source_credibility": "Source non qualifiable.",
   "publishable": false
 }`;
 
@@ -64,6 +76,7 @@ interface AIResponse {
   technical_findings: string[];
   risk_level: number;
   confidence_source: string;
+  source_credibility: string;
   publishable: boolean;
 }
 
@@ -189,6 +202,7 @@ Détails : ${rawContribution.details || 'Non fournis'}
         !Array.isArray(aiResult.technical_findings) ||
         typeof aiResult.risk_level !== 'number' ||
         typeof aiResult.confidence_source !== 'string' ||
+        typeof aiResult.source_credibility !== 'string' ||
         typeof aiResult.publishable !== 'boolean') {
       throw new Error('Invalid AI response structure');
     }
@@ -210,6 +224,7 @@ Détails : ${rawContribution.details || 'Non fournis'}
         technical_findings: aiResult.technical_findings,
         risk_level: aiResult.risk_level,
         confidence_source: aiResult.confidence_source,
+        source_credibility: aiResult.source_credibility,
         is_anonymous: rawContribution.is_anonymous,
         publishable: aiResult.publishable,
         ai_model_used: 'gpt-4.1-2025-04-14'

@@ -122,6 +122,50 @@ export type Database = {
           },
         ]
       }
+      owner_verifications: {
+        Row: {
+          created_at: string
+          document_path: string | null
+          document_type: string | null
+          id: string
+          updated_at: string
+          user_id: string
+          verification_status: string
+          verified_at: string | null
+          vin_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_path?: string | null
+          document_type?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+          verification_status?: string
+          verified_at?: string | null
+          vin_id: string
+        }
+        Update: {
+          created_at?: string
+          document_path?: string | null
+          document_type?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+          verification_status?: string
+          verified_at?: string | null
+          vin_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_verifications_vin_id_fkey"
+            columns: ["vin_id"]
+            isOneToOne: false
+            referencedRelation: "vins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       password_reset_requests: {
         Row: {
           email_hash: string
@@ -198,7 +242,11 @@ export type Database = {
           contribution_type: Database["public"]["Enums"]["contribution_type"]
           created_at: string
           id: string
+          intervention_date: string | null
+          intervention_type: string | null
           is_anonymous: boolean | null
+          is_owner_contribution: boolean | null
+          mileage_at_intervention: number | null
           processed_at: string
           publishable: boolean
           raw_contribution_id: string
@@ -216,7 +264,11 @@ export type Database = {
           contribution_type: Database["public"]["Enums"]["contribution_type"]
           created_at?: string
           id?: string
+          intervention_date?: string | null
+          intervention_type?: string | null
           is_anonymous?: boolean | null
+          is_owner_contribution?: boolean | null
+          mileage_at_intervention?: number | null
           processed_at?: string
           publishable?: boolean
           raw_contribution_id: string
@@ -234,7 +286,11 @@ export type Database = {
           contribution_type?: Database["public"]["Enums"]["contribution_type"]
           created_at?: string
           id?: string
+          intervention_date?: string | null
+          intervention_type?: string | null
           is_anonymous?: boolean | null
+          is_owner_contribution?: boolean | null
+          mileage_at_intervention?: number | null
           processed_at?: string
           publishable?: boolean
           raw_contribution_id?: string
@@ -269,7 +325,11 @@ export type Database = {
           created_at: string
           details: string | null
           id: string
+          intervention_date: string | null
+          intervention_type: string | null
           is_anonymous: boolean | null
+          is_owner_contribution: boolean | null
+          mileage_at_intervention: number | null
           processing_error: string | null
           processing_status: string
           summary: string | null
@@ -283,7 +343,11 @@ export type Database = {
           created_at?: string
           details?: string | null
           id?: string
+          intervention_date?: string | null
+          intervention_type?: string | null
           is_anonymous?: boolean | null
+          is_owner_contribution?: boolean | null
+          mileage_at_intervention?: number | null
           processing_error?: string | null
           processing_status?: string
           summary?: string | null
@@ -297,7 +361,11 @@ export type Database = {
           created_at?: string
           details?: string | null
           id?: string
+          intervention_date?: string | null
+          intervention_type?: string | null
           is_anonymous?: boolean | null
+          is_owner_contribution?: boolean | null
+          mileage_at_intervention?: number | null
           processing_error?: string | null
           processing_status?: string
           summary?: string | null

@@ -1,3 +1,6 @@
+# VLINKS Robots.txt
+# Canonical domain: https://vlinks.ca
+
 User-agent: Googlebot
 Allow: /
 
@@ -12,3 +15,9 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+# Sitemap location
+Sitemap: https://vlinks.ca/sitemap.xml
+
+# Preferred host (canonical)
+Host: https://vlinks.ca

@@ -4,6 +4,8 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ContributionForm } from "@/components/ContributionForm";
+import { OwnerVerificationForm } from "@/components/OwnerVerificationForm";
+import { OwnerContributionForm } from "@/components/OwnerContributionForm";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { 
@@ -29,9 +31,12 @@ import {
   Link2,
   Plus,
   ChevronDown,
-  Loader2
+  Loader2,
+  User,
+  Gauge
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const getContributionIcon = (type: ContributionType) => {
   switch (type) {
@@ -98,10 +103,49 @@ const getContributionColor = (type: ContributionType) => {
 
 const VINDetail = () => {
   const { vin } = useParams();
-  const { data, isLoading, error } = useVINData(vin);
+  const { data, isLoading, error, refetch } = useVINData(vin);
   const [expandedContribution, setExpandedContribution] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<ContributionType | "all">("all");
   const [showContributionForm, setShowContributionForm] = useState(false);
+  const [showOwnerVerificationForm, setShowOwnerVerificationForm] = useState(false);
+  const [showOwnerContributionForm, setShowOwnerContributionForm] = useState(false);
+  const [ownerVerificationStatus, setOwnerVerificationStatus] = useState<'none' | 'pending' | 'verified' | 'rejected'>('none');
+  const [isCheckingOwner, setIsCheckingOwner] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // Check owner verification status
+  useEffect(() => {
+    const checkOwnerStatus = async () => {
+      if (!data?.id) {
+        setIsCheckingOwner(false);
+        return;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setIsCheckingOwner(false);
+        return;
+      }
+
+      setCurrentUserId(user.id);
+
+      const { data: verification, error } = await supabase
+        .from('owner_verifications')
+        .select('verification_status')
+        .eq('user_id', user.id)
+        .eq('vin_id', data.id)
+        .maybeSingle();
+
+      if (verification) {
+        setOwnerVerificationStatus(verification.verification_status as any);
+      } else {
+        setOwnerVerificationStatus('none');
+      }
+      setIsCheckingOwner(false);
+    };
+
+    checkOwnerStatus();
+  }, [data?.id]);
 
   const getTrustColor = (score: number) => {
     if (score >= 80) return "text-success";
@@ -401,6 +445,103 @@ const VINDetail = () => {
               </p>
             </div>
           </div>
+
+          {/* Owner Section - Distinct from third-party contributions */}
+          {!isCheckingOwner && currentUserId && (
+            <div className="mb-8">
+              {/* Owner Status Banner */}
+              {ownerVerificationStatus === 'none' && (
+                <div className="p-6 rounded-2xl bg-success/5 border border-success/20">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 rounded-xl bg-success/10">
+                        <User className="w-6 h-6 text-success" />
+                      </div>
+                      <div>
+                        <h3 className="font-display text-lg font-semibold mb-1">
+                          Je suis propriétaire de ce véhicule
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Vous pouvez documenter l'historique d'entretien et les interventions réalisées.
+                          Les informations seront traitées et reformulées par VLINKS avant publication.
+                        </p>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="border-success/30 text-success hover:bg-success/10 shrink-0"
+                      onClick={() => setShowOwnerVerificationForm(true)}
+                    >
+                      <Shield className="w-4 h-4 mr-2" />
+                      Déclarer ma propriété
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {ownerVerificationStatus === 'pending' && (
+                <div className="p-6 rounded-2xl bg-warning/5 border border-warning/20">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 rounded-xl bg-warning/10">
+                        <Clock className="w-6 h-6 text-warning" />
+                      </div>
+                      <div>
+                        <h3 className="font-display text-lg font-semibold mb-1">
+                          Vérification en cours
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Votre demande de vérification propriétaire est en cours de traitement.
+                          Vous pouvez déjà commencer à documenter l'historique.
+                        </p>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="border-success/30 text-success hover:bg-success/10 shrink-0"
+                      onClick={() => setShowOwnerContributionForm(true)}
+                    >
+                      <Wrench className="w-4 h-4 mr-2" />
+                      Documenter un entretien
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {ownerVerificationStatus === 'verified' && (
+                <div className="p-6 rounded-2xl bg-success/5 border border-success/20">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 rounded-xl bg-success/10">
+                        <CheckCircle className="w-6 h-6 text-success" />
+                      </div>
+                      <div>
+                        <h3 className="font-display text-lg font-semibold mb-1 flex items-center gap-2">
+                          Propriétaire vérifié
+                          <Badge variant="verified" className="text-xs">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Vérifié
+                          </Badge>
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Vous pouvez documenter l'historique d'entretien de ce véhicule.
+                          Vos contributions seront identifiées comme provenant du propriétaire.
+                        </p>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="hero" 
+                      className="bg-success hover:bg-success/90 shrink-0"
+                      onClick={() => setShowOwnerContributionForm(true)}
+                    >
+                      <Wrench className="w-4 h-4 mr-2" />
+                      Ajouter un entretien
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -731,6 +872,25 @@ const VINDetail = () => {
         vin={vin || ""}
         open={showContributionForm}
         onOpenChange={setShowContributionForm}
+        onSuccess={() => refetch()}
+      />
+
+      <OwnerVerificationForm
+        vinId={data.id}
+        vin={vin || ""}
+        open={showOwnerVerificationForm}
+        onOpenChange={setShowOwnerVerificationForm}
+        onSuccess={() => {
+          setOwnerVerificationStatus('pending');
+        }}
+      />
+
+      <OwnerContributionForm
+        vinId={data.id}
+        vin={vin || ""}
+        open={showOwnerContributionForm}
+        onOpenChange={setShowOwnerContributionForm}
+        onSuccess={() => refetch()}
       />
     </div>
   );

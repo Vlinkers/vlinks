@@ -145,6 +145,10 @@ interface RawContribution {
   summary: string | null;
   details: string | null;
   is_anonymous: boolean;
+  is_owner_contribution: boolean;
+  intervention_type: string | null;
+  intervention_date: string | null;
+  mileage_at_intervention: number | null;
 }
 
 interface AIResponse {
@@ -202,12 +206,31 @@ serve(async (req) => {
       .eq('id', contribution_id);
 
     // Build content for AI analysis
-    const contentToAnalyze = `
+    let contentToAnalyze: string;
+    
+    if (rawContribution.is_owner_contribution) {
+      // Owner contribution - include intervention details
+      contentToAnalyze = `
+CONTRIBUTION PROPRIÉTAIRE - À traiter avec la mention "Source : propriétaire du véhicule"
+
+Type d'intervention : ${rawContribution.intervention_type || 'Non spécifié'}
+Date de l'intervention : ${rawContribution.intervention_date || 'Non spécifiée'}
+Kilométrage : ${rawContribution.mileage_at_intervention ? rawContribution.mileage_at_intervention.toLocaleString() + ' km' : 'Non spécifié'}
+Description : ${rawContribution.summary || 'Non fournie'}
+
+IMPORTANT : Cette contribution provient du propriétaire déclaré du véhicule. 
+Reformuler de manière factuelle et neutre, sans jugement.
+La source doit être qualifiée comme "propriétaire déclaré".
+      `.trim();
+    } else {
+      // Standard third-party contribution
+      contentToAnalyze = `
 Type de contribution : ${rawContribution.contribution_type}
 Titre : ${rawContribution.title}
 Résumé : ${rawContribution.summary || 'Non fourni'}
 Détails : ${rawContribution.details || 'Non fournis'}
-    `.trim();
+      `.trim();
+    }
 
     console.log('Calling OpenAI API...');
 
@@ -289,6 +312,15 @@ Détails : ${rawContribution.details || 'Non fournis'}
     console.log('Creating public contribution...');
 
     // Insert into public_contributions
+    // For owner contributions, force source to "propriétaire déclaré"
+    const finalConfidenceSource = rawContribution.is_owner_contribution 
+      ? "propriétaire déclaré" 
+      : aiResult.confidence_source;
+    
+    const finalSourceCredibility = rawContribution.is_owner_contribution
+      ? "Déclaration du propriétaire du véhicule"
+      : aiResult.source_credibility;
+
     const { data: publicContribution, error: insertError } = await supabase
       .from('public_contributions')
       .insert({
@@ -299,11 +331,15 @@ Détails : ${rawContribution.details || 'Non fournis'}
         summary_public: aiResult.summary_public,
         technical_findings: aiResult.technical_findings,
         risk_level: aiResult.risk_level,
-        confidence_source: aiResult.confidence_source,
-        source_credibility: aiResult.source_credibility,
+        confidence_source: finalConfidenceSource,
+        source_credibility: finalSourceCredibility,
         is_anonymous: rawContribution.is_anonymous,
         publishable: aiResult.publishable,
-        ai_model_used: 'gpt-4.1-2025-04-14'
+        ai_model_used: 'gpt-4.1-2025-04-14',
+        is_owner_contribution: rawContribution.is_owner_contribution,
+        intervention_type: rawContribution.intervention_type,
+        intervention_date: rawContribution.intervention_date,
+        mileage_at_intervention: rawContribution.mileage_at_intervention
       })
       .select()
       .single();

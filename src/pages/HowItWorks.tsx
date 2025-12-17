@@ -81,8 +81,11 @@ const HowItWorks = () => {
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-6">
               {t("how.title")} <span className="text-gradient">VLINKS</span>
             </h1>
-            <p className="text-lg text-muted-foreground leading-relaxed">
+            <p className="text-lg text-muted-foreground leading-relaxed mb-4">
               {t("how.subtitle")}
+            </p>
+            <p className="text-muted-foreground leading-relaxed">
+              {t("how.orientation")}
             </p>
           </div>
         </section>
@@ -115,6 +118,10 @@ const HowItWorks = () => {
                 </div>
               ))}
             </div>
+            
+            <p className="text-sm text-muted-foreground/80 text-center mt-8 italic">
+              {t("how.typesDisclaimer")}
+            </p>
           </div>
         </section>
 
@@ -175,6 +182,21 @@ const HowItWorks = () => {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Conclusion */}
+        <section className="container mx-auto px-4 mb-16">
+          <div className="max-w-2xl mx-auto text-center p-8 rounded-2xl border border-border/50 bg-card/30">
+            <h2 className="font-display text-2xl font-bold mb-4">
+              {t("how.conclusionTitle")}
+            </h2>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              {t("how.conclusionP1")}
+            </p>
+            <p className="text-muted-foreground/80 text-sm">
+              {t("how.conclusionP2")}
+            </p>
           </div>
         </section>
 

@@ -25,7 +25,7 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Hero Section
     "hero.headline1": "Chaque VIN a une histoire.",
-    "hero.subtitle": "Avant d'acheter un véhicule d'occasion, découvrez ce que d'autres ont réellement découvert.",
+    "hero.subtitle": "Avant d'acheter un véhicule d'occasion, découvrez ce que d'autres ont déjà découvert.",
     "hero.p1": "Quand vous cherchez un véhicule d'occasion, la vérité se trouve rarement dans un seul document. Elle est dispersée entre les rapports d'inspection, les historiques Carfax, les échanges avec les vendeurs, les discussions avec les mécaniciens, les photos, les notes et les décisions prises par d'autres acheteurs avant vous.",
     "hero.p2": "VLINKS centralise ces informations autour d'un seul numéro VIN, pour révéler une image plus claire, plus complète et plus transparente de l'état réel d'un véhicule — avant que vous ne preniez votre décision.",
     "hero.cta": "Recherchez un VIN pour voir ce que d'autres ont déjà découvert.",

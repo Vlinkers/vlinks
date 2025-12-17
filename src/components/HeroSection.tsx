@@ -106,6 +106,11 @@ const HeroSection = () => {
             </p>
           </form>
 
+          {/* Contribution Message */}
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl mx-auto mb-8 animate-fade-in-up stagger-4">
+            {t("hero.contribution")}
+          </p>
+
           {/* Tagline */}
           <p className="text-sm text-muted-foreground/70 italic mb-10 animate-fade-in-up stagger-4">
             {t("hero.tagline")}

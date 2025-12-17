@@ -25,7 +25,7 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Hero Section
     "hero.headline1": "Chaque VIN a une histoire.",
-    "hero.subtitle": "Avant d'acheter un véhicule d'occasion, découvrez ce que d'autres ont déjà découvert.",
+    "hero.subtitle": "Avant d'acheter un véhicule d'occasion, découvrez ce que d'autres ont réellement découvert.",
     "hero.p1": "Quand vous cherchez un véhicule d'occasion, la vérité se trouve rarement dans un seul document. Elle est dispersée entre les rapports d'inspection, les historiques Carfax, les échanges avec les vendeurs, les discussions avec les mécaniciens, les photos, les notes et les décisions prises par d'autres acheteurs avant vous.",
     "hero.p2": "VLINKS centralise ces informations autour d'un seul numéro VIN, pour révéler une image plus claire, plus complète et plus transparente de l'état réel d'un véhicule — avant que vous ne preniez votre décision.",
     "hero.cta": "Recherchez un VIN pour voir ce que d'autres ont déjà découvert.",
@@ -36,6 +36,7 @@ const translations: Record<Language, Record<string, string>> = {
     "hero.trust1": "Recherche anonyme",
     "hero.trust2": "Données anonymisées",
     "hero.trust3": "Plateforme indépendante",
+    "hero.contribution": "VLINKS existe parce que d'autres ont pris le temps de partager ce qu'ils ont découvert. Vous pourrez, vous aussi, contribuer quand ce sera pertinent pour vous.",
 
     // How It Works Page
     "how.title": "Comment fonctionne",
@@ -153,6 +154,7 @@ const translations: Record<Language, Record<string, string>> = {
     "hero.trust1": "Anonymous search",
     "hero.trust2": "Anonymized data",
     "hero.trust3": "Independent platform",
+    "hero.contribution": "VLINKS exists because others took the time to share what they discovered. You too can contribute when it's relevant for you.",
 
     // How It Works Page
     "how.title": "How",

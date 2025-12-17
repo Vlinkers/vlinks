@@ -192,7 +192,7 @@ const VINDetail = () => {
     );
   }
 
-  // VIN not found - show empty state with contribution CTA
+  // VIN not found - show empty state with dual choice CTA
   if (!data) {
     return (
       <div className="min-h-screen bg-background">
@@ -200,7 +200,7 @@ const VINDetail = () => {
         <main className="pt-24 pb-16">
           <div className="container mx-auto px-4">
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
               <Link to="/" className="hover:text-foreground transition-colors">
                 Accueil
               </Link>
@@ -208,103 +208,89 @@ const VINDetail = () => {
               <span className="text-foreground font-mono">{vin}</span>
             </div>
 
-            <div className="max-w-2xl mx-auto text-center">
-              <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-6">
-                <Car className="w-10 h-10 text-muted-foreground" />
-              </div>
-              <h1 className="font-display text-3xl font-bold mb-2">
-                Ce VIN n'a pas encore de dossier
-              </h1>
-              <p className="font-mono text-base text-muted-foreground mb-4">{vin}</p>
-              
-              {/* Owner declaration button - visible for logged users */}
-              {currentUserId && (
-                <div className="mb-6 p-4 rounded-xl bg-success/5 border border-success/20 text-left">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <User className="w-5 h-5 text-success" />
-                      <div>
-                        <p className="font-medium text-sm">Je suis propriétaire de ce véhicule</p>
-                        <p className="text-xs text-muted-foreground">
-                          Documentez l'historique d'entretien de votre véhicule
-                        </p>
-                      </div>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="border-success/30 text-success hover:bg-success/10 shrink-0"
-                      onClick={() => setShowOwnerVerificationForm(true)}
-                    >
-                      <Shield className="w-4 h-4 mr-2" />
-                      Déclarer
-                    </Button>
-                  </div>
+            <div className="max-w-2xl mx-auto">
+              {/* BLOC D'ACTION PRINCIPAL - Visible sans scroll */}
+              <div className="text-center mb-12 p-8 rounded-2xl glass border border-border/50">
+                <h1 className="font-display text-2xl md:text-3xl font-bold mb-2">
+                  Ce VIN n'a pas encore de dossier
+                </h1>
+                <p className="font-mono text-base text-muted-foreground mb-8">{vin}</p>
+                
+                {/* Deux boutons côte à côte - même hiérarchie */}
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    className="flex-1 sm:flex-none sm:min-w-[200px] h-14 text-base"
+                    onClick={() => setShowOwnerVerificationForm(true)}
+                  >
+                    <User className="w-5 h-5 mr-2" />
+                    Je suis propriétaire
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    className="flex-1 sm:flex-none sm:min-w-[200px] h-14 text-base"
+                    onClick={() => setShowContributionForm(true)}
+                  >
+                    <Link2 className="w-5 h-5 mr-2" />
+                    Je suis contributeur
+                  </Button>
                 </div>
-              )}
-
-              {/* CTA immédiat - visible sans scroll */}
-              <Button variant="outline" size="lg" onClick={() => setShowContributionForm(true)} className="mb-2">
-                <Plus className="w-5 h-5 mr-2" />
-                Créer le premier maillon
-              </Button>
-              <p className="text-xs text-muted-foreground mb-8">
-                Anonyme • Gratuit • Sans engagement
-              </p>
-
-              {/* Message central reformulé */}
-              <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-                Si personne ne contribue, l'information disparaît à nouveau.<br />
-                Votre expérience peut éviter une inspection inutile au prochain acheteur.
-              </p>
-
-              {/* Pourquoi contribuer maintenant */}
-              <div className="bg-muted/30 rounded-xl p-6 mb-6 text-left">
-                <h2 className="font-display text-lg font-semibold mb-4">
-                  Pourquoi contribuer maintenant ?
-                </h2>
-                <ul className="space-y-2 text-muted-foreground text-sm">
-                  <li>• Sans contribution, chaque acheteur repart de zéro</li>
-                  <li>• La même inspection est souvent payée plusieurs fois</li>
-                  <li>• L'information disparaît dès que l'achat est abandonné</li>
-                </ul>
-                <p className="mt-4 text-sm font-medium text-foreground">
-                  Votre contribution empêche ce gaspillage collectif.
+                
+                <p className="text-xs text-muted-foreground mt-4">
+                  Anonyme • Gratuit • Sans engagement
                 </p>
               </div>
 
-              {/* Ce que vous gagnez */}
-              <div className="bg-muted/30 rounded-xl p-6 mb-8 text-left">
-                <h2 className="font-display text-lg font-semibold mb-4">
-                  Ce que vous gagnez en contribuant
-                </h2>
-                <ul className="space-y-3 text-sm">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                    <span>Des crédits VLINKS pour consulter d'autres dossiers</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                    <span>Une preuve de transparence si vous revendez ce véhicule</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                    <span>La reconnaissance de la communauté</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                    <span>Une contribution anonyme, modérée et sans risque</span>
-                  </li>
-                </ul>
-              </div>
+              {/* CONTENU EXPLICATIF - Sous les boutons */}
+              <div className="space-y-6">
+                {/* Message central */}
+                <p className="text-center text-muted-foreground max-w-md mx-auto">
+                  Si personne ne contribue, l'information disparaît à nouveau.<br />
+                  Votre expérience peut éviter une inspection inutile au prochain acheteur.
+                </p>
 
-              <Button variant="hero" size="lg" onClick={() => setShowContributionForm(true)}>
-                <Plus className="w-5 h-5 mr-2" />
-                Créer le premier maillon
-              </Button>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Contribution gratuite • Anonyme • Réversible
-              </p>
+                {/* Pourquoi contribuer */}
+                <div className="bg-muted/30 rounded-xl p-6 text-left">
+                  <h2 className="font-display text-lg font-semibold mb-4">
+                    Pourquoi contribuer maintenant ?
+                  </h2>
+                  <ul className="space-y-2 text-muted-foreground text-sm">
+                    <li>• Sans contribution, chaque acheteur repart de zéro</li>
+                    <li>• La même inspection est souvent payée plusieurs fois</li>
+                    <li>• L'information disparaît dès que l'achat est abandonné</li>
+                  </ul>
+                  <p className="mt-4 text-sm font-medium text-foreground">
+                    Votre contribution empêche ce gaspillage collectif.
+                  </p>
+                </div>
+
+                {/* Ce que vous gagnez */}
+                <div className="bg-muted/30 rounded-xl p-6 text-left">
+                  <h2 className="font-display text-lg font-semibold mb-4">
+                    Ce que vous gagnez en contribuant
+                  </h2>
+                  <ul className="space-y-3 text-sm">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Des crédits VLINKS pour consulter d'autres dossiers</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Une preuve de transparence si vous revendez ce véhicule</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>La reconnaissance de la communauté</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Une contribution anonyme, modérée et sans risque</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </main>

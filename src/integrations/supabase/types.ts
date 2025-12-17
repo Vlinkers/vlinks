@@ -191,6 +191,128 @@ export type Database = {
         }
         Relationships: []
       }
+      public_contributions: {
+        Row: {
+          ai_model_used: string | null
+          confidence_source: string | null
+          contribution_type: Database["public"]["Enums"]["contribution_type"]
+          created_at: string
+          id: string
+          is_anonymous: boolean | null
+          processed_at: string
+          publishable: boolean
+          raw_contribution_id: string
+          risk_level: number | null
+          summary_public: string
+          technical_findings: string[] | null
+          updated_at: string
+          user_id: string
+          vin_id: string
+        }
+        Insert: {
+          ai_model_used?: string | null
+          confidence_source?: string | null
+          contribution_type: Database["public"]["Enums"]["contribution_type"]
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean | null
+          processed_at?: string
+          publishable?: boolean
+          raw_contribution_id: string
+          risk_level?: number | null
+          summary_public: string
+          technical_findings?: string[] | null
+          updated_at?: string
+          user_id: string
+          vin_id: string
+        }
+        Update: {
+          ai_model_used?: string | null
+          confidence_source?: string | null
+          contribution_type?: Database["public"]["Enums"]["contribution_type"]
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean | null
+          processed_at?: string
+          publishable?: boolean
+          raw_contribution_id?: string
+          risk_level?: number | null
+          summary_public?: string
+          technical_findings?: string[] | null
+          updated_at?: string
+          user_id?: string
+          vin_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_contributions_raw_contribution_id_fkey"
+            columns: ["raw_contribution_id"]
+            isOneToOne: false
+            referencedRelation: "raw_contributions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_contributions_vin_id_fkey"
+            columns: ["vin_id"]
+            isOneToOne: false
+            referencedRelation: "vins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      raw_contributions: {
+        Row: {
+          contribution_type: Database["public"]["Enums"]["contribution_type"]
+          created_at: string
+          details: string | null
+          id: string
+          is_anonymous: boolean | null
+          processing_error: string | null
+          processing_status: string
+          summary: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          vin_id: string
+        }
+        Insert: {
+          contribution_type: Database["public"]["Enums"]["contribution_type"]
+          created_at?: string
+          details?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          processing_error?: string | null
+          processing_status?: string
+          summary?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          vin_id: string
+        }
+        Update: {
+          contribution_type?: Database["public"]["Enums"]["contribution_type"]
+          created_at?: string
+          details?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          processing_error?: string | null
+          processing_status?: string
+          summary?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          vin_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raw_contributions_vin_id_fkey"
+            columns: ["vin_id"]
+            isOneToOne: false
+            referencedRelation: "vins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_badges: {
         Row: {
           badge_type: Database["public"]["Enums"]["badge_type"]

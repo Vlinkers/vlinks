@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Shield, LogOut, User } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Menu, X, Shield, LogOut, User, Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -15,6 +16,8 @@ import {
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [vinSearch, setVinSearch] = useState("");
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const { user, signOut } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -29,6 +32,15 @@ const Header = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
+  };
+
+  const handleVinSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (vinSearch.trim()) {
+      navigate(`/vin/${vinSearch.trim().toUpperCase()}`);
+      setVinSearch("");
+      setIsSearchExpanded(false);
+    }
   };
 
   return (
@@ -62,6 +74,35 @@ const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
+            {/* VIN Search - Expandable */}
+            <div 
+              className="relative"
+              onMouseEnter={() => setIsSearchExpanded(true)}
+              onMouseLeave={() => !vinSearch && setIsSearchExpanded(false)}
+            >
+              <form onSubmit={handleVinSearch} className="flex items-center">
+                <div className={`flex items-center transition-all duration-300 ease-in-out overflow-hidden ${isSearchExpanded ? 'w-48' : 'w-0'}`}>
+                  <Input
+                    type="text"
+                    placeholder="Rechercher un VIN..."
+                    value={vinSearch}
+                    onChange={(e) => setVinSearch(e.target.value.toUpperCase())}
+                    className="h-9 text-sm font-mono bg-muted/50 border-border/50 focus:border-primary"
+                    onFocus={() => setIsSearchExpanded(true)}
+                    onBlur={() => !vinSearch && setIsSearchExpanded(false)}
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  variant="ghost" 
+                  size="sm" 
+                  className="p-2 hover:bg-muted/50"
+                  onClick={() => !isSearchExpanded && setIsSearchExpanded(true)}
+                >
+                  <Search className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                </Button>
+              </form>
+            </div>
             <LanguageSwitcher />
             {user ? (
               <DropdownMenu>
@@ -111,6 +152,19 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-border/50 animate-fade-in-up">
             <nav className="flex flex-col gap-2">
+              {/* Mobile VIN Search */}
+              <form onSubmit={handleVinSearch} className="flex items-center gap-2 px-4 py-2">
+                <Input
+                  type="text"
+                  placeholder="Rechercher un VIN..."
+                  value={vinSearch}
+                  onChange={(e) => setVinSearch(e.target.value.toUpperCase())}
+                  className="h-10 text-sm font-mono bg-muted/50 border-border/50"
+                />
+                <Button type="submit" size="sm" variant="ghost" className="p-2">
+                  <Search className="w-5 h-5" />
+                </Button>
+              </form>
               {navLinks.map((link) => (
                 <Link
                   key={link.href}

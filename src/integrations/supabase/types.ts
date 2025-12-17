@@ -203,6 +203,7 @@ export type Database = {
           publishable: boolean
           raw_contribution_id: string
           risk_level: number | null
+          source_credibility: string | null
           summary_public: string
           technical_findings: string[] | null
           updated_at: string
@@ -220,6 +221,7 @@ export type Database = {
           publishable?: boolean
           raw_contribution_id: string
           risk_level?: number | null
+          source_credibility?: string | null
           summary_public: string
           technical_findings?: string[] | null
           updated_at?: string
@@ -237,6 +239,7 @@ export type Database = {
           publishable?: boolean
           raw_contribution_id?: string
           risk_level?: number | null
+          source_credibility?: string | null
           summary_public?: string
           technical_findings?: string[] | null
           updated_at?: string

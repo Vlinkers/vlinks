@@ -113,38 +113,38 @@ const VINDetail = () => {
   const [isCheckingOwner, setIsCheckingOwner] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // Check owner verification status
+  // Check user and owner verification status
   useEffect(() => {
-    const checkOwnerStatus = async () => {
-      if (!data?.id) {
-        setIsCheckingOwner(false);
-        return;
-      }
-
+    const checkUserAndOwnerStatus = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        setCurrentUserId(null);
         setIsCheckingOwner(false);
         return;
       }
 
       setCurrentUserId(user.id);
 
-      const { data: verification, error } = await supabase
-        .from('owner_verifications')
-        .select('verification_status')
-        .eq('user_id', user.id)
-        .eq('vin_id', data.id)
-        .maybeSingle();
+      // If we have a VIN record, check owner verification status
+      if (data?.id) {
+        const { data: verification } = await supabase
+          .from('owner_verifications')
+          .select('verification_status')
+          .eq('user_id', user.id)
+          .eq('vin_id', data.id)
+          .maybeSingle();
 
-      if (verification) {
-        setOwnerVerificationStatus(verification.verification_status as any);
-      } else {
-        setOwnerVerificationStatus('none');
+        if (verification) {
+          setOwnerVerificationStatus(verification.verification_status as any);
+        } else {
+          setOwnerVerificationStatus('none');
+        }
       }
+      
       setIsCheckingOwner(false);
     };
 
-    checkOwnerStatus();
+    checkUserAndOwnerStatus();
   }, [data?.id]);
 
   const getTrustColor = (score: number) => {
@@ -217,6 +217,32 @@ const VINDetail = () => {
               </h1>
               <p className="font-mono text-base text-muted-foreground mb-4">{vin}</p>
               
+              {/* Owner declaration button - visible for logged users */}
+              {currentUserId && (
+                <div className="mb-6 p-4 rounded-xl bg-success/5 border border-success/20 text-left">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <User className="w-5 h-5 text-success" />
+                      <div>
+                        <p className="font-medium text-sm">Je suis propriétaire de ce véhicule</p>
+                        <p className="text-xs text-muted-foreground">
+                          Documentez l'historique d'entretien de votre véhicule
+                        </p>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="border-success/30 text-success hover:bg-success/10 shrink-0"
+                      onClick={() => setShowOwnerVerificationForm(true)}
+                    >
+                      <Shield className="w-4 h-4 mr-2" />
+                      Déclarer
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* CTA immédiat - visible sans scroll */}
               <Button variant="outline" size="lg" onClick={() => setShowContributionForm(true)} className="mb-2">
                 <Plus className="w-5 h-5 mr-2" />
@@ -227,7 +253,7 @@ const VINDetail = () => {
               </p>
 
               {/* Message central reformulé */}
-              <p className="text-muted-foreground mb-8 max-w-md">
+              <p className="text-muted-foreground mb-8 max-w-md mx-auto">
                 Si personne ne contribue, l'information disparaît à nouveau.<br />
                 Votre expérience peut éviter une inspection inutile au prochain acheteur.
               </p>
@@ -254,19 +280,19 @@ const VINDetail = () => {
                 </h2>
                 <ul className="space-y-3 text-sm">
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                     <span>Des crédits VLINKS pour consulter d'autres dossiers</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                     <span>Une preuve de transparence si vous revendez ce véhicule</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                     <span>La reconnaissance de la communauté</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                     <span>Une contribution anonyme, modérée et sans risque</span>
                   </li>
                 </ul>
@@ -289,6 +315,17 @@ const VINDetail = () => {
           vin={vin || ""}
           open={showContributionForm}
           onOpenChange={setShowContributionForm}
+        />
+
+        <OwnerVerificationForm
+          vinId={null}
+          vin={vin || ""}
+          open={showOwnerVerificationForm}
+          onOpenChange={setShowOwnerVerificationForm}
+          onSuccess={() => {
+            setOwnerVerificationStatus('pending');
+            setShowOwnerVerificationForm(false);
+          }}
         />
       </div>
     );

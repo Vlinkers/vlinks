@@ -382,7 +382,40 @@ export function ContributionForm({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Texte pédagogique */}
+        {/* Bandeau explicatif principal */}
+        <div className="bg-primary/10 border border-primary/30 rounded-xl p-4">
+          <p className="text-sm text-foreground font-medium">
+            Vous transmettez des informations brutes.
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Elles ne sont pas publiées telles quelles. Elles sont analysées, anonymisées et reformulées automatiquement avant publication.
+          </p>
+        </div>
+
+        {/* Micro-indicateur du processus */}
+        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground py-2">
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-primary/60"></span>
+            Transmission
+          </span>
+          <span className="text-muted-foreground/50">→</span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-primary/40"></span>
+            Analyse VLINKS
+          </span>
+          <span className="text-muted-foreground/50">→</span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-primary/40"></span>
+            Reformulation
+          </span>
+          <span className="text-muted-foreground/50">→</span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-success/40"></span>
+            Publication contrôlée
+          </span>
+        </div>
+
+        {/* Texte pédagogique secondaire */}
         <div className="bg-muted/30 border border-border rounded-xl p-4 space-y-2">
           <p className="text-sm text-foreground">
             Vous avez déjà payé pour cette information. En la partageant, vous aidez les prochains acheteurs et gagnez des crédits.
@@ -455,61 +488,53 @@ export function ContributionForm({
             </p>
           </div>
 
-          {/* Message de réassurance - Pipeline IA */}
-          <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-            <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">Votre contribution sera analysée et reformulée automatiquement avant publication.</span>{" "}
-              Le contenu brut n'est jamais affiché publiquement. VLINKS génère des résumés techniques neutres et anonymisés.
-            </p>
-          </div>
-
-          {/* Point clé observé (anciennement Titre) */}
+          {/* Objet de votre contribution (interne) */}
           <div className="space-y-2">
-            <Label htmlFor="title">Point clé observé *</Label>
+            <Label htmlFor="title">Objet de votre contribution (interne) *</Label>
             <Input
               id="title"
               {...register("title")}
-              placeholder="Ex: Traces de rouille sous le châssis"
+              placeholder="Ex: Résultat inspection pré-achat, Échange avec vendeur..."
               className="bg-muted/30"
             />
             <p className="text-xs text-muted-foreground">
-              Indiquez simplement l'élément principal que vous avez découvert. VLINKS reformulera et intégrera l'information de façon neutre.
+              🔒 Non visible publiquement — Sert uniquement à classifier votre contribution en interne.
             </p>
             {errors.title && (
               <p className="text-sm text-danger">{errors.title.message}</p>
             )}
           </div>
 
-          {/* Ce que vous avez constaté (anciennement Résumé) */}
+          {/* Ce que vous avez constaté */}
           <div className="space-y-2">
             <Label htmlFor="summary">Ce que vous avez constaté *</Label>
             <Textarea
               id="summary"
               {...register("summary")}
-              placeholder="Décrivez librement ce que vous avez observé, sans vous soucier de la forme."
+              placeholder="Décrivez librement ce que vous avez observé, sans vous soucier de la forme. Écrivez comme vous le feriez à un ami."
               rows={3}
               className="bg-muted/30 resize-none"
             />
             <p className="text-xs text-muted-foreground">
-              Votre texte n'est pas publié tel quel. Il sert à produire un résumé technique objectif.
+              🔒 Non visible publiquement — Votre texte brut sera reformulé automatiquement en un résumé technique neutre.
             </p>
             {errors.summary && (
               <p className="text-sm text-danger">{errors.summary.message}</p>
             )}
           </div>
 
-          {/* Contexte et précisions (anciennement Détails) */}
+          {/* Contexte utile (optionnel) */}
           <div className="space-y-2">
-            <Label htmlFor="details">Contexte et précisions (optionnel)</Label>
+            <Label htmlFor="details">Contexte utile (optionnel)</Label>
             <Textarea
               id="details"
               {...register("details")}
               placeholder="Ajoutez le contexte : circonstances de la visite, échanges avec le vendeur, impressions générales..."
-              rows={5}
+              rows={4}
               className="bg-muted/30 resize-none"
             />
             <p className="text-xs text-muted-foreground">
-              Ces informations aident à comprendre la situation mais ne sont pas affichées publiquement.
+              🔒 Non visible publiquement — Ces informations aident l'IA à mieux comprendre et reformuler votre contribution.
             </p>
             {errors.details && (
               <p className="text-sm text-danger">{errors.details.message}</p>
@@ -568,7 +593,7 @@ export function ContributionForm({
           <div className="space-y-3">
             <Label className="flex items-center gap-2">
               <File className="w-4 h-4" />
-              Documents ({documents.length}/5)
+              Documents justificatifs ({documents.length}/5)
             </Label>
             <div className="flex flex-wrap gap-2">
               {documents.map((doc, index) => (
@@ -604,7 +629,7 @@ export function ContributionForm({
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              PDF, DOC, images. Max 5 fichiers.
+              🔒 Les documents originaux ne sont jamais publiés. Seuls des résumés techniques anonymisés peuvent l'être.
             </p>
           </div>
 
@@ -706,16 +731,14 @@ export function ContributionForm({
             />
           </div>
 
-          {/* Mention de revue */}
-          <p className="text-xs text-muted-foreground text-center">
-            Votre contribution sera analysée par notre IA et reformulée de manière neutre avant publication.
-          </p>
-
           {/* Processing Status */}
           {processingStatus === 'processing' && (
-            <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
+            <div className="flex items-center justify-center gap-3 p-4 rounded-lg bg-primary/10 border border-primary/20">
               <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm text-primary font-medium">Analyse IA en cours...</span>
+              <div className="text-sm">
+                <span className="text-primary font-medium">Analyse VLINKS en cours</span>
+                <span className="text-muted-foreground"> → Reformulation → Publication contrôlée</span>
+              </div>
             </div>
           )}
 
@@ -736,10 +759,10 @@ export function ContributionForm({
               disabled={isSubmitting || processingStatus === 'processing'}
               className="flex-1"
             >
-              {processingStatus === 'submitting' && "Envoi en cours..."}
+              {processingStatus === 'submitting' && "Transmission en cours..."}
               {processingStatus === 'processing' && "Analyse en cours..."}
-              {processingStatus === 'idle' && "Ajouter ce maillon"}
-              {processingStatus === 'done' && "Ajouter ce maillon"}
+              {processingStatus === 'idle' && "Transmettre pour analyse"}
+              {processingStatus === 'done' && "Transmettre pour analyse"}
               {processingStatus === 'error' && "Réessayer"}
             </Button>
           </div>

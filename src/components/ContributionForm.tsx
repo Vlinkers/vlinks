@@ -212,8 +212,11 @@ export function ContributionForm({
     setValue("tags", newTags);
   };
 
+  const [processingStatus, setProcessingStatus] = useState<'idle' | 'submitting' | 'processing' | 'done' | 'error'>('idle');
+
   const onSubmit = async (data: ContributionFormData) => {
     setIsSubmitting(true);
+    setProcessingStatus('submitting');
 
     try {
       // Get current user
@@ -229,7 +232,25 @@ export function ContributionForm({
         return;
       }
 
-      // Create contribution
+      // Create raw contribution (private, never displayed publicly)
+      const { data: rawContribution, error: rawError } = await supabase
+        .from("raw_contributions")
+        .insert({
+          vin_id: vinId,
+          user_id: user.id,
+          contribution_type: data.contribution_type,
+          title: data.title,
+          summary: data.summary,
+          details: data.details || null,
+          is_anonymous: data.is_anonymous,
+          processing_status: 'pending',
+        })
+        .select()
+        .single();
+
+      if (rawError) throw rawError;
+
+      // Also create legacy contribution for backwards compatibility
       const { data: contribution, error: contributionError } = await supabase
         .from("vin_contributions")
         .insert({
@@ -292,20 +313,49 @@ export function ContributionForm({
         });
       }
 
-      toast({
-        title: "Contribution ajoutée",
-        description: "Merci de contribuer à la chaîne de vérité!",
-      });
+      // Trigger AI processing
+      setProcessingStatus('processing');
+      
+      const { data: processResult, error: processError } = await supabase.functions.invoke(
+        'process-contribution',
+        {
+          body: { contribution_id: rawContribution.id },
+        }
+      );
+
+      if (processError) {
+        console.error("Error processing contribution:", processError);
+        // Don't fail the whole submission, the contribution is saved
+        toast({
+          title: "Contribution enregistrée",
+          description: "Votre contribution sera analysée sous peu.",
+        });
+      } else if (processResult?.success) {
+        setProcessingStatus('done');
+        toast({
+          title: "Contribution analysée",
+          description: processResult.publishable 
+            ? "Votre contribution a été analysée et sera publiée." 
+            : "Votre contribution a été analysée. Elle sera vérifiée par notre équipe.",
+        });
+      } else {
+        toast({
+          title: "Contribution enregistrée",
+          description: "Votre contribution sera analysée sous peu.",
+        });
+      }
 
       // Reset form
       reset();
       setDocuments([]);
       setPhotos([]);
       setTags([]);
+      setProcessingStatus('idle');
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {
       console.error("Error submitting contribution:", error);
+      setProcessingStatus('error');
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de l'envoi",
@@ -405,11 +455,11 @@ export function ContributionForm({
             </p>
           </div>
 
-          {/* Message de réassurance */}
+          {/* Message de réassurance - Pipeline IA */}
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
             <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">Vos textes ne sont jamais publiés tels quels.</span>{" "}
-              VLINKS transforme les contributions en résumés techniques anonymisés et vérifiés.
+              <span className="font-medium text-foreground">Votre contribution sera analysée et reformulée automatiquement avant publication.</span>{" "}
+              Le contenu brut n'est jamais affiché publiquement. VLINKS génère des résumés techniques neutres et anonymisés.
             </p>
           </div>
 
@@ -658,8 +708,16 @@ export function ContributionForm({
 
           {/* Mention de revue */}
           <p className="text-xs text-muted-foreground text-center">
-            Votre contribution sera revue et analysée avant publication.
+            Votre contribution sera analysée par notre IA et reformulée de manière neutre avant publication.
           </p>
+
+          {/* Processing Status */}
+          {processingStatus === 'processing' && (
+            <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
+              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm text-primary font-medium">Analyse IA en cours...</span>
+            </div>
+          )}
 
           {/* Submit */}
           <div className="flex gap-3 pt-4">
@@ -668,16 +726,21 @@ export function ContributionForm({
               variant="outline"
               onClick={() => onOpenChange(false)}
               className="flex-1"
+              disabled={isSubmitting}
             >
               Annuler
             </Button>
             <Button
               type="submit"
               variant="hero"
-              disabled={isSubmitting}
+              disabled={isSubmitting || processingStatus === 'processing'}
               className="flex-1"
             >
-              {isSubmitting ? "Envoi en cours..." : "Ajouter ce maillon"}
+              {processingStatus === 'submitting' && "Envoi en cours..."}
+              {processingStatus === 'processing' && "Analyse en cours..."}
+              {processingStatus === 'idle' && "Ajouter ce maillon"}
+              {processingStatus === 'done' && "Ajouter ce maillon"}
+              {processingStatus === 'error' && "Réessayer"}
             </Button>
           </div>
         </form>

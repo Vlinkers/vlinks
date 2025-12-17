@@ -75,6 +75,11 @@ const translations: Record<Language, Record<string, string>> = {
     "how.benefit3.desc": "Les contributeurs réguliers bénéficient d'un accès élargi aux informations de la plateforme.",
     "how.benefit4.title": "Protection de la vie privée",
     "how.benefit4.desc": "Vos informations personnelles sont automatiquement anonymisées. Seules les informations techniques sont partagées.",
+    "how.orientation": "Que vous soyez en train d'acheter un véhicule ou que vous ayez déjà enquêté sur un VIN, VLINKS vous permet de transformer vos découvertes en informations utiles pour les autres.",
+    "how.typesDisclaimer": "Les contributions doivent refléter des faits observés ou documentés, sans jugement personnel ni accusation.",
+    "how.conclusionTitle": "Et maintenant ?",
+    "how.conclusionP1": "Vous pouvez rechercher un VIN pour voir les informations déjà partagées, ou contribuer à un véhicule que vous avez déjà investigué.",
+    "how.conclusionP2": "Vous n'êtes jamais obligé de contribuer. VLINKS fonctionne parce que chacun le fait quand c'est pertinent pour lui.",
 
     // Pricing Page
     "pricing.title": "Accès transparent,",
@@ -193,6 +198,11 @@ const translations: Record<Language, Record<string, string>> = {
     "how.benefit3.desc": "Regular contributors benefit from expanded access to platform information.",
     "how.benefit4.title": "Privacy protection",
     "how.benefit4.desc": "Your personal information is automatically anonymized. Only technical information is shared.",
+    "how.orientation": "Whether you're currently buying a vehicle or have already investigated a VIN, VLINKS allows you to turn your discoveries into useful information for others.",
+    "how.typesDisclaimer": "Contributions should reflect observed or documented facts, without personal judgment or accusations.",
+    "how.conclusionTitle": "What's next?",
+    "how.conclusionP1": "You can search a VIN to see information already shared, or contribute to a vehicle you've already investigated.",
+    "how.conclusionP2": "You're never obligated to contribute. VLINKS works because everyone does it when it's relevant for them.",
 
     // Pricing Page
     "pricing.title": "Transparent access,",

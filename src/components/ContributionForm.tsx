@@ -375,21 +375,32 @@ export function ContributionForm({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto glass-strong">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl">
-            Ajouter un maillon de vérité
+            Ajouter un maillon d'information
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             VIN: <span className="font-mono">{vin}</span>
           </DialogDescription>
         </DialogHeader>
 
-        {/* Bandeau explicatif principal */}
-        <div className="bg-primary/10 border border-primary/30 rounded-xl p-4">
+        {/* Encadré pédagogique principal */}
+        <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 space-y-3">
           <p className="text-sm text-foreground font-medium">
-            Vous transmettez des informations brutes.
+            Vous ajoutez un maillon à la chaîne d'information de ce véhicule.
           </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Elles ne sont pas publiées telles quelles. Elles sont analysées, anonymisées et reformulées automatiquement avant publication.
-          </p>
+          <ul className="text-sm text-muted-foreground space-y-1.5">
+            <li className="flex items-start gap-2">
+              <span className="text-primary mt-0.5">→</span>
+              <span>Vos contributions ne sont pas publiées telles quelles</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary mt-0.5">→</span>
+              <span>VLINKS revoit, assemble et reformule les maillons</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary mt-0.5">→</span>
+              <span>Les documents bruts restent privés</span>
+            </li>
+          </ul>
         </div>
 
         {/* Micro-indicateur du processus */}
@@ -406,21 +417,21 @@ export function ContributionForm({
           <span className="text-muted-foreground/50">→</span>
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-primary/40"></span>
-            Reformulation
+            Assemblage
           </span>
           <span className="text-muted-foreground/50">→</span>
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-success/40"></span>
-            Publication contrôlée
+            Publication
           </span>
         </div>
 
-        {/* Texte pédagogique secondaire */}
-        <div className="bg-muted/30 border border-border rounded-xl p-4 space-y-2">
+        {/* Note d'encouragement */}
+        <div className="bg-muted/30 border border-border rounded-xl p-4">
           <p className="text-sm text-foreground">
-            Vous avez déjà payé pour cette information. En la partageant, vous aidez les prochains acheteurs et gagnez des crédits.
+            Chaque maillon compte. Information partielle ou complète, positive ou négative — tout enrichit la vision collective.
           </p>
-          <p className="text-xs text-muted-foreground flex items-center gap-2">
+          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
             <span>⏱️</span>
             <span>2–5 minutes · Contribution anonyme possible</span>
           </p>
@@ -430,7 +441,7 @@ export function ContributionForm({
           {/* Contribution Type Selection */}
           <div className="space-y-3">
             <Label className="text-base font-semibold">
-              Que souhaitez-vous partager ?
+              Quelle(s) information(s) apportez-vous ?
             </Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {contributionTypes.map((type) => {
@@ -488,53 +499,53 @@ export function ContributionForm({
             </p>
           </div>
 
-          {/* Objet de votre contribution (interne) */}
+          {/* Information principale */}
           <div className="space-y-2">
-            <Label htmlFor="title">Objet de votre contribution (interne) *</Label>
+            <Label htmlFor="title">Information principale *</Label>
             <Input
               id="title"
               {...register("title")}
-              placeholder="Ex: Résultat inspection pré-achat, Échange avec vendeur..."
+              placeholder="Ex: Problème de rouille, Historique d'entretien complet, État général du véhicule..."
               className="bg-muted/30"
             />
             <p className="text-xs text-muted-foreground">
-              🔒 Non visible publiquement — Sert uniquement à classifier votre contribution en interne.
+              🔒 Ce champ n'est pas visible publiquement — Il aide VLINKS à comprendre votre contribution.
             </p>
             {errors.title && (
               <p className="text-sm text-danger">{errors.title.message}</p>
             )}
           </div>
 
-          {/* Ce que vous avez constaté */}
+          {/* Éléments de contexte */}
           <div className="space-y-2">
-            <Label htmlFor="summary">Ce que vous avez constaté *</Label>
+            <Label htmlFor="summary">Éléments de contexte *</Label>
             <Textarea
               id="summary"
               {...register("summary")}
-              placeholder="Décrivez librement ce que vous avez observé, sans vous soucier de la forme. Écrivez comme vous le feriez à un ami."
+              placeholder="Décrivez librement ce que vous savez ou avez observé. Écrivez naturellement, sans vous soucier de la forme."
               rows={3}
               className="bg-muted/30 resize-none"
             />
             <p className="text-xs text-muted-foreground">
-              🔒 Non visible publiquement — Votre texte brut sera reformulé automatiquement en un résumé technique neutre.
+              🔒 Ce champ n'est pas visible publiquement — VLINKS reformule automatiquement vos informations.
             </p>
             {errors.summary && (
               <p className="text-sm text-danger">{errors.summary.message}</p>
             )}
           </div>
 
-          {/* Contexte utile (optionnel) */}
+          {/* Détails additionnels */}
           <div className="space-y-2">
-            <Label htmlFor="details">Contexte utile (optionnel)</Label>
+            <Label htmlFor="details">Détails additionnels (optionnel)</Label>
             <Textarea
               id="details"
               {...register("details")}
-              placeholder="Ajoutez le contexte : circonstances de la visite, échanges avec le vendeur, impressions générales..."
+              placeholder="Ajoutez tout ce qui pourrait être utile : circonstances, échanges avec le vendeur, impressions..."
               rows={4}
               className="bg-muted/30 resize-none"
             />
             <p className="text-xs text-muted-foreground">
-              🔒 Non visible publiquement — Ces informations aident l'IA à mieux comprendre et reformuler votre contribution.
+              🔒 Ce champ n'est pas visible publiquement — Ces informations enrichissent l'analyse.
             </p>
             {errors.details && (
               <p className="text-sm text-danger">{errors.details.message}</p>
@@ -759,10 +770,10 @@ export function ContributionForm({
               disabled={isSubmitting || processingStatus === 'processing'}
               className="flex-1"
             >
-              {processingStatus === 'submitting' && "Transmission en cours..."}
+              {processingStatus === 'submitting' && "Ajout en cours..."}
               {processingStatus === 'processing' && "Analyse en cours..."}
-              {processingStatus === 'idle' && "Transmettre pour analyse"}
-              {processingStatus === 'done' && "Transmettre pour analyse"}
+              {processingStatus === 'idle' && "Ajouter ce maillon à la chaîne"}
+              {processingStatus === 'done' && "Ajouter ce maillon à la chaîne"}
               {processingStatus === 'error' && "Réessayer"}
             </Button>
           </div>

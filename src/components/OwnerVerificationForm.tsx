@@ -21,7 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface OwnerVerificationFormProps {
-  vinId: string;
+  vinId: string | null;
   vin: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -96,8 +96,33 @@ export function OwnerVerificationForm({
         return;
       }
 
+      // Get or create VIN record if vinId is null
+      let actualVinId = vinId;
+      if (!actualVinId) {
+        // Check if VIN exists
+        const { data: existingVin } = await supabase
+          .from("vins")
+          .select("id")
+          .eq("vin", vin)
+          .maybeSingle();
+
+        if (existingVin) {
+          actualVinId = existingVin.id;
+        } else {
+          // Create new VIN record
+          const { data: newVin, error: vinError } = await supabase
+            .from("vins")
+            .insert({ vin })
+            .select("id")
+            .single();
+
+          if (vinError) throw vinError;
+          actualVinId = newVin.id;
+        }
+      }
+
       // Upload document to private bucket
-      const filePath = `${user.id}/${vinId}/${Date.now()}_${document.name}`;
+      const filePath = `${user.id}/${actualVinId}/${Date.now()}_${document.name}`;
       const { error: uploadError } = await supabase.storage
         .from("owner-verification-docs")
         .upload(filePath, document);
@@ -111,7 +136,7 @@ export function OwnerVerificationForm({
         .from("owner_verifications")
         .insert({
           user_id: user.id,
-          vin_id: vinId,
+          vin_id: actualVinId,
           document_path: filePath,
           document_type: documentType,
           verification_status: "pending",

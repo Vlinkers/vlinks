@@ -22,7 +22,7 @@ const WhyVlinks = () => {
   const problems = [
     {
       title: "Inspections coûteuses",
-      description: "250$ à 550$ par inspection. Un coût que chaque acheteur paie, souvent pour découvrir les mêmes problèmes que le précédent.",
+      description: "Un coût important que chaque acheteur paie, souvent pour découvrir les mêmes problèmes que le précédent.",
     },
     {
       title: "Informations qui disparaissent",

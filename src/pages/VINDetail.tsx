@@ -14,14 +14,12 @@ import {
   CheckCircle, 
   Car, 
   Calendar, 
-  Users, 
-  Star,
+  Users,
   FileText,
   Lock,
   ChevronRight,
   ExternalLink,
   Clock,
-  ThumbsUp,
   Camera,
   FileSearch,
   MessageCircle,
@@ -1062,7 +1060,7 @@ const VINDetail = () => {
                 </p>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm">
-                    <Star className="w-4 h-4 text-warning" />
+                    <CheckCircle className="w-4 h-4 text-warning" />
                     <span>Gagnez des points et badges</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">

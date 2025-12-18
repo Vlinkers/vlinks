@@ -7,7 +7,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+// Use Lovable AI Gateway (no API key needed from user)
+const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -169,14 +170,17 @@ serve(async (req) => {
     const { contribution_id } = await req.json();
 
     if (!contribution_id) {
+      console.error('Missing contribution_id in request');
       throw new Error('contribution_id is required');
     }
 
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not configured');
+    if (!LOVABLE_API_KEY) {
+      console.error('LOVABLE_API_KEY is not configured');
+      throw new Error('LOVABLE_API_KEY is not configured');
     }
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Supabase configuration is missing');
       throw new Error('Supabase configuration is missing');
     }
 
@@ -232,64 +236,93 @@ Détails : ${rawContribution.details || 'Non fournis'}
       `.trim();
     }
 
-    console.log('Calling OpenAI API...');
+    console.log('Calling Lovable AI Gateway...');
 
-    // Call OpenAI API
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Call Lovable AI Gateway (uses google/gemini-2.5-flash by default)
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
+        model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: contentToAnalyze }
         ],
-        temperature: 0.3,
-        max_tokens: 1000,
-        response_format: { type: "json_object" }
       }),
     });
 
-    if (!openAIResponse.ok) {
-      const errorText = await openAIResponse.text();
-      console.error('OpenAI API error:', errorText);
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error('Lovable AI Gateway error:', aiResponse.status, errorText);
       
+      // Handle rate limits
+      if (aiResponse.status === 429) {
+        await supabase
+          .from('raw_contributions')
+          .update({ 
+            processing_status: 'pending',
+            processing_error: 'Rate limit exceeded, will retry later'
+          })
+          .eq('id', contribution_id);
+
+        return new Response(JSON.stringify({ 
+          success: false,
+          error: 'Rate limit exceeded, please try again later'
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       // Update status to failed
       await supabase
         .from('raw_contributions')
         .update({ 
           processing_status: 'failed',
-          processing_error: `OpenAI API error: ${openAIResponse.status}`
+          processing_error: `AI Gateway error: ${aiResponse.status} - ${errorText.substring(0, 200)}`
         })
         .eq('id', contribution_id);
 
-      throw new Error(`OpenAI API error: ${openAIResponse.status}`);
+      throw new Error(`AI Gateway error: ${aiResponse.status}`);
     }
 
-    const aiData = await openAIResponse.json();
+    const aiData = await aiResponse.json();
     const aiContent = aiData.choices?.[0]?.message?.content;
 
     if (!aiContent) {
+      console.error('No content in AI response:', JSON.stringify(aiData));
       throw new Error('No content in AI response');
     }
 
-    console.log('AI response received:', aiContent);
+    console.log('AI response received');
 
-    // Parse AI response
+    // Parse AI response - extract JSON from possible markdown code blocks
     let aiResult: AIResponse;
     try {
-      aiResult = JSON.parse(aiContent);
+      // Remove markdown code blocks if present
+      let jsonContent = aiContent.trim();
+      if (jsonContent.startsWith('```json')) {
+        jsonContent = jsonContent.slice(7);
+      } else if (jsonContent.startsWith('```')) {
+        jsonContent = jsonContent.slice(3);
+      }
+      if (jsonContent.endsWith('```')) {
+        jsonContent = jsonContent.slice(0, -3);
+      }
+      jsonContent = jsonContent.trim();
+      
+      aiResult = JSON.parse(jsonContent);
     } catch (parseError) {
-      console.error('Error parsing AI response:', parseError);
+      console.error('Error parsing AI response:', parseError, 'Content:', aiContent);
       
       await supabase
         .from('raw_contributions')
         .update({ 
           processing_status: 'failed',
-          processing_error: 'Failed to parse AI response'
+          processing_error: 'Failed to parse AI response as JSON'
         })
         .eq('id', contribution_id);
 
@@ -303,6 +336,16 @@ Détails : ${rawContribution.details || 'Non fournis'}
         typeof aiResult.confidence_source !== 'string' ||
         typeof aiResult.source_credibility !== 'string' ||
         typeof aiResult.publishable !== 'boolean') {
+      console.error('Invalid AI response structure:', JSON.stringify(aiResult));
+      
+      await supabase
+        .from('raw_contributions')
+        .update({ 
+          processing_status: 'failed',
+          processing_error: 'AI response missing required fields'
+        })
+        .eq('id', contribution_id);
+
       throw new Error('Invalid AI response structure');
     }
 
@@ -335,7 +378,7 @@ Détails : ${rawContribution.details || 'Non fournis'}
         source_credibility: finalSourceCredibility,
         is_anonymous: rawContribution.is_anonymous,
         publishable: aiResult.publishable,
-        ai_model_used: 'gpt-4.1-2025-04-14',
+        ai_model_used: 'google/gemini-2.5-flash',
         is_owner_contribution: rawContribution.is_owner_contribution,
         intervention_type: rawContribution.intervention_type,
         intervention_date: rawContribution.intervention_date,
@@ -351,7 +394,7 @@ Détails : ${rawContribution.details || 'Non fournis'}
         .from('raw_contributions')
         .update({ 
           processing_status: 'failed',
-          processing_error: insertError.message
+          processing_error: `Database error: ${insertError.message}`
         })
         .eq('id', contribution_id);
 
@@ -361,10 +404,13 @@ Détails : ${rawContribution.details || 'Non fournis'}
     // Update raw contribution status to completed
     await supabase
       .from('raw_contributions')
-      .update({ processing_status: 'completed' })
+      .update({ 
+        processing_status: 'completed',
+        processing_error: null
+      })
       .eq('id', contribution_id);
 
-    console.log(`Contribution processed successfully: ${publicContribution.id}`);
+    console.log(`Contribution processed successfully: ${publicContribution.id}, publishable: ${aiResult.publishable}`);
 
     return new Response(JSON.stringify({ 
       success: true,

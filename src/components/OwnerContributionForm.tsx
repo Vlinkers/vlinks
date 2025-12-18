@@ -144,7 +144,7 @@ export function OwnerContributionForm({
   const [ownerVerificationStatus, setOwnerVerificationStatus] = useState<'none' | 'pending' | 'verified'>('none');
   const [verificationDocument, setVerificationDocument] = useState<File | null>(null);
   const [verificationDocumentType, setVerificationDocumentType] = useState<string>("");
-  const [pendingContributionData, setPendingContributionData] = useState<ContributionFormData | null>(null);
+  const [pendingVinId, setPendingVinId] = useState<string | null>(null);
 
   const {
     register,
@@ -207,10 +207,11 @@ export function OwnerContributionForm({
       setCurrentStep('contribution');
       setVerificationDocument(null);
       setVerificationDocumentType("");
-      setPendingContributionData(null);
+      setPendingVinId(null);
       reset();
       setDocuments([]);
       setPhotos([]);
+      setProcessingStatus('idle');
     }
   }, [open, reset]);
 
@@ -417,14 +418,21 @@ export function OwnerContributionForm({
         }
       }
 
+      // TOUJOURS soumettre la contribution d'abord
+      await submitContribution(data, actualVinId, user.id);
+
+      // APRÈS soumission réussie, si pas encore vérifié, proposer la vérification
       if (ownerVerificationStatus === 'none') {
-        setPendingContributionData(data);
+        // Store VIN ID for verification step
+        setPendingVinId(actualVinId);
         setCurrentStep('verification');
-        setIsSubmitting(false);
+        // Don't close the dialog, show verification step
         return;
       }
 
-      await submitContribution(data, actualVinId, user.id);
+      // Si déjà vérifié, fermer directement
+      onOpenChange(false);
+      onSuccess?.();
 
     } catch (error) {
       console.error("Error submitting contribution:", error);
@@ -462,26 +470,15 @@ export function OwnerContributionForm({
         return;
       }
 
-      let actualVinId = vinId;
+      // Use the VIN ID stored after contribution submission
+      const actualVinId = pendingVinId || vinId;
       if (!actualVinId) {
-        const { data: existingVin } = await supabase
-          .from("vins")
-          .select("id")
-          .eq("vin", vin)
-          .maybeSingle();
-
-        if (existingVin) {
-          actualVinId = existingVin.id;
-        } else {
-          const { data: newVin, error: vinError } = await supabase
-            .from("vins")
-            .insert({ vin })
-            .select("id")
-            .single();
-
-          if (vinError) throw vinError;
-          actualVinId = newVin.id;
-        }
+        toast({
+          title: "Erreur",
+          description: "VIN non trouvé",
+          variant: "destructive",
+        });
+        return;
       }
 
       const filePath = `${user.id}/${actualVinId}/${verificationDocument.name}`;
@@ -505,14 +502,14 @@ export function OwnerContributionForm({
 
       setOwnerVerificationStatus('pending');
 
-      if (pendingContributionData) {
-        await submitContribution(pendingContributionData, actualVinId, user.id);
-      }
-
       toast({
-        title: "Vérification en cours",
-        description: "Votre statut de propriétaire sera vérifié sous peu. Votre contribution a été enregistrée.",
+        title: "Merci !",
+        description: "Votre contribution a été enregistrée et votre statut de propriétaire sera vérifié sous peu.",
       });
+
+      // Close and cleanup
+      onOpenChange(false);
+      onSuccess?.();
 
     } catch (error) {
       console.error("Error submitting verification:", error);
@@ -526,29 +523,56 @@ export function OwnerContributionForm({
     }
   };
 
-  // Verification step
+  // Handler to skip verification
+  const handleSkipVerification = () => {
+    toast({
+      title: "Contribution enregistrée",
+      description: "Vous pourrez valider votre statut de propriétaire lors d'une prochaine contribution.",
+    });
+    onOpenChange(false);
+    onSuccess?.();
+  };
+
+  // Verification step - shown AFTER contribution is submitted
   if (currentStep === 'verification') {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
-              <Shield className="w-5 h-5 text-success" />
-              Vérification de propriété
+              <CheckCircle className="w-5 h-5 text-success" />
+              Contribution enregistrée !
             </DialogTitle>
             <DialogDescription>
-              Avant de publier, validez votre statut de propriétaire. Cette étape n'est demandée qu'une seule fois.
+              Confirmez votre statut de propriétaire pour renforcer la crédibilité de vos contributions.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
+          <div className="space-y-5 py-4">
+            {/* Confirmation that contribution is saved */}
             <div className="bg-success/10 border border-success/20 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-success mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-medium text-success mb-1">Document sécurisé</p>
+                  <p className="font-medium text-success mb-1">Votre contribution a été enregistrée</p>
                   <p className="text-muted-foreground">
-                    Votre document n'est jamais publié. Il sert uniquement à valider votre statut de propriétaire.
+                    Elle sera analysée et publiée indépendamment de la vérification ci-dessous.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Verification explanation */}
+            <div className="bg-muted/30 border border-border rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <Shield className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium mb-1">Pourquoi valider mon statut ?</p>
+                  <p className="text-muted-foreground">
+                    La preuve sert uniquement à confirmer votre statut de propriétaire. Elle n'est jamais publiée et ne bloque pas vos contributions.
+                  </p>
+                  <p className="text-muted-foreground mt-2 text-xs">
+                    Une fois vérifié, vous n'aurez plus jamais à fournir ce document pour ce VIN.
                   </p>
                 </div>
               </div>
@@ -611,19 +635,11 @@ export function OwnerContributionForm({
               )}
             </div>
 
-            <div className="flex gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setCurrentStep('contribution')}
-                className="flex-1"
-              >
-                Retour
-              </Button>
+            <div className="flex flex-col gap-2 pt-4">
               <Button
                 onClick={handleVerificationSubmit}
                 disabled={!verificationDocument || !verificationDocumentType || isSubmitting}
-                className="flex-1 bg-success hover:bg-success/90"
+                className="w-full bg-success hover:bg-success/90"
               >
                 {isSubmitting ? (
                   <>
@@ -631,8 +647,16 @@ export function OwnerContributionForm({
                     Envoi...
                   </>
                 ) : (
-                  "Valider mon statut"
+                  "Valider mon statut de propriétaire"
                 )}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleSkipVerification}
+                className="text-muted-foreground"
+              >
+                Passer cette étape
               </Button>
             </div>
           </div>

@@ -161,6 +161,12 @@ interface AIResponse {
   publishable: boolean;
 }
 
+interface UserProfile {
+  username: string | null;
+  display_name: string | null;
+  public_id: string | null;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -202,6 +208,24 @@ serve(async (req) => {
     }
 
     console.log(`Found contribution: ${rawContribution.title}`);
+
+    // Fetch user profile for author info (SECURITY: never expose user_id to public)
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('username, display_name, public_id')
+      .eq('user_id', rawContribution.user_id)
+      .single();
+
+    // Determine author label and public_id based on anonymity
+    const authorLabel = rawContribution.is_anonymous 
+      ? 'Anonyme' 
+      : (userProfile?.username || userProfile?.display_name || 'Contributeur');
+    
+    const authorPublicId = rawContribution.is_anonymous 
+      ? null 
+      : (userProfile?.public_id || null);
+
+    console.log(`Author info: label="${authorLabel}", public_id=${authorPublicId ? 'set' : 'null'}`);
 
     // Update status to processing
     await supabase
@@ -364,11 +388,13 @@ Détails : ${rawContribution.details || 'Non fournis'}
       ? "Déclaration du propriétaire du véhicule"
       : aiResult.source_credibility;
 
+    // SECURITY: Write author_label and author_public_id instead of user_id
+    // user_id is still stored for internal reference but NOT exposed via RLS
     const { data: publicContribution, error: insertError } = await supabase
       .from('public_contributions')
       .insert({
         raw_contribution_id: contribution_id,
-        user_id: rawContribution.user_id,
+        user_id: rawContribution.user_id, // Internal reference only, not exposed via RLS
         vin_id: rawContribution.vin_id,
         contribution_type: rawContribution.contribution_type,
         summary_public: aiResult.summary_public,
@@ -382,7 +408,10 @@ Détails : ${rawContribution.details || 'Non fournis'}
         is_owner_contribution: rawContribution.is_owner_contribution,
         intervention_type: rawContribution.intervention_type,
         intervention_date: rawContribution.intervention_date,
-        mileage_at_intervention: rawContribution.mileage_at_intervention
+        mileage_at_intervention: rawContribution.mileage_at_intervention,
+        // NEW: Safe public author identification
+        author_label: authorLabel,
+        author_public_id: authorPublicId
       })
       .select()
       .single();

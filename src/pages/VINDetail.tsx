@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const getContributionIcon = (type: ContributionType) => {
   switch (type) {
@@ -103,6 +104,7 @@ const getContributionColor = (type: ContributionType) => {
 const VINDetail = () => {
   const { vin } = useParams();
   const { data, isLoading, error, refetch } = useVINData(vin);
+  const { toast } = useToast();
   const [expandedContribution, setExpandedContribution] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<ContributionType | "all">("all");
   const [showContributionForm, setShowContributionForm] = useState(false);
@@ -111,6 +113,7 @@ const VINDetail = () => {
   const [ownerVerificationStatus, setOwnerVerificationStatus] = useState<'none' | 'pending' | 'verified' | 'rejected'>('none');
   const [isCheckingOwner, setIsCheckingOwner] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isEndingOwnership, setIsEndingOwnership] = useState(false);
 
   // Check user and owner verification status
   useEffect(() => {
@@ -124,13 +127,14 @@ const VINDetail = () => {
 
       setCurrentUserId(user.id);
 
-      // If we have a VIN record, check owner verification status
+      // If we have a VIN record, check owner verification status (only active, not ended)
       if (data?.id) {
         const { data: verification } = await supabase
           .from('owner_verifications')
-          .select('verification_status')
+          .select('verification_status, ended_at')
           .eq('user_id', user.id)
           .eq('vin_id', data.id)
+          .is('ended_at', null)
           .maybeSingle();
 
         if (verification) {
@@ -145,6 +149,50 @@ const VINDetail = () => {
 
     checkUserAndOwnerStatus();
   }, [data?.id]);
+
+  // Handle ending ownership
+  const handleEndOwnership = async () => {
+    if (!currentUserId || !data?.id) return;
+    
+    setIsEndingOwnership(true);
+    try {
+      // Update existing contributions to mark as former owner
+      await supabase
+        .from('raw_contributions')
+        .update({ is_former_owner: true })
+        .eq('user_id', currentUserId)
+        .eq('vin_id', data.id)
+        .eq('is_owner_contribution', true);
+
+      // End the ownership verification (mark with ended_at)
+      const { error } = await supabase
+        .from('owner_verifications')
+        .update({ ended_at: new Date().toISOString() })
+        .eq('user_id', currentUserId)
+        .eq('vin_id', data.id)
+        .is('ended_at', null);
+
+      if (error) throw error;
+
+      setOwnerVerificationStatus('none');
+      
+      toast({
+        title: "Propriété terminée",
+        description: "Votre statut de propriétaire a été mis à jour. Vos contributions passées restent visibles comme 'ancien propriétaire'.",
+      });
+      
+      refetch();
+    } catch (error) {
+      console.error("Error ending ownership:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la mise à jour",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEndingOwnership(false);
+    }
+  };
 
   const getTrustColor = (score: number) => {
     if (score >= 80) return "text-success";
@@ -548,17 +596,32 @@ const VINDetail = () => {
                         </p>
                       </div>
                     </div>
-                    <Button 
-                      variant="hero" 
-                      className="bg-success hover:bg-success/90 shrink-0"
-                      onClick={() => {
-                        setIsOwnerClaim(true);
-                        setShowContributionForm(true);
-                      }}
-                    >
-                      <Link2 className="w-4 h-4 mr-2" />
-                      Ajouter une contribution
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                      <Button 
+                        variant="hero" 
+                        className="bg-success hover:bg-success/90"
+                        onClick={() => {
+                          setIsOwnerClaim(true);
+                          setShowOwnerForm(true);
+                        }}
+                      >
+                        <Link2 className="w-4 h-4 mr-2" />
+                        Ajouter une contribution
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="border-muted-foreground/30 text-muted-foreground hover:bg-muted/50"
+                        onClick={handleEndOwnership}
+                        disabled={isEndingOwnership}
+                      >
+                        {isEndingOwnership ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <XCircle className="w-4 h-4 mr-2" />
+                        )}
+                        Je ne suis plus propriétaire
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}

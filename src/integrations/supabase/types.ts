@@ -127,6 +127,7 @@ export type Database = {
           created_at: string
           document_path: string | null
           document_type: string | null
+          ended_at: string | null
           id: string
           updated_at: string
           user_id: string
@@ -138,6 +139,7 @@ export type Database = {
           created_at?: string
           document_path?: string | null
           document_type?: string | null
+          ended_at?: string | null
           id?: string
           updated_at?: string
           user_id: string
@@ -149,6 +151,7 @@ export type Database = {
           created_at?: string
           document_path?: string | null
           document_type?: string | null
+          ended_at?: string | null
           id?: string
           updated_at?: string
           user_id?: string
@@ -328,6 +331,7 @@ export type Database = {
           intervention_date: string | null
           intervention_type: string | null
           is_anonymous: boolean | null
+          is_former_owner: boolean | null
           is_owner_contribution: boolean | null
           mileage_at_intervention: number | null
           processing_error: string | null
@@ -346,6 +350,7 @@ export type Database = {
           intervention_date?: string | null
           intervention_type?: string | null
           is_anonymous?: boolean | null
+          is_former_owner?: boolean | null
           is_owner_contribution?: boolean | null
           mileage_at_intervention?: number | null
           processing_error?: string | null
@@ -364,6 +369,7 @@ export type Database = {
           intervention_date?: string | null
           intervention_type?: string | null
           is_anonymous?: boolean | null
+          is_former_owner?: boolean | null
           is_owner_contribution?: boolean | null
           mileage_at_intervention?: number | null
           processing_error?: string | null

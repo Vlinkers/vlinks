@@ -183,9 +183,10 @@ export function OwnerContributionForm({
       if (checkVinId) {
         const { data: verification } = await supabase
           .from('owner_verifications')
-          .select('verification_status')
+          .select('verification_status, ended_at')
           .eq('user_id', user.id)
           .eq('vin_id', checkVinId)
+          .is('ended_at', null)
           .maybeSingle();
 
         if (verification) {

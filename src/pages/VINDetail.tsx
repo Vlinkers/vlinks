@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ContributionForm } from "@/components/ContributionForm";
+import { OwnerContributionForm } from "@/components/OwnerContributionForm";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { 
@@ -105,6 +106,7 @@ const VINDetail = () => {
   const [expandedContribution, setExpandedContribution] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<ContributionType | "all">("all");
   const [showContributionForm, setShowContributionForm] = useState(false);
+  const [showOwnerForm, setShowOwnerForm] = useState(false);
   const [isOwnerClaim, setIsOwnerClaim] = useState(false);
   const [ownerVerificationStatus, setOwnerVerificationStatus] = useState<'none' | 'pending' | 'verified' | 'rejected'>('none');
   const [isCheckingOwner, setIsCheckingOwner] = useState(true);
@@ -221,10 +223,7 @@ const VINDetail = () => {
                     <Button 
                       size="default"
                       className="bg-success hover:bg-success/90 text-success-foreground"
-                      onClick={() => {
-                        setIsOwnerClaim(true);
-                        setShowContributionForm(true);
-                      }}
+                      onClick={() => setShowOwnerForm(true)}
                     >
                       <User className="w-4 h-4 mr-2" />
                       Je suis propriétaire
@@ -232,10 +231,7 @@ const VINDetail = () => {
                     <Button 
                       size="default"
                       className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                      onClick={() => {
-                        setIsOwnerClaim(false);
-                        setShowContributionForm(true);
-                      }}
+                      onClick={() => setShowContributionForm(true)}
                     >
                       <Link2 className="w-4 h-4 mr-2" />
                       Je souhaite contribuer
@@ -292,15 +288,20 @@ const VINDetail = () => {
         </main>
         <Footer />
 
+        {/* Popup contributeur */}
         <ContributionForm
           vinId={null}
           vin={vin || ""}
           open={showContributionForm}
-          onOpenChange={(open) => {
-            setShowContributionForm(open);
-            if (!open) setIsOwnerClaim(false);
-          }}
-          isOwnerClaim={isOwnerClaim}
+          onOpenChange={setShowContributionForm}
+        />
+
+        {/* Popup propriétaire - types spécifiques */}
+        <OwnerContributionForm
+          vinId={null}
+          vin={vin || ""}
+          open={showOwnerForm}
+          onOpenChange={setShowOwnerForm}
         />
       </div>
     );

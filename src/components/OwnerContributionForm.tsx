@@ -1,14 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
@@ -16,58 +13,118 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
+  Wrench,
+  Car,
+  AlertTriangle,
+  FileText,
+  ClipboardList,
   Upload,
   X,
-  FileText,
-  Wrench,
-  Calendar as CalendarIcon,
-  Gauge,
+  Plus,
+  Image as ImageIcon,
+  File,
   CheckCircle,
-  Loader2,
+  Shield,
   User,
+  Loader2,
+  Calendar,
+  Gauge,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
 
-const interventionTypes = [
-  { value: "entretien_regulier", label: "Entretien régulier", description: "Vidange, filtres, révision" },
-  { value: "reparation", label: "Réparation", description: "Correction d'un problème identifié" },
-  { value: "rappel_constructeur", label: "Rappel constructeur", description: "Intervention suite à un rappel officiel" },
-  { value: "remplacement_piece", label: "Remplacement de pièce", description: "Changement de pièce d'usure ou défectueuse" },
-  { value: "autre", label: "Autre", description: "Intervention non catégorisée" },
+// Owner-specific contribution types (5 types)
+const ownerContributionTypes = [
+  {
+    value: "maintenance_repair",
+    label: "Entretien & réparations",
+    icon: Wrench,
+    description: "Factures d'entretien, réparations, dates et kilométrage",
+  },
+  {
+    value: "usage_history",
+    label: "Historique d'usage",
+    icon: Car,
+    description: "Durée de possession, type d'usage, fréquence d'entretien",
+  },
+  {
+    value: "notable_events",
+    label: "Événements notables",
+    icon: AlertTriangle,
+    description: "Pannes, bruits, problèmes observés et résolutions",
+  },
+  {
+    value: "documents",
+    label: "Documents",
+    icon: FileText,
+    description: "Factures, rapports, rappels constructeur",
+  },
+  {
+    value: "owner_notes",
+    label: "Notes factuelles",
+    icon: ClipboardList,
+    description: "Observations objectives, sans jugement ni intention commerciale",
+  },
+] as const;
+
+const verificationDocumentTypes = [
+  { value: "facture", label: "Facture récente", description: "Facture d'entretien ou de réparation" },
+  { value: "assurance", label: "Certificat d'assurance", description: "Document d'assurance actif" },
+  { value: "carte_grise", label: "Carte grise (masquée)", description: "Carte grise avec informations personnelles masquées" },
+  { value: "autre", label: "Autre document", description: "Tout document prouvant la propriété" },
 ];
 
-const ownerContributionSchema = z.object({
-  intervention_type: z.string().min(1, "Veuillez sélectionner un type d'intervention"),
-  intervention_date: z.date({
-    required_error: "La date est obligatoire",
-  }),
-  mileage: z.number({
-    required_error: "Le kilométrage est obligatoire",
-  }).min(0, "Le kilométrage doit être positif"),
-  description: z
+// Map owner types to existing DB enum types
+const ownerTypeToDbType: Record<string, string> = {
+  maintenance_repair: "vehicle_history",
+  usage_history: "observation",
+  notable_events: "observation",
+  documents: "vehicle_history",
+  owner_notes: "observation",
+};
+
+const contributionSchema = z.object({
+  contribution_type: z.enum([
+    "maintenance_repair",
+    "usage_history",
+    "notable_events",
+    "documents",
+    "owner_notes",
+  ]),
+  title: z
     .string()
     .trim()
-    .min(10, "La description doit contenir au moins 10 caractères")
-    .max(2000, "La description ne peut pas dépasser 2000 caractères"),
+    .min(5, "Le titre doit contenir au moins 5 caractères")
+    .max(200, "Le titre ne peut pas dépasser 200 caractères"),
+  summary: z
+    .string()
+    .trim()
+    .min(20, "Le résumé doit contenir au moins 20 caractères")
+    .max(500, "Le résumé ne peut pas dépasser 500 caractères"),
+  details: z
+    .string()
+    .trim()
+    .max(5000, "Les détails ne peuvent pas dépasser 5000 caractères")
+    .optional(),
+  is_anonymous: z.boolean().default(false),
+  intervention_date: z.string().optional(),
+  mileage: z.string().optional(),
+  intervention_type: z.string().optional(),
 });
 
-type OwnerContributionFormData = z.infer<typeof ownerContributionSchema>;
+type ContributionFormData = z.infer<typeof contributionSchema>;
 
 interface OwnerContributionFormProps {
-  vinId: string;
+  vinId: string | null;
   vin: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }
+
+type FormStep = 'contribution' | 'verification';
 
 export function OwnerContributionForm({
   vinId,
@@ -79,7 +136,15 @@ export function OwnerContributionForm({
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [documents, setDocuments] = useState<File[]>([]);
+  const [photos, setPhotos] = useState<File[]>([]);
   const [processingStatus, setProcessingStatus] = useState<'idle' | 'submitting' | 'processing' | 'done' | 'error'>('idle');
+  
+  // Owner verification state
+  const [currentStep, setCurrentStep] = useState<FormStep>('contribution');
+  const [ownerVerificationStatus, setOwnerVerificationStatus] = useState<'none' | 'pending' | 'verified'>('none');
+  const [verificationDocument, setVerificationDocument] = useState<File | null>(null);
+  const [verificationDocumentType, setVerificationDocumentType] = useState<string>("");
+  const [pendingContributionData, setPendingContributionData] = useState<ContributionFormData | null>(null);
 
   const {
     register,
@@ -88,31 +153,236 @@ export function OwnerContributionForm({
     setValue,
     reset,
     formState: { errors },
-  } = useForm<OwnerContributionFormData>({
-    resolver: zodResolver(ownerContributionSchema),
+  } = useForm<ContributionFormData>({
+    resolver: zodResolver(contributionSchema),
+    defaultValues: {
+      is_anonymous: false,
+    },
   });
 
-  const interventionType = watch("intervention_type");
-  const interventionDate = watch("intervention_date");
+  const contributionType = watch("contribution_type");
+
+  // Check owner verification status on mount
+  useEffect(() => {
+    const checkOwnerStatus = async () => {
+      if (!open) return;
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      let checkVinId = vinId;
+      if (!checkVinId) {
+        const { data: existingVin } = await supabase
+          .from("vins")
+          .select("id")
+          .eq("vin", vin)
+          .maybeSingle();
+        if (existingVin) checkVinId = existingVin.id;
+      }
+
+      if (checkVinId) {
+        const { data: verification } = await supabase
+          .from('owner_verifications')
+          .select('verification_status')
+          .eq('user_id', user.id)
+          .eq('vin_id', checkVinId)
+          .maybeSingle();
+
+        if (verification) {
+          if (verification.verification_status === 'verified') {
+            setOwnerVerificationStatus('verified');
+          } else if (verification.verification_status === 'pending') {
+            setOwnerVerificationStatus('pending');
+          }
+        }
+      }
+    };
+
+    checkOwnerStatus();
+  }, [open, vinId, vin]);
+
+  // Reset step when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setCurrentStep('contribution');
+      setVerificationDocument(null);
+      setVerificationDocumentType("");
+      setPendingContributionData(null);
+      reset();
+      setDocuments([]);
+      setPhotos([]);
+    }
+  }, [open, reset]);
 
   const handleDocumentUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
       if (files) {
-        const newFiles = Array.from(files).slice(0, 3 - documents.length);
+        const newFiles = Array.from(files).slice(0, 5 - documents.length);
         setDocuments((prev) => [...prev, ...newFiles]);
       }
     },
     [documents.length]
   );
 
+  const handlePhotoUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (files) {
+        const newFiles = Array.from(files).filter((f) =>
+          f.type.startsWith("image/")
+        );
+        setPhotos((prev) => [...prev, ...newFiles].slice(0, 10));
+      }
+    },
+    []
+  );
+
+  const handleVerificationDocumentUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (files && files[0]) {
+        const file = files[0];
+        if (file.size > 10 * 1024 * 1024) {
+          toast({
+            title: "Fichier trop volumineux",
+            description: "Le fichier ne doit pas dépasser 10 Mo",
+            variant: "destructive",
+          });
+          return;
+        }
+        setVerificationDocument(file);
+      }
+    },
+    [toast]
+  );
+
   const removeDocument = (index: number) => {
     setDocuments((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const onSubmit = async (data: OwnerContributionFormData) => {
-    setIsSubmitting(true);
+  const removePhoto = (index: number) => {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const submitContribution = async (data: ContributionFormData, actualVinId: string, userId: string) => {
     setProcessingStatus('submitting');
+
+    const dbContributionType = ownerTypeToDbType[data.contribution_type] || "observation";
+
+    const { data: rawContribution, error: rawError } = await supabase
+      .from("raw_contributions")
+      .insert({
+        vin_id: actualVinId,
+        user_id: userId,
+        contribution_type: dbContributionType as any,
+        title: data.title,
+        summary: data.summary,
+        details: data.details || null,
+        is_anonymous: data.is_anonymous,
+        is_owner_contribution: true,
+        intervention_date: data.intervention_date || null,
+        mileage_at_intervention: data.mileage ? parseInt(data.mileage) : null,
+        intervention_type: data.intervention_type || data.contribution_type,
+        processing_status: 'pending',
+      })
+      .select()
+      .single();
+
+    if (rawError) throw rawError;
+
+    const { data: contribution, error: contributionError } = await supabase
+      .from("vin_contributions")
+      .insert({
+        vin_id: actualVinId,
+        user_id: userId,
+        contribution_type: dbContributionType as any,
+        title: data.title,
+        summary: data.summary,
+        details: data.details || null,
+        is_anonymous: data.is_anonymous,
+      })
+      .select()
+      .single();
+
+    if (contributionError) throw contributionError;
+
+    for (const doc of documents) {
+      const filePath = `${userId}/${contribution.id}/${doc.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("vin-documents")
+        .upload(filePath, doc);
+
+      if (!uploadError) {
+        await supabase.from("contribution_documents").insert({
+          contribution_id: contribution.id,
+          file_name: doc.name,
+          file_path: filePath,
+          file_type: doc.type,
+          file_size: doc.size,
+        });
+      }
+    }
+
+    for (const photo of photos) {
+      const filePath = `${userId}/${contribution.id}/${photo.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("vin-photos")
+        .upload(filePath, photo);
+
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage
+          .from("vin-photos")
+          .getPublicUrl(filePath);
+
+        await supabase.from("contribution_photos").insert({
+          contribution_id: contribution.id,
+          file_name: photo.name,
+          file_path: urlData.publicUrl,
+        });
+      }
+    }
+
+    setProcessingStatus('processing');
+    
+    const { data: processResult, error: processError } = await supabase.functions.invoke(
+      'process-contribution',
+      {
+        body: { contribution_id: rawContribution.id },
+      }
+    );
+
+    if (processError) {
+      console.error("Error processing contribution:", processError);
+      toast({
+        title: "Contribution enregistrée",
+        description: "Votre contribution sera analysée sous peu.",
+      });
+    } else if (processResult?.success) {
+      setProcessingStatus('done');
+      toast({
+        title: "Contribution analysée",
+        description: processResult.publishable 
+          ? "Votre contribution a été analysée et sera publiée." 
+          : "Votre contribution a été analysée. Elle sera vérifiée par notre équipe.",
+      });
+    } else {
+      toast({
+        title: "Contribution enregistrée",
+        description: "Votre contribution sera analysée sous peu.",
+      });
+    }
+
+    reset();
+    setDocuments([]);
+    setPhotos([]);
+    setProcessingStatus('idle');
+    onOpenChange(false);
+    onSuccess?.();
+  };
+
+  const onSubmit = async (data: ContributionFormData) => {
+    setIsSubmitting(true);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -125,99 +395,39 @@ export function OwnerContributionForm({
         return;
       }
 
-      // Create raw contribution with owner flag
-      const { data: rawContribution, error: rawError } = await supabase
-        .from("raw_contributions")
-        .insert({
-          vin_id: vinId,
-          user_id: user.id,
-          contribution_type: "vehicle_history",
-          title: `Intervention propriétaire - ${interventionTypes.find(t => t.value === data.intervention_type)?.label || data.intervention_type}`,
-          summary: data.description,
-          details: null,
-          is_anonymous: false,
-          is_owner_contribution: true,
-          intervention_type: data.intervention_type,
-          intervention_date: format(data.intervention_date, "yyyy-MM-dd"),
-          mileage_at_intervention: data.mileage,
-          processing_status: 'pending',
-        })
-        .select()
-        .single();
+      let actualVinId = vinId;
+      if (!actualVinId) {
+        const { data: existingVin } = await supabase
+          .from("vins")
+          .select("id")
+          .eq("vin", vin)
+          .maybeSingle();
 
-      if (rawError) throw rawError;
+        if (existingVin) {
+          actualVinId = existingVin.id;
+        } else {
+          const { data: newVin, error: vinError } = await supabase
+            .from("vins")
+            .insert({ vin })
+            .select("id")
+            .single();
 
-      // Also create legacy contribution for backwards compatibility
-      const { data: contribution, error: contributionError } = await supabase
-        .from("vin_contributions")
-        .insert({
-          vin_id: vinId,
-          user_id: user.id,
-          contribution_type: "vehicle_history",
-          title: `Intervention propriétaire - ${interventionTypes.find(t => t.value === data.intervention_type)?.label || data.intervention_type}`,
-          summary: data.description,
-          details: `Date: ${format(data.intervention_date, "dd/MM/yyyy")} | Kilométrage: ${data.mileage.toLocaleString()} km`,
-          is_anonymous: false,
-        })
-        .select()
-        .single();
-
-      if (contributionError) throw contributionError;
-
-      // Upload documents
-      for (const doc of documents) {
-        const filePath = `${user.id}/${contribution.id}/${doc.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from("vin-documents")
-          .upload(filePath, doc);
-
-        if (!uploadError) {
-          await supabase.from("contribution_documents").insert({
-            contribution_id: contribution.id,
-            file_name: doc.name,
-            file_path: filePath,
-            file_type: doc.type,
-            file_size: doc.size,
-          });
+          if (vinError) throw vinError;
+          actualVinId = newVin.id;
         }
       }
 
-      // Trigger AI processing
-      setProcessingStatus('processing');
-      
-      const { data: processResult, error: processError } = await supabase.functions.invoke(
-        'process-contribution',
-        {
-          body: { contribution_id: rawContribution.id },
-        }
-      );
-
-      if (processError) {
-        console.error("Error processing contribution:", processError);
-        toast({
-          title: "Contribution enregistrée",
-          description: "Votre historique sera analysé sous peu.",
-        });
-      } else if (processResult?.success) {
-        setProcessingStatus('done');
-        toast({
-          title: "Historique ajouté",
-          description: "Votre contribution propriétaire a été analysée et ajoutée au dossier.",
-        });
-      } else {
-        toast({
-          title: "Contribution enregistrée",
-          description: "Votre historique sera analysé sous peu.",
-        });
+      if (ownerVerificationStatus === 'none') {
+        setPendingContributionData(data);
+        setCurrentStep('verification');
+        setIsSubmitting(false);
+        return;
       }
 
-      reset();
-      setDocuments([]);
-      setProcessingStatus('idle');
-      onOpenChange(false);
-      onSuccess?.();
+      await submitContribution(data, actualVinId, user.id);
+
     } catch (error) {
-      console.error("Error submitting owner contribution:", error);
+      console.error("Error submitting contribution:", error);
       setProcessingStatus('error');
       toast({
         title: "Erreur",
@@ -229,264 +439,493 @@ export function OwnerContributionForm({
     }
   };
 
+  const handleVerificationSubmit = async () => {
+    if (!verificationDocument || !verificationDocumentType) {
+      toast({
+        title: "Formulaire incomplet",
+        description: "Veuillez sélectionner un type et téléverser un document",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être connecté",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      let actualVinId = vinId;
+      if (!actualVinId) {
+        const { data: existingVin } = await supabase
+          .from("vins")
+          .select("id")
+          .eq("vin", vin)
+          .maybeSingle();
+
+        if (existingVin) {
+          actualVinId = existingVin.id;
+        } else {
+          const { data: newVin, error: vinError } = await supabase
+            .from("vins")
+            .insert({ vin })
+            .select("id")
+            .single();
+
+          if (vinError) throw vinError;
+          actualVinId = newVin.id;
+        }
+      }
+
+      const filePath = `${user.id}/${actualVinId}/${verificationDocument.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("owner-verification-docs")
+        .upload(filePath, verificationDocument);
+
+      if (uploadError) throw uploadError;
+
+      const { error: verificationError } = await supabase
+        .from("owner_verifications")
+        .insert({
+          user_id: user.id,
+          vin_id: actualVinId,
+          document_type: verificationDocumentType,
+          document_path: filePath,
+          verification_status: 'pending',
+        });
+
+      if (verificationError) throw verificationError;
+
+      setOwnerVerificationStatus('pending');
+
+      if (pendingContributionData) {
+        await submitContribution(pendingContributionData, actualVinId, user.id);
+      }
+
+      toast({
+        title: "Vérification en cours",
+        description: "Votre statut de propriétaire sera vérifié sous peu. Votre contribution a été enregistrée.",
+      });
+
+    } catch (error) {
+      console.error("Error submitting verification:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'envoi",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Verification step
+  if (currentStep === 'verification') {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Shield className="w-5 h-5 text-success" />
+              Vérification de propriété
+            </DialogTitle>
+            <DialogDescription>
+              Avant de publier, validez votre statut de propriétaire. Cette étape n'est demandée qu'une seule fois.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            <div className="bg-success/10 border border-success/20 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-success mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium text-success mb-1">Document sécurisé</p>
+                  <p className="text-muted-foreground">
+                    Votre document n'est jamais publié. Il sert uniquement à valider votre statut de propriétaire.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label>Type de document</Label>
+              <div className="grid grid-cols-1 gap-2">
+                {verificationDocumentTypes.map((docType) => (
+                  <button
+                    key={docType.value}
+                    type="button"
+                    onClick={() => setVerificationDocumentType(docType.value)}
+                    className={`p-3 rounded-lg border text-left transition-all ${
+                      verificationDocumentType === docType.value
+                        ? "border-success bg-success/10"
+                        : "border-border hover:border-success/50"
+                    }`}
+                  >
+                    <span className="font-medium text-sm">{docType.label}</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {docType.description}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label>Téléverser le document</Label>
+              {verificationDocument ? (
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+                  <File className="w-5 h-5 text-muted-foreground" />
+                  <span className="flex-1 text-sm truncate">{verificationDocument.name}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setVerificationDocument(null)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-success/50 transition-colors">
+                  <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+                  <span className="text-sm text-muted-foreground">
+                    Cliquez ou glissez un fichier
+                  </span>
+                  <span className="text-xs text-muted-foreground mt-1">
+                    PDF, JPG, PNG (max 10 Mo)
+                  </span>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={handleVerificationDocumentUpload}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCurrentStep('contribution')}
+                className="flex-1"
+              >
+                Retour
+              </Button>
+              <Button
+                onClick={handleVerificationSubmit}
+                disabled={!verificationDocument || !verificationDocumentType || isSubmitting}
+                className="flex-1 bg-success hover:bg-success/90"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Envoi...
+                  </>
+                ) : (
+                  "Valider mon statut"
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto glass-strong">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-display text-2xl flex items-center gap-2">
-            <User className="w-6 h-6 text-success" />
-            Historique d'entretien déclaré par le propriétaire
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <User className="w-5 h-5 text-success" />
+            Contribution propriétaire
           </DialogTitle>
-          <DialogDescription className="text-muted-foreground">
-            VIN: <span className="font-mono">{vin}</span>
+          <DialogDescription>
+            Documentez l'historique de votre véhicule. Vos informations sont analysées et reformulées automatiquement avant publication.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Sous-titre explicatif */}
-        <div className="bg-success/10 border border-success/30 rounded-xl p-4">
-          <p className="text-sm text-foreground font-medium">
-            Informations factuelles, datées et documentées.
-          </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Votre historique sera reformulé de manière neutre par VLINKS avant publication.
-          </p>
-        </div>
-
-        {/* Note d'information */}
-        <div className="bg-muted/30 border border-border rounded-xl p-4">
-          <p className="text-sm text-foreground">
-            En tant que propriétaire, vous documentez l'historique d'entretien. Vos contributions sont distinctes des observations tierces.
-          </p>
-          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
-            <span>🏷️</span>
-            <span>Toutes vos contributions seront identifiées comme « Source : propriétaire du véhicule »</span>
-          </p>
+        {/* VIN display */}
+        <div className="bg-muted/50 rounded-lg p-3 flex items-center gap-3">
+          <Car className="w-5 h-5 text-muted-foreground" />
+          <span className="font-mono text-sm">{vin}</span>
+          {ownerVerificationStatus === 'verified' && (
+            <span className="ml-auto text-xs bg-success/20 text-success px-2 py-1 rounded-full flex items-center gap-1">
+              <CheckCircle className="w-3 h-3" />
+              Propriétaire vérifié
+            </span>
+          )}
+          {ownerVerificationStatus === 'pending' && (
+            <span className="ml-auto text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">
+              Vérification en cours
+            </span>
+          )}
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Intervention Type */}
+          {/* Contribution type selection - 5 owner-specific types */}
           <div className="space-y-3">
-            <Label className="text-base font-semibold">
-              Type d'intervention <span className="text-danger">*</span>
-            </Label>
+            <Label>Type de contribution</Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {interventionTypes.map((type) => (
-                <button
-                  key={type.value}
-                  type="button"
-                  onClick={() => setValue("intervention_type", type.value)}
-                  className={`p-3 rounded-xl border text-left transition-all ${
-                    interventionType === type.value
-                      ? "border-success bg-success/10"
-                      : "border-border hover:border-muted-foreground/50 bg-muted/30"
-                  }`}
-                >
-                  <p className={`font-medium text-sm ${
-                    interventionType === type.value ? "text-success" : "text-foreground"
-                  }`}>
-                    {type.label}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {type.description}
-                  </p>
-                </button>
-              ))}
-            </div>
-            {errors.intervention_type && (
-              <p className="text-sm text-danger">{errors.intervention_type.message}</p>
-            )}
-          </div>
-
-          {/* Date and Mileage Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Intervention Date */}
-            <div className="space-y-2">
-              <Label className="text-base font-semibold flex items-center gap-2">
-                <CalendarIcon className="w-4 h-4" />
-                Date de l'intervention <span className="text-danger">*</span>
-              </Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
+              {ownerContributionTypes.map((type) => {
+                const Icon = type.icon;
+                const isSelected = contributionType === type.value;
+                return (
+                  <button
+                    key={type.value}
                     type="button"
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !interventionDate && "text-muted-foreground"
-                    )}
+                    onClick={() => setValue("contribution_type", type.value as any)}
+                    className={`p-3 rounded-lg border text-left transition-all ${
+                      isSelected
+                        ? "border-success bg-success/10"
+                        : "border-border hover:border-success/50"
+                    }`}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {interventionDate ? (
-                      format(interventionDate, "PPP", { locale: fr })
-                    ) : (
-                      <span>Sélectionner une date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={interventionDate}
-                    onSelect={(date) => date && setValue("intervention_date", date)}
-                    disabled={(date) => date > new Date()}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-              {errors.intervention_date && (
-                <p className="text-sm text-danger">{errors.intervention_date.message}</p>
-              )}
-            </div>
-
-            {/* Mileage */}
-            <div className="space-y-2">
-              <Label className="text-base font-semibold flex items-center gap-2">
-                <Gauge className="w-4 h-4" />
-                Kilométrage <span className="text-danger">*</span>
-              </Label>
-              <div className="relative">
-                <Input
-                  type="number"
-                  placeholder="Ex: 85000"
-                  {...register("mileage", { valueAsNumber: true })}
-                  className="pr-10"
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                  km
-                </span>
-              </div>
-              {errors.mileage && (
-                <p className="text-sm text-danger">{errors.mileage.message}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label className="text-base font-semibold">
-              Description factuelle <span className="text-danger">*</span>
-            </Label>
-            <Textarea
-              placeholder="Décrivez ce qui a été fait, sans justification ni commentaire..."
-              {...register("description")}
-              className="min-h-[120px]"
-            />
-            <p className="text-xs text-muted-foreground">
-              Ces informations seront reformulées automatiquement. Décrivez uniquement les faits.
-            </p>
-            {errors.description && (
-              <p className="text-sm text-danger">{errors.description.message}</p>
-            )}
-          </div>
-
-          {/* Documents */}
-          <div className="space-y-3">
-            <Label className="text-base font-semibold flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Document associé
-              <span className="text-xs font-normal text-muted-foreground">(fortement recommandé)</span>
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              🔒 Les documents originaux ne sont jamais publiés. Ils servent uniquement à renforcer la crédibilité de l'historique.
-            </p>
-            
-            {documents.length < 3 && (
-              <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-success/50 transition-colors bg-muted/20">
-                <Upload className="w-6 h-6 text-muted-foreground mb-1" />
-                <span className="text-sm text-muted-foreground">
-                  Facture, bon de travail, ordre de réparation
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  PDF, JPG, PNG (max 3 fichiers)
-                </span>
-                <input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={handleDocumentUpload}
-                  className="hidden"
-                />
-              </label>
-            )}
-
-            {documents.length > 0 && (
-              <div className="space-y-2">
-                {documents.map((doc, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/30"
-                  >
-                    <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5 text-success" />
-                      <div>
-                        <p className="text-sm font-medium truncate max-w-[200px]">
-                          {doc.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {(doc.size / 1024).toFixed(1)} Ko
-                        </p>
-                      </div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Icon className={`w-4 h-4 ${isSelected ? "text-success" : "text-muted-foreground"}`} />
+                      <span className="font-medium text-sm">{type.label}</span>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeDocument(index)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      {type.description}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+            {errors.contribution_type && (
+              <p className="text-sm text-destructive">{errors.contribution_type.message}</p>
+            )}
+          </div>
+
+          {/* Form fields - only show when type is selected */}
+          {contributionType && (
+            <>
+              {/* Intervention details for maintenance/events */}
+              {(contributionType === 'maintenance_repair' || contributionType === 'notable_events') && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
+                  <div className="space-y-2">
+                    <Label htmlFor="intervention_date" className="flex items-center gap-2 text-sm">
+                      <Calendar className="w-4 h-4" />
+                      Date
+                    </Label>
+                    <Input
+                      id="intervention_date"
+                      type="date"
+                      {...register("intervention_date")}
+                    />
                   </div>
-                ))}
+                  <div className="space-y-2">
+                    <Label htmlFor="mileage" className="flex items-center gap-2 text-sm">
+                      <Gauge className="w-4 h-4" />
+                      Kilométrage
+                    </Label>
+                    <Input
+                      id="mileage"
+                      type="number"
+                      placeholder="ex: 85000"
+                      {...register("mileage")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="intervention_type" className="text-sm">Type d'intervention</Label>
+                    <Input
+                      id="intervention_type"
+                      placeholder="ex: Vidange, freins..."
+                      {...register("intervention_type")}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Title */}
+              <div className="space-y-2">
+                <Label htmlFor="title">Information principale *</Label>
+                <Input
+                  id="title"
+                  placeholder="Décrivez brièvement cette information"
+                  {...register("title")}
+                />
+                {errors.title && (
+                  <p className="text-sm text-destructive">{errors.title.message}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Cette information sert de base à notre analyse. Elle ne sera pas publiée telle quelle.
+                </p>
               </div>
-            )}
-          </div>
 
-          {/* Process Indicator */}
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground py-2">
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-success/60"></span>
-              Transmission
-            </span>
-            <span className="text-muted-foreground/50">→</span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-success/40"></span>
-              Analyse VLINKS
-            </span>
-            <span className="text-muted-foreground/50">→</span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-success/40"></span>
-              Reformulation
-            </span>
-            <span className="text-muted-foreground/50">→</span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-success/40"></span>
-              Publication
-            </span>
-          </div>
+              {/* Summary */}
+              <div className="space-y-2">
+                <Label htmlFor="summary">Éléments de contexte *</Label>
+                <Textarea
+                  id="summary"
+                  placeholder="Fournissez le contexte et les détails importants..."
+                  rows={3}
+                  {...register("summary")}
+                />
+                {errors.summary && (
+                  <p className="text-sm text-destructive">{errors.summary.message}</p>
+                )}
+              </div>
 
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            variant="hero"
-            className="w-full bg-success hover:bg-success/90"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                {processingStatus === 'processing' ? "Analyse en cours..." : "Envoi en cours..."}
-              </>
-            ) : (
-              <>
-                <Wrench className="w-4 h-4 mr-2" />
-                Ajouter cet entretien à l'historique
-              </>
-            )}
-          </Button>
+              {/* Details */}
+              <div className="space-y-2">
+                <Label htmlFor="details">Détails additionnels (optionnel)</Label>
+                <Textarea
+                  id="details"
+                  placeholder="Ajoutez tout détail supplémentaire pertinent..."
+                  rows={3}
+                  {...register("details")}
+                />
+              </div>
 
-          <p className="text-xs text-center text-muted-foreground">
-            Cette contribution sera identifiée comme provenant du propriétaire du véhicule.
-          </p>
+              {/* Documents upload */}
+              <div className="space-y-3">
+                <Label>Documents justificatifs</Label>
+                <div className="flex flex-wrap gap-2">
+                  {documents.map((doc, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border"
+                    >
+                      <File className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm truncate max-w-[150px]">{doc.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeDocument(index)}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  {documents.length < 5 && (
+                    <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-border cursor-pointer hover:border-success/50 transition-colors">
+                      <Plus className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Ajouter</span>
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        onChange={handleDocumentUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Les documents sont privés et servent uniquement à valider vos informations.
+                </p>
+              </div>
+
+              {/* Photos upload */}
+              <div className="space-y-3">
+                <Label>Photos (optionnel)</Label>
+                <div className="flex flex-wrap gap-2">
+                  {photos.map((photo, index) => (
+                    <div
+                      key={index}
+                      className="relative w-16 h-16 rounded-lg overflow-hidden border border-border"
+                    >
+                      <img
+                        src={URL.createObjectURL(photo)}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(index)}
+                        className="absolute top-1 right-1 p-0.5 rounded-full bg-background/80 text-destructive hover:bg-background"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {photos.length < 10 && (
+                    <label className="flex flex-col items-center justify-center w-16 h-16 rounded-lg border border-dashed border-border cursor-pointer hover:border-success/50 transition-colors">
+                      <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Anonymous toggle */}
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
+                <div className="space-y-0.5">
+                  <Label htmlFor="anonymous" className="text-sm font-medium">
+                    Contribution anonyme
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Votre nom ne sera pas affiché publiquement
+                  </p>
+                </div>
+                <Switch
+                  id="anonymous"
+                  checked={watch("is_anonymous")}
+                  onCheckedChange={(checked) => setValue("is_anonymous", checked)}
+                />
+              </div>
+
+              {/* Educational banner */}
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Shield className="w-5 h-5 text-primary mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-medium text-primary mb-1">Vos informations sont protégées</p>
+                    <p className="text-muted-foreground">
+                      Vous transmettez des informations brutes. Elles sont analysées, anonymisées et reformulées automatiquement par VLINKS avant toute publication.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit button */}
+              <Button
+                type="submit"
+                disabled={isSubmitting || processingStatus !== 'idle'}
+                className="w-full bg-success hover:bg-success/90"
+              >
+                {processingStatus === 'submitting' && (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Envoi en cours...
+                  </>
+                )}
+                {processingStatus === 'processing' && (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Analyse en cours...
+                  </>
+                )}
+                {processingStatus === 'idle' && !isSubmitting && (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Soumettre ma contribution
+                  </>
+                )}
+                {isSubmitting && processingStatus === 'idle' && (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Envoi...
+                  </>
+                )}
+              </Button>
+            </>
+          )}
         </form>
       </DialogContent>
     </Dialog>

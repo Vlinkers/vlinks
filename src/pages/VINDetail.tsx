@@ -823,7 +823,7 @@ const VINDetail = () => {
                             <Icon className="w-3 h-3" />
                           </div>
 
-                          {/* Contribution Card */}
+                          {/* Contribution Card - AI-processed content only */}
                           <div className="p-5 rounded-xl glass border border-border/50 hover:border-primary/30 transition-all">
                             {/* Header */}
                             <div className="flex items-start justify-between mb-3">
@@ -833,26 +833,31 @@ const VINDetail = () => {
                                     <Icon className="w-3 h-3 mr-1" />
                                     {getContributionLabel(contribution.type)}
                                   </Badge>
+                                  {contribution.isOwnerContribution && (
+                                    <Badge variant="info" className="text-xs">
+                                      <User className="w-3 h-3 mr-1" />
+                                      Propriétaire
+                                    </Badge>
+                                  )}
                                   {contribution.authorVerified && (
                                     <Badge variant="verified" className="text-xs">
                                       <CheckCircle className="w-3 h-3 mr-1" />
                                       Vérifié
                                     </Badge>
                                   )}
-                                  {contribution.decision === "purchased" && (
-                                    <Badge variant="verified" className="text-xs bg-success/20 text-success border-success/30">
-                                      ✓ A acheté
+                                  {/* Risk Level Badge */}
+                                  {contribution.riskLevel >= 4 && (
+                                    <Badge variant="destructive" className="text-xs">
+                                      <AlertTriangle className="w-3 h-3 mr-1" />
+                                      Risque élevé
                                     </Badge>
                                   )}
-                                  {contribution.decision === "passed" && (
-                                    <Badge variant="outline" className="text-xs">
-                                      ✗ N'a pas acheté
+                                  {contribution.riskLevel === 3 && (
+                                    <Badge variant="warning" className="text-xs">
+                                      Attention requise
                                     </Badge>
                                   )}
                                 </div>
-                                <h3 className="font-semibold text-foreground mb-1">
-                                  {contribution.title}
-                                </h3>
                                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                                   <span>{contribution.author}</span>
                                   <span>•</span>
@@ -860,29 +865,41 @@ const VINDetail = () => {
                                     <Calendar className="w-3 h-3" />
                                     {contribution.date}
                                   </span>
+                                  {contribution.mileageAtIntervention && (
+                                    <>
+                                      <span>•</span>
+                                      <span>{contribution.mileageAtIntervention.toLocaleString()} km</span>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </div>
 
-                            {/* Summary */}
-                            {contribution.summary && (
-                              <p className="text-sm text-foreground/80 mb-3">
-                                {contribution.summary}
-                              </p>
-                            )}
+                            {/* AI-Processed Summary - NEVER raw user text */}
+                            <p className="text-sm text-foreground/90 mb-3">
+                              {contribution.summaryPublic}
+                            </p>
 
-                            {/* Pass Reason */}
-                            {contribution.passReason && (
-                              <div className="p-3 rounded-lg bg-muted/30 mb-3 text-sm">
-                                <span className="text-muted-foreground">Raison du refus: </span>
-                                <span className="text-foreground">{contribution.passReason}</span>
+                            {/* Source Credibility */}
+                            {contribution.sourceCredibility && (
+                              <div className="text-xs text-muted-foreground mb-3 flex items-center gap-1">
+                                <Shield className="w-3 h-3" />
+                                <span>{contribution.sourceCredibility}</span>
                               </div>
                             )}
 
-                            {/* Expanded Details */}
-                            {isExpanded && contribution.details && (
-                              <div className="p-4 rounded-lg bg-muted/20 mb-3 text-sm text-foreground/70 border-l-2 border-primary/50">
-                                {contribution.details}
+                            {/* Technical Findings - Expandable */}
+                            {isExpanded && contribution.technicalFindings.length > 0 && (
+                              <div className="p-4 rounded-lg bg-muted/20 mb-3 border-l-2 border-primary/50">
+                                <p className="text-xs font-medium text-muted-foreground mb-2">Constats techniques</p>
+                                <ul className="space-y-1">
+                                  {contribution.technicalFindings.map((finding, i) => (
+                                    <li key={i} className="text-sm text-foreground/70 flex items-start gap-2">
+                                      <span className="text-primary">•</span>
+                                      {finding}
+                                    </li>
+                                  ))}
+                                </ul>
                               </div>
                             )}
 
@@ -890,20 +907,6 @@ const VINDetail = () => {
                             {contribution.photos.length > 0 && (
                               <div className="mb-3">
                                 <PhotoGallery photos={contribution.photos} />
-                              </div>
-                            )}
-
-                            {/* Tags */}
-                            {contribution.tags.length > 0 && (
-                              <div className="flex gap-2 flex-wrap mb-3">
-                                {contribution.tags.map((tag, i) => (
-                                  <span
-                                    key={i}
-                                    className="px-2 py-0.5 rounded-full text-xs bg-muted/50 text-muted-foreground"
-                                  >
-                                    {tag}
-                                  </span>
-                                ))}
                               </div>
                             )}
 
@@ -924,17 +927,13 @@ const VINDetail = () => {
                                 )}
                               </div>
                               <div className="flex items-center gap-3">
-                                <button className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                                  <ThumbsUp className="w-4 h-4" />
-                                  {contribution.helpful}
-                                </button>
-                                {contribution.details && (
+                                {contribution.technicalFindings.length > 0 && (
                                   <button
                                     onClick={() => setExpandedContribution(isExpanded ? null : contribution.id)}
                                     className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors"
                                   >
                                     <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                                    {isExpanded ? "Moins" : "Plus"}
+                                    {isExpanded ? "Moins" : "Détails"}
                                   </button>
                                 )}
                               </div>
@@ -997,21 +996,21 @@ const VINDetail = () => {
                     <span className="font-semibold">{contributions.filter(c => c.type === "observation" || c.type === "photo_evidence").length}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Décisions partagées</span>
-                    <span className="font-semibold">{contributions.filter(c => c.decision !== null).length}</span>
+                    <span className="text-sm text-muted-foreground">Contributions propriétaire</span>
+                    <span className="font-semibold">{contributions.filter(c => c.isOwnerContribution).length}</span>
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t border-border/50">
                   <div className="flex items-center gap-2 text-sm">
                     <div className="w-2 h-2 rounded-full bg-success" />
                     <span className="text-muted-foreground">
-                      {contributions.filter(c => c.decision === "purchased").length} ont acheté
+                      {contributions.filter(c => c.riskLevel <= 2).length} sans problème détecté
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm mt-1">
-                    <div className="w-2 h-2 rounded-full bg-muted-foreground" />
+                    <div className="w-2 h-2 rounded-full bg-warning" />
                     <span className="text-muted-foreground">
-                      {contributions.filter(c => c.decision === "passed").length} ont renoncé
+                      {contributions.filter(c => c.riskLevel >= 3).length} points d'attention
                     </span>
                   </div>
                 </div>

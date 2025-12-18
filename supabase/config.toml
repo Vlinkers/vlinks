@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.process-contribution]
 verify_jwt = true
+
+[functions.decode-vin]
+verify_jwt = false

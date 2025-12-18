@@ -482,6 +482,60 @@ export type Database = {
           },
         ]
       }
+      vin_decodes: {
+        Row: {
+          body_class: string | null
+          created_at: string
+          drive_type: string | null
+          engine: string | null
+          error_message: string | null
+          fuel_type: string | null
+          id: string
+          is_valid: boolean
+          make: string | null
+          model: string | null
+          model_year: number | null
+          raw_response: Json | null
+          trim: string | null
+          updated_at: string
+          vin: string
+        }
+        Insert: {
+          body_class?: string | null
+          created_at?: string
+          drive_type?: string | null
+          engine?: string | null
+          error_message?: string | null
+          fuel_type?: string | null
+          id?: string
+          is_valid?: boolean
+          make?: string | null
+          model?: string | null
+          model_year?: number | null
+          raw_response?: Json | null
+          trim?: string | null
+          updated_at?: string
+          vin: string
+        }
+        Update: {
+          body_class?: string | null
+          created_at?: string
+          drive_type?: string | null
+          engine?: string | null
+          error_message?: string | null
+          fuel_type?: string | null
+          id?: string
+          is_valid?: boolean
+          make?: string | null
+          model?: string | null
+          model_year?: number | null
+          raw_response?: Json | null
+          trim?: string | null
+          updated_at?: string
+          vin?: string
+        }
+        Relationships: []
+      }
       vins: {
         Row: {
           contributions_count: number | null

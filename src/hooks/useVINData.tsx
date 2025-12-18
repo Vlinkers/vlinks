@@ -16,6 +16,7 @@ export interface PublicContribution {
   type: ContributionType;
   date: string;
   author: string;
+  authorPublicId: string | null;
   authorVerified: boolean;
   // AI-processed fields - NEVER raw user text
   summaryPublic: string;
@@ -28,7 +29,7 @@ export interface PublicContribution {
   interventionType: string | null;
   interventionDate: string | null;
   mileageAtIntervention: number | null;
-  // Legacy fields for photos/documents (linked via raw_contribution)
+  // Legacy fields for photos/documents - no longer linked via user_id
   hasDocuments: boolean;
   documentCount: number;
   hasPhotos: boolean;
@@ -66,12 +67,11 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
   }
 
   // Fetch ONLY AI-processed, publishable contributions from public_contributions
-  // CRITICAL: Never read from vin_contributions or raw_contributions client-side
+  // SECURITY: Never read user_id - use author_label and author_public_id instead
   const { data: contributions, error: contribError } = await supabase
     .from("public_contributions")
     .select(`
       id,
-      user_id,
       contribution_type,
       summary_public,
       technical_findings,
@@ -84,7 +84,8 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       intervention_date,
       mileage_at_intervention,
       created_at,
-      raw_contribution_id
+      author_label,
+      author_public_id
     `)
     .eq("vin_id", vinRecord.id)
     .eq("publishable", true)
@@ -92,64 +93,8 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
 
   if (contribError) throw contribError;
 
-  // Fetch profiles for contributors
-  const userIds = [...new Set((contributions || []).map(c => c.user_id))];
-  
-  let profilesMap: Record<string, { display_name: string | null; is_verified: boolean }> = {};
-  
-  if (userIds.length > 0) {
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("user_id, display_name, is_verified")
-      .in("user_id", userIds);
-    
-    if (profiles) {
-      profilesMap = profiles.reduce((acc, p) => {
-        acc[p.user_id] = { display_name: p.display_name, is_verified: p.is_verified };
-        return acc;
-      }, {} as Record<string, { display_name: string | null; is_verified: boolean }>);
-    }
-  }
-
-  // Fetch photos from vin_contributions table (linked via the same user/vin)
-  // Note: Photos are stored in contribution_photos linked to vin_contributions
-  const { data: legacyContributions } = await supabase
-    .from("vin_contributions")
-    .select(`
-      id,
-      user_id,
-      contribution_photos (id, file_path, file_name, caption),
-      contribution_documents (id)
-    `)
-    .eq("vin_id", vinRecord.id);
-
-  // Build a map of user contributions to their photos/docs
-  const photosByUser: Record<string, { photos: ContributionPhoto[], docCount: number }> = {};
-  if (legacyContributions) {
-    for (const lc of legacyContributions) {
-      const photosRaw = lc.contribution_photos as { id: string; file_path: string; file_name: string; caption: string | null }[] || [];
-      const docCount = (lc.contribution_documents as { id: string }[])?.length || 0;
-      
-      const photos: ContributionPhoto[] = photosRaw.map(photo => ({
-        id: photo.id,
-        url: photo.file_path, // Already public URL from storage
-        caption: photo.caption,
-        fileName: photo.file_name,
-      }));
-
-      if (!photosByUser[lc.user_id]) {
-        photosByUser[lc.user_id] = { photos: [], docCount: 0 };
-      }
-      photosByUser[lc.user_id].photos.push(...photos);
-      photosByUser[lc.user_id].docCount += docCount;
-    }
-  }
-
-  // Transform contributions - ONLY AI-processed content
+  // Transform contributions - ONLY AI-processed content, NO user_id exposure
   const transformedContributions: PublicContribution[] = (contributions || []).map(c => {
-    const profile = profilesMap[c.user_id];
-    const userMedia = photosByUser[c.user_id] || { photos: [], docCount: 0 };
-
     return {
       id: c.id,
       type: c.contribution_type,
@@ -158,8 +103,10 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
         month: "short",
         year: "numeric",
       }),
-      author: c.is_anonymous ? "Anonyme" : (profile?.display_name || "Contributeur"),
-      authorVerified: profile?.is_verified || false,
+      // SECURITY: Use pre-computed author_label from edge function, never fetch user info client-side
+      author: c.author_label || "Anonyme",
+      authorPublicId: c.author_public_id,
+      authorVerified: c.is_owner_contribution || false, // Owner contributions are "verified"
       // AI-processed fields only
       summaryPublic: c.summary_public,
       technicalFindings: c.technical_findings || [],
@@ -171,19 +118,21 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       interventionType: c.intervention_type,
       interventionDate: c.intervention_date,
       mileageAtIntervention: c.mileage_at_intervention,
-      // Media
-      hasDocuments: userMedia.docCount > 0,
-      documentCount: userMedia.docCount,
-      hasPhotos: userMedia.photos.length > 0,
-      photoCount: userMedia.photos.length,
-      photos: userMedia.photos,
+      // Media - no longer linked via user_id for security
+      hasDocuments: false,
+      documentCount: 0,
+      hasPhotos: false,
+      photoCount: 0,
+      photos: [],
       isAnonymous: c.is_anonymous || false,
     };
   });
 
-  // Calculate unique contributors
+  // Calculate unique contributors based on author_public_id (excluding anonymous)
   const uniqueContributors = new Set(
-    (contributions || []).filter(c => !c.is_anonymous).map(c => c.user_id)
+    (contributions || [])
+      .filter(c => !c.is_anonymous && c.author_public_id)
+      .map(c => c.author_public_id)
   ).size;
 
   // Format last updated

@@ -199,6 +199,7 @@ export type Database = {
           level: number
           location: string | null
           points: number
+          public_id: string | null
           reviews_count: number
           updated_at: string
           user_id: string
@@ -215,6 +216,7 @@ export type Database = {
           level?: number
           location?: string | null
           points?: number
+          public_id?: string | null
           reviews_count?: number
           updated_at?: string
           user_id: string
@@ -231,6 +233,7 @@ export type Database = {
           level?: number
           location?: string | null
           points?: number
+          public_id?: string | null
           reviews_count?: number
           updated_at?: string
           user_id?: string
@@ -241,6 +244,8 @@ export type Database = {
       public_contributions: {
         Row: {
           ai_model_used: string | null
+          author_label: string
+          author_public_id: string | null
           confidence_source: string | null
           contribution_type: Database["public"]["Enums"]["contribution_type"]
           created_at: string
@@ -263,6 +268,8 @@ export type Database = {
         }
         Insert: {
           ai_model_used?: string | null
+          author_label?: string
+          author_public_id?: string | null
           confidence_source?: string | null
           contribution_type: Database["public"]["Enums"]["contribution_type"]
           created_at?: string
@@ -285,6 +292,8 @@ export type Database = {
         }
         Update: {
           ai_model_used?: string | null
+          author_label?: string
+          author_public_id?: string | null
           confidence_source?: string | null
           contribution_type?: Database["public"]["Enums"]["contribution_type"]
           created_at?: string

@@ -7,6 +7,7 @@ import { ContributionForm } from "@/components/ContributionForm";
 import { OwnerContributionForm } from "@/components/OwnerContributionForm";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { useVINData, type ContributionType } from "@/hooks/useVINData";
+import { useVINDecode } from "@/hooks/useVINDecode";
 import { 
   Shield, 
   AlertTriangle, 
@@ -32,7 +33,9 @@ import {
   ChevronDown,
   Loader2,
   User,
-  Gauge
+  Gauge,
+  Fuel,
+  Settings
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -101,9 +104,109 @@ const getContributionColor = (type: ContributionType) => {
   }
 };
 
+// Vehicle Detected Block Component
+interface VehicleDetectedBlockProps {
+  vinDecode: {
+    make: string | null;
+    model: string | null;
+    model_year: number | null;
+    trim: string | null;
+    engine: string | null;
+    body_class: string | null;
+    drive_type: string | null;
+    fuel_type: string | null;
+    is_valid: boolean;
+    error_message: string | null;
+  } | null | undefined;
+  isLoading: boolean;
+}
+
+const VehicleDetectedBlock = ({ vinDecode, isLoading }: VehicleDetectedBlockProps) => {
+  if (isLoading) {
+    return (
+      <div className="p-4 rounded-xl bg-muted/30 border border-border/50 mb-4">
+        <div className="flex items-center gap-3">
+          <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+          <span className="text-sm text-muted-foreground">Identification du véhicule...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!vinDecode) {
+    return null;
+  }
+
+  if (!vinDecode.is_valid) {
+    return (
+      <div className="p-4 rounded-xl bg-danger/10 border border-danger/30 mb-4">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-danger mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="font-medium text-danger">VIN non reconnu</p>
+            <p className="text-sm text-muted-foreground">
+              {vinDecode.error_message || "Ce VIN ne correspond pas à un véhicule valide ou n'est pas reconnu par la base NHTSA."}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const vehicleName = [
+    vinDecode.model_year,
+    vinDecode.make,
+    vinDecode.model,
+    vinDecode.trim
+  ].filter(Boolean).join(' ');
+
+  return (
+    <div className="p-4 rounded-xl bg-success/10 border border-success/30 mb-4">
+      <div className="flex items-start gap-3">
+        <CheckCircle className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-success mb-1">Véhicule détecté</p>
+          <p className="font-display text-lg font-semibold text-foreground truncate">
+            {vehicleName || "Véhicule identifié"}
+          </p>
+          
+          {/* Vehicle details grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
+            {vinDecode.body_class && (
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Car className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{vinDecode.body_class}</span>
+              </div>
+            )}
+            {vinDecode.engine && (
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Settings className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{vinDecode.engine}</span>
+              </div>
+            )}
+            {vinDecode.fuel_type && (
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Fuel className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{vinDecode.fuel_type}</span>
+              </div>
+            )}
+            {vinDecode.drive_type && (
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Gauge className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{vinDecode.drive_type}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const VINDetail = () => {
   const { vin } = useParams();
   const { data, isLoading, error, refetch } = useVINData(vin);
+  const { data: vinDecode, isLoading: isDecodingVIN } = useVINDecode(vin);
   const { toast } = useToast();
   const [expandedContribution, setExpandedContribution] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<ContributionType | "all">("all");
@@ -256,6 +359,9 @@ const VINDetail = () => {
             </div>
 
             <div className="max-w-3xl mx-auto">
+              {/* Bloc véhicule détecté */}
+              <VehicleDetectedBlock vinDecode={vinDecode} isLoading={isDecodingVIN} />
+              
               {/* BLOC D'ACTION PRINCIPAL - Ligne unique au-dessus de la flottaison */}
               <div className="text-center mb-6 p-6 rounded-2xl glass border border-border/50">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -413,11 +519,36 @@ const VINDetail = () => {
                     </Badge>
                   </div>
                   <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
-                    {data.year ? `${data.year} ` : ""}{data.make || ""} {data.model || "Véhicule"}
+                    {(vinDecode?.model_year || data.year) ? `${vinDecode?.model_year || data.year} ` : ""}
+                    {vinDecode?.make || data.make || ""} {vinDecode?.model || data.model || "Véhicule"}
+                    {vinDecode?.trim ? ` ${vinDecode.trim}` : ""}
                   </h1>
                   <p className="text-muted-foreground font-mono text-lg">
                     {vin}
                   </p>
+                  {/* Additional vehicle details from decode */}
+                  {vinDecode?.is_valid && (vinDecode.engine || vinDecode.fuel_type || vinDecode.drive_type) && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {vinDecode.engine && (
+                        <Badge variant="outline" className="text-xs">
+                          <Settings className="w-3 h-3 mr-1" />
+                          {vinDecode.engine}
+                        </Badge>
+                      )}
+                      {vinDecode.fuel_type && (
+                        <Badge variant="outline" className="text-xs">
+                          <Fuel className="w-3 h-3 mr-1" />
+                          {vinDecode.fuel_type}
+                        </Badge>
+                      )}
+                      {vinDecode.drive_type && (
+                        <Badge variant="outline" className="text-xs">
+                          <Gauge className="w-3 h-3 mr-1" />
+                          {vinDecode.drive_type}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-3">
                   <Button variant="outline" size="sm">

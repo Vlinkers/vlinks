@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Github, Twitter, Linkedin, Mail } from "lucide-react";
-import vlinksLogo from "@/assets/vlinks-logo.png";
+import vlinksIcon from "@/assets/vlinks-icon.png";
 
 const footerLinks = {
   product: {
@@ -49,12 +49,18 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-12">
           {/* Brand Column */}
           <div className="col-span-2">
-            <Link to="/" className="flex items-center gap-2 mb-4">
-              <img 
-                src={vlinksLogo} 
-                alt="VLINKS Logo" 
-                className="w-8 h-8"
-              />
+            <Link to="/" className="flex items-center gap-3 mb-4">
+              <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-white/10 backdrop-blur-sm p-1">
+                <img 
+                  src={vlinksIcon} 
+                  alt="VLINKS Logo" 
+                  className="w-full h-full object-contain rounded"
+                />
+              </div>
+              <span className="font-display text-xl font-bold tracking-tight">
+                <span className="text-primary">V</span>
+                <span className="text-foreground">LINKS</span>
+              </span>
             </Link>
             <p className="text-sm text-muted-foreground mb-6 max-w-xs">
               Truth is a chain. You are the link.

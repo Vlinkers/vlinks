@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, X, Shield, LogOut, User, Search } from "lucide-react";
+import { Menu, X, LogOut, User, Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import vlinksLogo from "@/assets/vlinks-logo.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,14 +50,11 @@ const Header = () => {
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="relative">
-              <Shield className="w-8 h-8 md:w-10 md:h-10 text-primary transition-transform group-hover:scale-110" />
-              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <span className="font-display text-xl md:text-2xl font-bold">
-              <span className="text-gradient">V</span>
-              <span className="text-foreground">LINKS</span>
-            </span>
+            <img 
+              src={vlinksLogo} 
+              alt="VLINKS Logo" 
+              className="w-8 h-8 md:w-10 md:h-10 transition-transform group-hover:scale-110"
+            />
           </Link>
 
           {/* Desktop Navigation */}

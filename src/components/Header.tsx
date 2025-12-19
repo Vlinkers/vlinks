@@ -6,7 +6,8 @@ import { Menu, X, LogOut, User, Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import vlinksIcon from "@/assets/vlinks-icon.png";
+import vlinksLogo from "@/assets/vlinks-logo.svg";
+import vlinksIcon from "@/assets/vlinks-icon.svg";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,18 +50,12 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="relative w-10 h-10 md:w-12 md:h-12 transition-transform group-hover:scale-110 rounded-lg overflow-hidden bg-white/10 backdrop-blur-sm p-1">
-              <img 
-                src={vlinksIcon} 
-                alt="VLINKS Logo" 
-                className="w-full h-full object-contain rounded"
-              />
-            </div>
-            <span className="font-display text-xl md:text-2xl font-bold tracking-tight">
-              <span className="text-primary">V</span>
-              <span className="text-foreground">LINKS</span>
-            </span>
+          <Link to="/" className="flex items-center group">
+            <img 
+              src={vlinksLogo} 
+              alt="VLINKS Logo" 
+              className="h-10 md:h-12 w-auto transition-transform group-hover:scale-105"
+            />
           </Link>
 
           {/* Desktop Navigation */}

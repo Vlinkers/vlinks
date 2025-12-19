@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none">
+  <g transform="translate(20,10)">
+    <path d="M40 30 V130 C40 145 55 145 70 145"
+          stroke="#0B1E4B" stroke-width="14"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M160 30 V130 C160 145 145 145 130 145"
+          stroke="#0B1E4B" stroke-width="14"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M70 45 L100 95 L130 45"
+          stroke="#1FC7D4" stroke-width="12"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

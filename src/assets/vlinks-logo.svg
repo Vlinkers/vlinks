@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 180" fill="none">
+  <style>
+    text {
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+      font-weight: 700;
+      letter-spacing: 5px;
+    }
+  </style>
+  <!-- ICON -->
+  <g transform="translate(20,10)">
+    <path d="M40 30 V130 C40 145 55 145 70 145"
+          stroke="#0B1E4B" stroke-width="14"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M160 30 V130 C160 145 145 145 130 145"
+          stroke="#0B1E4B" stroke-width="14"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M70 45 L100 95 L130 45"
+          stroke="#1FC7D4" stroke-width="12"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- WORDMARK -->
+  <text x="240" y="115" font-size="56" fill="#0B1E4B">VLINKS</text>
+</svg>

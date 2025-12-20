@@ -8,7 +8,7 @@ import { Mail, Lock, User, ArrowLeft, Eye, EyeOff, AtSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { validateUsernameFormat, checkUsernameAvailability } from "@/lib/usernameValidation";
-import vlinksLogo from "@/assets/vlinks-full-logo.png";
+import vlinksLogo from "@/assets/vlinks-logo.svg";
 
 const emailSchema = z.string().email("Adresse email invalide");
 const passwordSchema = z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères");
@@ -164,7 +164,7 @@ const Auth = () => {
               <img 
                 src={vlinksLogo} 
                 alt="VLINKS" 
-                className="h-16 md:h-20 w-auto mx-auto transition-transform group-hover:scale-105"
+                className="h-10 md:h-12 w-auto mx-auto transition-transform group-hover:scale-105"
               />
             </Link>
             <p className="mt-4 text-muted-foreground">

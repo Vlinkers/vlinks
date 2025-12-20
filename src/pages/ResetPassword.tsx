@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
-import vlinksLogo from "@/assets/vlinks-full-logo.png";
+import vlinksLogo from "@/assets/vlinks-logo.svg";
 
 const emailSchema = z.string().email("Adresse email invalide");
 
@@ -80,7 +80,7 @@ const ResetPassword = () => {
               <img 
                 src={vlinksLogo} 
                 alt="VLINKS" 
-                className="h-16 md:h-20 w-auto mx-auto transition-transform group-hover:scale-105"
+                className="h-10 md:h-12 w-auto mx-auto transition-transform group-hover:scale-105"
               />
             </Link>
           </div>

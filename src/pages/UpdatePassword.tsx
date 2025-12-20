@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Lock, ArrowLeft, Eye, EyeOff, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
-import vlinksLogo from "@/assets/vlinks-full-logo.png";
+import vlinksLogo from "@/assets/vlinks-logo.svg";
 
 const passwordSchema = z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères");
 
@@ -107,7 +107,7 @@ const UpdatePassword = () => {
               <img 
                 src={vlinksLogo} 
                 alt="VLINKS" 
-                className="h-16 md:h-20 w-auto mx-auto transition-transform group-hover:scale-105"
+                className="h-10 md:h-12 w-auto mx-auto transition-transform group-hover:scale-105"
               />
             </Link>
           </div>

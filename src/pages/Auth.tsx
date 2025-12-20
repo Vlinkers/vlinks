@@ -4,10 +4,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, Mail, Lock, User, ArrowLeft, Eye, EyeOff, AtSign } from "lucide-react";
+import { Mail, Lock, User, ArrowLeft, Eye, EyeOff, AtSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { validateUsernameFormat, checkUsernameAvailability } from "@/lib/usernameValidation";
+import vlinksLogo from "@/assets/vlinks-full-logo.png";
 
 const emailSchema = z.string().email("Adresse email invalide");
 const passwordSchema = z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères");
@@ -159,11 +160,11 @@ const Auth = () => {
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="text-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2 group">
+            <Link to="/" className="inline-block group">
               <img 
-                src="/lovable-uploads/23cc450b-40cf-471e-998e-38e8c6d766d8.png" 
+                src={vlinksLogo} 
                 alt="VLINKS" 
-                className="h-12 transition-transform group-hover:scale-110"
+                className="h-16 md:h-20 w-auto mx-auto transition-transform group-hover:scale-105"
               />
             </Link>
             <p className="mt-4 text-muted-foreground">

@@ -4,9 +4,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, Mail, Lock, User, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Shield, Mail, Lock, User, ArrowLeft, Eye, EyeOff, AtSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { validateUsernameFormat, checkUsernameAvailability } from "@/lib/usernameValidation";
 
 const emailSchema = z.string().email("Adresse email invalide");
 const passwordSchema = z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères");
@@ -15,10 +16,12 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string; username?: string }>({});
   
   const { signIn, signUp, user, loading } = useAuth();
   const navigate = useNavigate();
@@ -30,8 +33,8 @@ const Auth = () => {
     }
   }, [user, loading, navigate]);
 
-  const validateForm = () => {
-    const newErrors: { email?: string; password?: string } = {};
+  const validateForm = async () => {
+    const newErrors: { email?: string; password?: string; username?: string } = {};
     
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
@@ -43,6 +46,22 @@ const Auth = () => {
       newErrors.password = passwordResult.error.errors[0].message;
     }
     
+    // Validate username for signup
+    if (!isLogin) {
+      const usernameResult = validateUsernameFormat(username, "fr");
+      if (!usernameResult.valid) {
+        newErrors.username = usernameResult.error;
+      } else {
+        // Check availability
+        setIsCheckingUsername(true);
+        const availabilityResult = await checkUsernameAvailability(username, undefined, "fr");
+        setIsCheckingUsername(false);
+        if (!availabilityResult.valid) {
+          newErrors.username = availabilityResult.error;
+        }
+      }
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -50,7 +69,8 @@ const Auth = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    const isValid = await validateForm();
+    if (!isValid) return;
     
     setIsSubmitting(true);
 
@@ -78,7 +98,7 @@ const Auth = () => {
           });
         }
       } else {
-        const { error } = await signUp(email, password, displayName);
+        const { error } = await signUp(email, password, username, displayName);
         if (error) {
           if (error.message.includes("already registered")) {
             toast({
@@ -180,11 +200,44 @@ const Auth = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Display Name (signup only) */}
+              {/* Username (signup only - REQUIRED) */}
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="text-foreground">
+                    Pseudonyme public <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      id="username"
+                      type="text"
+                      placeholder="mon_pseudo"
+                      value={username}
+                      onChange={(e) => {
+                        const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+                        setUsername(value);
+                        if (errors.username) setErrors({ ...errors, username: undefined });
+                      }}
+                      className={`pl-11 ${errors.username ? 'border-destructive' : ''}`}
+                      maxLength={20}
+                      required
+                    />
+                  </div>
+                  {errors.username ? (
+                    <p className="text-sm text-destructive">{errors.username}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Ce pseudonyme est la seule information visible par les autres utilisateurs. 3-20 caractères, lettres, chiffres et underscore uniquement.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Display Name (signup only - optional) */}
               {!isLogin && (
                 <div className="space-y-2">
                   <Label htmlFor="displayName" className="text-foreground">
-                    Nom d'affichage
+                    Nom d'affichage <span className="text-muted-foreground text-xs">(optionnel)</span>
                   </Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />

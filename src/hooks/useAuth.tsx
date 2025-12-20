@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, username: string, displayName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
@@ -39,8 +39,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, displayName?: string) => {
+const signUp = async (email: string, password: string, username: string, displayName?: string) => {
     const redirectUrl = `${window.location.origin}/`;
+    
+    // Username is now REQUIRED - never derive from email
+    if (!username || username.trim().length < 3) {
+      return { error: new Error("Username is required") };
+    }
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -48,8 +53,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          display_name: displayName || email.split('@')[0],
-          username: email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '_')
+          display_name: displayName || username,
+          username: username.trim()
         }
       }
     });

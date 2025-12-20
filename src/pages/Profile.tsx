@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { User, FileText, LogOut, Calendar, Edit2, Trash2, Eye, Loader2, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { User, FileText, LogOut, Calendar, Trash2, Eye, Loader2, AlertCircle, Car, Shield } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +55,15 @@ interface UserContribution {
   publishable: boolean;
 }
 
+interface OwnerClaim {
+  id: string;
+  vin_id: string;
+  vin: string;
+  status: string;
+  created_at: string;
+  verified_at: string | null;
+}
+
 const CONTRIBUTION_TYPE_LABELS: Record<string, { fr: string; en: string }> = {
   inspection_report: { fr: "Rapport d'inspection", en: "Inspection Report" },
   vehicle_history: { fr: "Historique véhicule", en: "Vehicle History" },
@@ -73,12 +82,15 @@ const Profile = () => {
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [contributions, setContributions] = useState<UserContribution[]>([]);
+  const [ownerClaims, setOwnerClaims] = useState<OwnerClaim[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [username, setUsername] = useState("");
   const [usernameError, setUsernameError] = useState("");
   const [deleteContributionId, setDeleteContributionId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [revokeClaimId, setRevokeClaimId] = useState<string | null>(null);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
   
   // Filters
   const [filterType, setFilterType] = useState<string>("all");
@@ -91,11 +103,12 @@ const Profile = () => {
     }
   }, [user, authLoading, navigate]);
 
-  // Fetch profile and contributions
+  // Fetch profile, contributions and claims
   useEffect(() => {
     if (user) {
       fetchProfile();
       fetchContributions();
+      fetchOwnerClaims();
     }
   }, [user]);
 
@@ -180,6 +193,73 @@ const Profile = () => {
     });
 
     setContributions(combined);
+  };
+
+  const fetchOwnerClaims = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("owner_claims")
+      .select(`
+        id,
+        vin_id,
+        status,
+        created_at,
+        verified_at,
+        vins!inner(vin)
+      `)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching owner claims:", error);
+      return;
+    }
+
+    const claims: OwnerClaim[] = (data || []).map((claim: any) => ({
+      id: claim.id,
+      vin_id: claim.vin_id,
+      vin: claim.vins?.vin || "N/A",
+      status: claim.status,
+      created_at: claim.created_at,
+      verified_at: claim.verified_at,
+    }));
+
+    setOwnerClaims(claims);
+  };
+
+  const handleRevokeClaim = async (claimId: string) => {
+    setRevokingId(claimId);
+
+    const { error } = await supabase
+      .from("owner_claims")
+      .update({ 
+        status: "revoked", 
+        revoked_at: new Date().toISOString() 
+      })
+      .eq("id", claimId)
+      .eq("user_id", user?.id);
+
+    setRevokingId(null);
+    setRevokeClaimId(null);
+
+    if (error) {
+      toast({
+        title: language === "fr" ? "Erreur" : "Error",
+        description: language === "fr" 
+          ? "Impossible de révoquer le claim" 
+          : "Failed to revoke claim",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: language === "fr" ? "Révoqué" : "Revoked",
+        description: language === "fr" 
+          ? "Votre revendication a été révoquée" 
+          : "Your claim has been revoked",
+      });
+      fetchOwnerClaims();
+    }
   };
 
   const validateUsername = (value: string): boolean => {
@@ -349,14 +429,18 @@ const Profile = () => {
             </h1>
 
             <Tabs defaultValue="profile" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-2 max-w-md">
+              <TabsList className="grid w-full grid-cols-3 max-w-lg">
                 <TabsTrigger value="profile" className="flex items-center gap-2">
                   <User className="w-4 h-4" />
                   {language === "fr" ? "Profil" : "Profile"}
                 </TabsTrigger>
                 <TabsTrigger value="contributions" className="flex items-center gap-2">
                   <FileText className="w-4 h-4" />
-                  {language === "fr" ? "Mes contributions" : "My Contributions"}
+                  {language === "fr" ? "Contributions" : "Contributions"}
+                </TabsTrigger>
+                <TabsTrigger value="claims" className="flex items-center gap-2">
+                  <Car className="w-4 h-4" />
+                  {language === "fr" ? "Mes VIN" : "My VINs"}
                 </TabsTrigger>
               </TabsList>
 
@@ -570,6 +654,94 @@ const Profile = () => {
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              {/* Owner Claims Tab */}
+              <TabsContent value="claims" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="w-5 h-5 text-primary" />
+                      {language === "fr" ? "Mes VIN revendiqués" : "My Claimed VINs"}
+                    </CardTitle>
+                    <CardDescription>
+                      {language === "fr" 
+                        ? "Gérez vos revendications de propriété (beta)" 
+                        : "Manage your ownership claims (beta)"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {ownerClaims.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <Car className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p>{language === "fr" ? "Aucun VIN revendiqué" : "No claimed VINs"}</p>
+                        <p className="text-sm mt-2">
+                          {language === "fr" 
+                            ? "Vous pouvez revendiquer un VIN depuis sa page de détails." 
+                            : "You can claim a VIN from its details page."}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {ownerClaims.map((claim) => (
+                          <div 
+                            key={claim.id}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="flex-1 space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <code className="text-sm font-mono text-primary">{claim.vin}</code>
+                                {claim.status === "active" ? (
+                                  <Badge variant="default" className="bg-green-500/20 text-green-600">
+                                    {language === "fr" ? "Actif" : "Active"}
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="secondary">
+                                    {language === "fr" ? "Révoqué" : "Revoked"}
+                                  </Badge>
+                                )}
+                                {claim.verified_at && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {language === "fr" ? "Vérifié" : "Verified"}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {new Date(claim.created_at).toLocaleDateString(
+                                    language === "fr" ? "fr-CA" : "en-CA"
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => navigate(`/vin/${claim.vin}`)}
+                                title={language === "fr" ? "Voir" : "View"}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              {claim.status === "active" && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => setRevokeClaimId(claim.id)}
+                                  title={language === "fr" ? "Révoquer" : "Revoke"}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
             </Tabs>
           </div>
         </main>
@@ -603,6 +775,38 @@ const Profile = () => {
                   <Trash2 className="w-4 h-4 mr-2" />
                 )}
                 {language === "fr" ? "Supprimer" : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        {/* Revoke Claim Confirmation Dialog */}
+        <AlertDialog open={!!revokeClaimId} onOpenChange={() => setRevokeClaimId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {language === "fr" ? "Révoquer cette revendication ?" : "Revoke this claim?"}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {language === "fr" 
+                  ? "Cette action indiquera que vous n'êtes plus le propriétaire de ce véhicule. Vous pourrez revendiquer à nouveau plus tard si nécessaire." 
+                  : "This will indicate that you are no longer the owner of this vehicle. You can claim it again later if needed."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>
+                {language === "fr" ? "Annuler" : "Cancel"}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => revokeClaimId && handleRevokeClaim(revokeClaimId)}
+                disabled={!!revokingId}
+              >
+                {revokingId ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <Trash2 className="w-4 h-4 mr-2" />
+                )}
+                {language === "fr" ? "Révoquer" : "Revoke"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

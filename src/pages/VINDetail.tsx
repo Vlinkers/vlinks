@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ContributionForm } from "@/components/ContributionForm";
 import { OwnerClaimForm } from "@/components/OwnerClaimForm";
 import { PhotoGallery } from "@/components/PhotoGallery";
+import { UsernameRequiredDialog } from "@/components/UsernameRequiredDialog";
 import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { useVINDecode } from "@/hooks/useVINDecode";
 import { 
@@ -214,6 +215,8 @@ const VINDetail = () => {
   const [ownerVerificationStatus, setOwnerVerificationStatus] = useState<'none' | 'pending' | 'verified' | 'rejected'>('none');
   const [isCheckingOwner, setIsCheckingOwner] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [userHasUsername, setUserHasUsername] = useState(true);
+  const [showUsernameDialog, setShowUsernameDialog] = useState(false);
   const [isEndingOwnership, setIsEndingOwnership] = useState(false);
 
   // Check user and owner verification status
@@ -222,11 +225,22 @@ const VINDetail = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setCurrentUserId(null);
+        setUserHasUsername(true); // Reset for logged out users
         setIsCheckingOwner(false);
         return;
       }
 
       setCurrentUserId(user.id);
+
+      // Check if user has a valid username
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      const hasValidUsername = !!(profile?.username && profile.username.length >= 3);
+      setUserHasUsername(hasValidUsername);
 
       // If we have a VIN record, check owner verification status (only active, not ended)
       if (data?.id) {
@@ -376,7 +390,13 @@ const VINDetail = () => {
                     <Button 
                       size="default"
                       variant="hero"
-                      onClick={() => setShowContributionForm(true)}
+                      onClick={() => {
+                        if (!userHasUsername) {
+                          setShowUsernameDialog(true);
+                        } else {
+                          setShowContributionForm(true);
+                        }
+                      }}
                     >
                       <Link2 className="w-4 h-4 mr-2" />
                       Ajouter un maillon
@@ -1096,6 +1116,16 @@ const VINDetail = () => {
       </main>
 
       <Footer />
+
+      {/* Dialog pseudonyme obligatoire */}
+      <UsernameRequiredDialog 
+        open={showUsernameDialog} 
+        onComplete={() => {
+          setShowUsernameDialog(false);
+          setUserHasUsername(true);
+          setShowContributionForm(true);
+        }} 
+      />
 
       {/* Formulaires seulement si connecté */}
       {currentUserId && (

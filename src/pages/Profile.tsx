@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { User, FileText, LogOut, Calendar, Trash2, Eye, Loader2, AlertCircle, Car, Shield } from "lucide-react";
+import { validateUsernameFormat, checkUsernameAvailability } from "@/lib/usernameValidation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -263,34 +264,19 @@ const Profile = () => {
   };
 
   const validateUsername = (value: string): boolean => {
-    if (value.length < 3 || value.length > 20) {
-      setUsernameError(language === "fr" 
-        ? "Le pseudonyme doit contenir entre 3 et 20 caractères" 
-        : "Username must be between 3 and 20 characters");
-      return false;
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(value)) {
-      setUsernameError(language === "fr" 
-        ? "Lettres, chiffres et underscores uniquement" 
-        : "Letters, numbers, and underscores only");
+    const result = validateUsernameFormat(value, language as "fr" | "en");
+    if (!result.valid) {
+      setUsernameError(result.error || "");
       return false;
     }
     setUsernameError("");
     return true;
   };
 
-  const checkUsernameAvailability = async (value: string): Promise<boolean> => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("username", value)
-      .neq("user_id", user?.id || "")
-      .single();
-
-    if (data) {
-      setUsernameError(language === "fr" 
-        ? "Ce pseudonyme est déjà pris" 
-        : "This username is already taken");
+  const checkUsernameAvailable = async (value: string): Promise<boolean> => {
+    const result = await checkUsernameAvailability(value, user?.id, language as "fr" | "en");
+    if (!result.valid) {
+      setUsernameError(result.error || "");
       return false;
     }
     return true;
@@ -301,7 +287,7 @@ const Profile = () => {
     
     setSaving(true);
     
-    const isAvailable = await checkUsernameAvailability(username);
+    const isAvailable = await checkUsernameAvailable(username);
     if (!isAvailable) {
       setSaving(false);
       return;

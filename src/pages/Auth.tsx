@@ -160,11 +160,11 @@ const Auth = () => {
           {/* Logo */}
           <div className="text-center mb-8">
             <Link to="/" className="inline-flex items-center gap-2 group">
-              <Shield className="w-12 h-12 text-primary transition-transform group-hover:scale-110" />
-              <span className="font-display text-3xl font-bold">
-                <span className="text-gradient">VIN</span>
-                <span className="text-foreground">munity</span>
-              </span>
+              <img 
+                src="/lovable-uploads/23cc450b-40cf-471e-998e-38e8c6d766d8.png" 
+                alt="VLINKS" 
+                className="h-12 transition-transform group-hover:scale-110"
+              />
             </Link>
             <p className="mt-4 text-muted-foreground">
               {isLogin 

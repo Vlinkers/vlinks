@@ -30,7 +30,7 @@ const CTASection = () => {
             Prêt à acheter <span className="text-gradient">en toute confiance?</span>
           </h2>
           <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">
-            Rejoignez des milliers d'acheteurs qui font confiance à la communauté VINmunity 
+            Rejoignez des milliers d'acheteurs qui font confiance à la communauté VLINKS 
             pour prendre des décisions éclairées.
           </p>
 

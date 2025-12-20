@@ -94,7 +94,7 @@ const Auth = () => {
         } else {
           toast({
             title: "Connexion réussie",
-            description: "Bienvenue sur VINmunity !",
+            description: "Bienvenue sur VLINKS !",
           });
         }
       } else {
@@ -116,7 +116,7 @@ const Auth = () => {
         } else {
           toast({
             title: "Inscription réussie",
-            description: "Bienvenue dans la communauté VINmunity !",
+            description: "Bienvenue dans la communauté VLINKS !",
           });
         }
       }

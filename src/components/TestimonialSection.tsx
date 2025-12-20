@@ -8,7 +8,7 @@ const testimonials = [
     location: "Montréal, QC",
     avatar: "MT",
     rating: 5,
-    text: "Grâce à VINmunity, j'ai découvert que le véhicule avait eu un problème de transmission non déclaré. Le vendeur ne voulait rien dire, mais la communauté m'a sauvé d'un mauvais achat!",
+    text: "Grâce à VLINKS, j'ai découvert que le véhicule avait eu un problème de transmission non déclaré. Le vendeur ne voulait rien dire, mais la communauté m'a sauvé d'un mauvais achat!",
     badge: "verified",
   },
   {

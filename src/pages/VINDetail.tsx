@@ -4,8 +4,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ContributionForm } from "@/components/ContributionForm";
-import { OwnerContributionForm } from "@/components/OwnerContributionForm";
-import { OwnerVerificationForm } from "@/components/OwnerVerificationForm";
+import { OwnerClaimForm } from "@/components/OwnerClaimForm";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { useVINDecode } from "@/hooks/useVINDecode";
@@ -211,7 +210,7 @@ const VINDetail = () => {
   const [filterType, setFilterType] = useState<ContributionType | "all">("all");
   const [showContributionForm, setShowContributionForm] = useState(false);
   const [showOwnerForm, setShowOwnerForm] = useState(false);
-  const [isOwnerClaim, setIsOwnerClaim] = useState(false);
+  
   const [ownerVerificationStatus, setOwnerVerificationStatus] = useState<'none' | 'pending' | 'verified' | 'rejected'>('none');
   const [isCheckingOwner, setIsCheckingOwner] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -494,9 +493,9 @@ const VINDetail = () => {
           />
         )}
 
-        {/* Popup propriétaire (beta, discret) - seulement si connecté */}
+        {/* Popup propriétaire claim-only (beta, discret) - seulement si connecté */}
         {currentUserId && (
-          <OwnerVerificationForm
+          <OwnerClaimForm
             vinId={null}
             vin={vin || ""}
             open={showOwnerForm}
@@ -696,40 +695,24 @@ const VINDetail = () => {
             </div>
           )}
           
-          {/* Status propriétaire (si vérifié ou en attente) - discret */}
+          {/* Status propriétaire (si vérifié ou en attente) - discret, sans CTA contribution en V1 */}
           {!isCheckingOwner && currentUserId && ownerVerificationStatus === 'verified' && (
             <div className="mb-4 p-3 rounded-xl bg-success/5 border border-success/20 flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm">
                 <CheckCircle className="w-4 h-4 text-success" />
                 <span className="text-success font-medium">Propriétaire vérifié</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="text-success hover:bg-success/10"
-                  onClick={() => {
-                    setIsOwnerClaim(true);
-                    setShowOwnerForm(true);
-                  }}
-                >
-                  <Plus className="w-3 h-3 mr-1" />
-                  Contribution propriétaire
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="text-muted-foreground hover:text-foreground"
-                  onClick={handleEndOwnership}
-                  disabled={isEndingOwnership}
-                >
-                  {isEndingOwnership ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <XCircle className="w-3 h-3" />
-                  )}
-                </Button>
-              </div>
+              <button
+                onClick={handleEndOwnership}
+                disabled={isEndingOwnership}
+                className="text-xs text-muted-foreground hover:text-foreground underline transition-colors"
+              >
+                {isEndingOwnership ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  "Révoquer"
+                )}
+              </button>
             </div>
           )}
           
@@ -1121,14 +1104,10 @@ const VINDetail = () => {
             vinId={data.id}
             vin={vin || ""}
             open={showContributionForm}
-            onOpenChange={(open) => {
-              setShowContributionForm(open);
-              if (!open) setIsOwnerClaim(false);
-            }}
+            onOpenChange={setShowContributionForm}
             onSuccess={() => refetch()}
-            isOwnerClaim={isOwnerClaim}
           />
-          <OwnerVerificationForm
+          <OwnerClaimForm
             vinId={data.id}
             vin={vin || ""}
             open={showOwnerForm}

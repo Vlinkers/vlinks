@@ -122,6 +122,44 @@ export type Database = {
           },
         ]
       }
+      owner_claims: {
+        Row: {
+          created_at: string
+          id: string
+          revoked_at: string | null
+          status: string
+          user_id: string
+          verified_at: string | null
+          vin_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          revoked_at?: string | null
+          status?: string
+          user_id: string
+          verified_at?: string | null
+          vin_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          revoked_at?: string | null
+          status?: string
+          user_id?: string
+          verified_at?: string | null
+          vin_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_claims_vin_id_fkey"
+            columns: ["vin_id"]
+            isOneToOne: true
+            referencedRelation: "vins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       owner_verifications: {
         Row: {
           created_at: string

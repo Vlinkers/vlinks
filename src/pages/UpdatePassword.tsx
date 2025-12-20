@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, Lock, ArrowLeft, Eye, EyeOff, CheckCircle } from "lucide-react";
+import { Lock, ArrowLeft, Eye, EyeOff, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import vlinksLogo from "@/assets/vlinks-full-logo.png";
 
 const passwordSchema = z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères");
 
@@ -102,12 +103,12 @@ const UpdatePassword = () => {
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="text-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2 group">
-              <Shield className="w-12 h-12 text-primary transition-transform group-hover:scale-110" />
-              <span className="font-display text-3xl font-bold">
-                <span className="text-gradient">V</span>
-                <span className="text-foreground">LINKS</span>
-              </span>
+            <Link to="/" className="inline-block group">
+              <img 
+                src={vlinksLogo} 
+                alt="VLINKS" 
+                className="h-16 md:h-20 w-auto mx-auto transition-transform group-hover:scale-105"
+              />
             </Link>
           </div>
 

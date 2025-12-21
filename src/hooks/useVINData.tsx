@@ -18,12 +18,20 @@ export interface PublicContribution {
   author: string;
   authorPublicId: string | null;
   authorVerified: boolean;
-  // AI-processed fields - NEVER raw user text
+  // AI-processed fields - NEVER raw user text in summary
   summaryPublic: string;
   technicalFindings: string[];
   riskLevel: number;
   confidenceSource: string;
   sourceCredibility: string;
+  // V2 enriched fields
+  keyFacts: string[];
+  mechanicSignals: string[];
+  riskIndicators: string[];
+  documentAnalysis: string | null;
+  documentVsOralGap: string | null;
+  confidenceLevel: 'low' | 'medium' | 'high';
+  hasDocumentAttached: boolean;
   // Metadata
   isOwnerContribution: boolean;
   interventionType: string | null;
@@ -49,6 +57,12 @@ export interface VINData {
   uniqueContributors: number;
   lastUpdated: string;
   contributions: PublicContribution[];
+  // Aggregated data for report
+  allKeyFacts: string[];
+  allMechanicSignals: string[];
+  allRiskIndicators: string[];
+  hasHighRisk: boolean;
+  averageRiskLevel: number;
 }
 
 async function fetchVINData(vin: string): Promise<VINData | null> {
@@ -85,7 +99,14 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       mileage_at_intervention,
       created_at,
       author_label,
-      author_public_id
+      author_public_id,
+      key_facts,
+      mechanic_signals,
+      risk_indicators,
+      document_analysis,
+      document_vs_oral_gap,
+      confidence_level,
+      has_document_attached
     `)
     .eq("vin_id", vinRecord.id)
     .eq("publishable", true)
@@ -93,8 +114,22 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
 
   if (contribError) throw contribError;
 
+  // Aggregate all facts, signals, and risks
+  const allKeyFacts: string[] = [];
+  const allMechanicSignals: string[] = [];
+  const allRiskIndicators: string[] = [];
+  let totalRiskLevel = 0;
+  let hasHighRisk = false;
+
   // Transform contributions - ONLY AI-processed content, NO user_id exposure
   const transformedContributions: PublicContribution[] = (contributions || []).map(c => {
+    // Aggregate data
+    if (c.key_facts) allKeyFacts.push(...c.key_facts);
+    if (c.mechanic_signals) allMechanicSignals.push(...c.mechanic_signals);
+    if (c.risk_indicators) allRiskIndicators.push(...c.risk_indicators);
+    totalRiskLevel += c.risk_level || 1;
+    if ((c.risk_level || 1) >= 4) hasHighRisk = true;
+
     return {
       id: c.id,
       type: c.contribution_type,
@@ -113,14 +148,22 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       riskLevel: c.risk_level || 1,
       confidenceSource: c.confidence_source || "observation personnelle",
       sourceCredibility: c.source_credibility || "",
+      // V2 enriched fields
+      keyFacts: c.key_facts || [],
+      mechanicSignals: c.mechanic_signals || [],
+      riskIndicators: c.risk_indicators || [],
+      documentAnalysis: c.document_analysis || null,
+      documentVsOralGap: c.document_vs_oral_gap || null,
+      confidenceLevel: (c.confidence_level as 'low' | 'medium' | 'high') || 'medium',
+      hasDocumentAttached: c.has_document_attached || false,
       // Metadata
       isOwnerContribution: c.is_owner_contribution || false,
       interventionType: c.intervention_type,
       interventionDate: c.intervention_date,
       mileageAtIntervention: c.mileage_at_intervention,
       // Media - no longer linked via user_id for security
-      hasDocuments: false,
-      documentCount: 0,
+      hasDocuments: c.has_document_attached || false,
+      documentCount: c.has_document_attached ? 1 : 0,
       hasPhotos: false,
       photoCount: 0,
       photos: [],
@@ -140,6 +183,11 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
     ? formatRelativeTime(new Date(vinRecord.updated_at))
     : "Jamais";
 
+  // Calculate average risk level
+  const averageRiskLevel = contributions && contributions.length > 0
+    ? totalRiskLevel / contributions.length
+    : 0;
+
   return {
     id: vinRecord.id,
     vin: vinRecord.vin,
@@ -151,6 +199,12 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
     uniqueContributors,
     lastUpdated,
     contributions: transformedContributions,
+    // Aggregated data
+    allKeyFacts: [...new Set(allKeyFacts)], // Deduplicate
+    allMechanicSignals: [...new Set(allMechanicSignals)],
+    allRiskIndicators: [...new Set(allRiskIndicators)],
+    hasHighRisk,
+    averageRiskLevel,
   };
 }
 

@@ -284,18 +284,27 @@ export type Database = {
           ai_model_used: string | null
           author_label: string
           author_public_id: string | null
+          confidence_level: string | null
           confidence_source: string | null
           contribution_type: Database["public"]["Enums"]["contribution_type"]
           created_at: string
+          document_analysis: string | null
+          document_text_extracted: string | null
+          document_vs_oral_gap: string | null
+          has_document_attached: boolean | null
           id: string
           intervention_date: string | null
           intervention_type: string | null
           is_anonymous: boolean | null
           is_owner_contribution: boolean | null
+          key_facts: string[] | null
+          mechanic_signals: string[] | null
           mileage_at_intervention: number | null
           processed_at: string
           publishable: boolean
           raw_contribution_id: string
+          raw_user_content: string | null
+          risk_indicators: string[] | null
           risk_level: number | null
           source_credibility: string | null
           summary_public: string
@@ -308,18 +317,27 @@ export type Database = {
           ai_model_used?: string | null
           author_label?: string
           author_public_id?: string | null
+          confidence_level?: string | null
           confidence_source?: string | null
           contribution_type: Database["public"]["Enums"]["contribution_type"]
           created_at?: string
+          document_analysis?: string | null
+          document_text_extracted?: string | null
+          document_vs_oral_gap?: string | null
+          has_document_attached?: boolean | null
           id?: string
           intervention_date?: string | null
           intervention_type?: string | null
           is_anonymous?: boolean | null
           is_owner_contribution?: boolean | null
+          key_facts?: string[] | null
+          mechanic_signals?: string[] | null
           mileage_at_intervention?: number | null
           processed_at?: string
           publishable?: boolean
           raw_contribution_id: string
+          raw_user_content?: string | null
+          risk_indicators?: string[] | null
           risk_level?: number | null
           source_credibility?: string | null
           summary_public: string
@@ -332,18 +350,27 @@ export type Database = {
           ai_model_used?: string | null
           author_label?: string
           author_public_id?: string | null
+          confidence_level?: string | null
           confidence_source?: string | null
           contribution_type?: Database["public"]["Enums"]["contribution_type"]
           created_at?: string
+          document_analysis?: string | null
+          document_text_extracted?: string | null
+          document_vs_oral_gap?: string | null
+          has_document_attached?: boolean | null
           id?: string
           intervention_date?: string | null
           intervention_type?: string | null
           is_anonymous?: boolean | null
           is_owner_contribution?: boolean | null
+          key_facts?: string[] | null
+          mechanic_signals?: string[] | null
           mileage_at_intervention?: number | null
           processed_at?: string
           publishable?: boolean
           raw_contribution_id?: string
+          raw_user_content?: string | null
+          risk_indicators?: string[] | null
           risk_level?: number | null
           source_credibility?: string | null
           summary_public?: string

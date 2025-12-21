@@ -1002,37 +1002,107 @@ const VINDetail = () => {
                 </div>
               </div>
 
-              {/* Premium Upsell */}
+              {/* Aggregated Signals Summary */}
+              {(data.allMechanicSignals.length > 0 || data.allRiskIndicators.length > 0) && (
+                <div className="p-6 rounded-2xl glass border border-warning/30">
+                  <h3 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-warning" />
+                    Points d'attention
+                  </h3>
+                  {data.allMechanicSignals.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs font-medium text-muted-foreground mb-2">Signaux mécaniques</p>
+                      <ul className="space-y-1">
+                        {data.allMechanicSignals.slice(0, 5).map((signal, i) => (
+                          <li key={i} className="text-sm flex items-start gap-2">
+                            <Wrench className="w-3 h-3 mt-1 text-warning flex-shrink-0" />
+                            {signal}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {data.allRiskIndicators.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-2">Indicateurs de risque</p>
+                      <ul className="space-y-1">
+                        {data.allRiskIndicators.slice(0, 3).map((risk, i) => (
+                          <li key={i} className="text-sm flex items-start gap-2 text-danger">
+                            <AlertTriangle className="w-3 h-3 mt-1 flex-shrink-0" />
+                            {risk}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Key Facts */}
+              {data.allKeyFacts.length > 0 && (
+                <div className="p-6 rounded-2xl glass">
+                  <h3 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-success" />
+                    Faits clés
+                  </h3>
+                  <ul className="space-y-2">
+                    {data.allKeyFacts.slice(0, 6).map((fact, i) => (
+                      <li key={i} className="text-sm flex items-start gap-2">
+                        <span className="text-primary">•</span>
+                        {fact}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Premium Upsell - Report Button */}
               <div className="p-6 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
                 <div className="flex items-center gap-2 mb-3">
-                  <Lock className="w-5 h-5 text-primary" />
+                  <FileText className="w-5 h-5 text-primary" />
                   <h3 className="font-display text-lg font-semibold">
                     Rapport consolidé
                   </h3>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Obtenez un rapport unifié avec tous les documents, l'analyse de risque 
-                  détaillée et les recommandations personnalisées.
+                  Rapport unifié avec synthèse, faits clés, signaux mécaniques et recommandation d'achat.
                 </p>
                 <ul className="space-y-2 mb-4">
                   <li className="flex items-center gap-2 text-sm">
                     <CheckCircle className="w-4 h-4 text-success" />
-                    Tous les documents anonymisés
+                    Synthèse complète
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <CheckCircle className="w-4 h-4 text-success" />
-                    Synthèse des observations
+                    Score de confiance: {data.trustScore}/100
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <CheckCircle className="w-4 h-4 text-success" />
-                    Analyse prédictive des risques
-                  </li>
-                  <li className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="w-4 h-4 text-success" />
-                    Recommandation d'achat
+                    {data.totalContributions} contributions analysées
                   </li>
                 </ul>
-                <Button variant="hero" className="w-full">
+                <Button 
+                  variant="hero" 
+                  className="w-full"
+                  onClick={async () => {
+                    try {
+                      const { data: reportData, error } = await supabase.functions.invoke('generate-report', {
+                        body: { vin_id: data.id }
+                      });
+                      if (error) throw error;
+                      if (reportData?.report) {
+                        // Open report in new window as JSON for now
+                        const blob = new Blob([JSON.stringify(reportData.report, null, 2)], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        window.open(url, '_blank');
+                        toast({ title: "Rapport généré", description: "Le rapport a été ouvert dans un nouvel onglet." });
+                      }
+                    } catch (err) {
+                      console.error('Report error:', err);
+                      toast({ title: "Erreur", description: "Impossible de générer le rapport.", variant: "destructive" });
+                    }
+                  }}
+                >
                   <FileText className="w-4 h-4 mr-2" />
                   Obtenir le rapport
                 </Button>

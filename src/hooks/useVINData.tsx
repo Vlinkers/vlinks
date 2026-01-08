@@ -32,6 +32,7 @@ export interface PublicContribution {
   documentVsOralGap: string | null;
   confidenceLevel: 'low' | 'medium' | 'high';
   hasDocumentAttached: boolean;
+  sourceEvidence: string[];
   // Metadata
   isOwnerContribution: boolean;
   interventionType: string | null;
@@ -105,6 +106,7 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       risk_indicators,
       document_analysis,
       document_vs_oral_gap,
+      source_evidence,
       confidence_level,
       has_document_attached
     `)
@@ -156,6 +158,7 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       documentVsOralGap: c.document_vs_oral_gap || null,
       confidenceLevel: (c.confidence_level as 'low' | 'medium' | 'high') || 'medium',
       hasDocumentAttached: c.has_document_attached || false,
+      sourceEvidence: c.source_evidence || ['Texte utilisateur uniquement'],
       // Metadata
       isOwnerContribution: c.is_owner_contribution || false,
       interventionType: c.intervention_type,

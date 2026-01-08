@@ -1,6 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+// @ts-ignore - pdfjs-serverless has type issues but works at runtime
+import { getDocument } from "https://esm.sh/pdfjs-serverless";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -115,13 +117,14 @@ Tu produis UNIQUEMENT un objet JSON structuré contenant :
   "key_facts": ["Fait clé 1 - reformulé de façon neutre", "Fait clé 2", ...],
   "mechanic_signals": ["Signal mécanique 1 - usure, bruit, fuite, etc.", ...],
   "risk_indicators": ["Indicateur de risque 1 - incohérence, divergence, etc.", ...],
-  "document_analysis": "Analyse du document joint si fourni. Résumé des points clés du document officiel.",
+  "document_analysis": "Analyse du document joint si fourni. Résumé des points clés du document officiel. DOIT citer explicitement des éléments extraits du PDF si disponible.",
   "document_vs_oral_gap": "Différences notables entre le contenu du document et le témoignage oral du contributeur. Null si pas de divergence ou pas de document.",
   "technical_findings": ["Constat technique 1", "Constat technique 2", ...],
   "risk_level": <nombre de 1 à 5>,
   "confidence_level": "<low|medium|high>",
   "confidence_source": "<inspection professionnelle | observation personnelle | historique véhicule | échange avec propriétaire | échange avec mécanicien>",
   "source_credibility": "Qualification neutre de la source sans noms propres",
+  "source_evidence": ["Type de source utilisée : PDF officiel analysé | Document non extractible | Texte utilisateur uniquement"],
   "publishable": <true | false>
 }
 
@@ -152,6 +155,12 @@ risk_indicators:
 document_vs_oral_gap:
 - Null si pas de document ou pas de divergence
 - Sinon: description factuelle des différences
+
+source_evidence:
+- OBLIGATOIRE: liste des sources d'information utilisées
+- "PDF officiel analysé" si un PDF avec texte extractible a été fourni
+- "Document non extractible (scan)" si PDF scanné sans texte
+- "Texte utilisateur uniquement" si aucun document
 
 confidence_level:
 - "high": Document officiel, inspection professionnelle, multiple sources concordantes
@@ -185,6 +194,7 @@ Si le contenu est vide, incompréhensible ou ne contient aucune information util
   "confidence_level": "low",
   "confidence_source": "observation personnelle",
   "source_credibility": "Source non qualifiable.",
+  "source_evidence": ["Texte utilisateur uniquement"],
   "publishable": false
 }
 
@@ -228,6 +238,7 @@ interface AIResponse {
   confidence_level: string;
   confidence_source: string;
   source_credibility: string;
+  source_evidence: string[];
   publishable: boolean;
 }
 
@@ -242,40 +253,198 @@ interface ContributionDocument {
   file_path: string;
   file_name: string;
   file_type: string | null;
+  file_size: number | null;
   description: string | null;
 }
 
-// Simple function to extract text content description from documents
-async function getDocumentContext(supabase: any, contributionId: string): Promise<{ hasDocuments: boolean; documentDescription: string }> {
+interface PDFExtractionResult {
+  text: string;
+  stats: {
+    chars: number;
+    pages: number;
+    is_scanned_guess: boolean;
+  };
+  needs_ocr: boolean;
+}
+
+// Extract text from PDF using pdfjs-serverless
+async function extractPDFText(pdfBytes: Uint8Array): Promise<PDFExtractionResult> {
+  try {
+    console.log(`Extracting text from PDF (${pdfBytes.length} bytes)...`);
+    
+    const document = await getDocument({ 
+      data: pdfBytes,
+      useSystemFonts: true 
+    }).promise;
+    
+    const numPages = document.numPages;
+    let fullText = '';
+    
+    for (let i = 1; i <= numPages; i++) {
+      const page = await document.getPage(i);
+      const textContent = await page.getTextContent();
+      // @ts-ignore - TextItem type varies across pdfjs versions
+      const pageText = textContent.items
+        .filter((item: any) => 'str' in item)
+        .map((item: any) => item.str || '')
+        .join(' ');
+      fullText += pageText + '\n\n';
+    }
+    
+    // Trim and limit to 60k characters for AI cost control
+    fullText = fullText.trim().substring(0, 60000);
+    
+    const charCount = fullText.length;
+    const isScannedGuess = charCount < 300; // Less than 300 chars = likely scanned
+    
+    console.log(`PDF extraction complete: ${charCount} chars, ${numPages} pages, scanned_guess=${isScannedGuess}`);
+    
+    return {
+      text: fullText,
+      stats: {
+        chars: charCount,
+        pages: numPages,
+        is_scanned_guess: isScannedGuess
+      },
+      needs_ocr: isScannedGuess
+    };
+  } catch (error) {
+    console.error('Error extracting PDF text:', error);
+    return {
+      text: '',
+      stats: { chars: 0, pages: 0, is_scanned_guess: true },
+      needs_ocr: true
+    };
+  }
+}
+
+// Download PDF from Supabase Storage and extract text
+async function downloadAndExtractPDF(supabase: any, filePath: string): Promise<PDFExtractionResult | null> {
+  try {
+    console.log(`Downloading PDF from storage: ${filePath}`);
+    
+    const { data, error } = await supabase.storage
+      .from('vin-documents')
+      .download(filePath);
+    
+    if (error || !data) {
+      console.error('Error downloading PDF:', error);
+      return null;
+    }
+    
+    const arrayBuffer = await data.arrayBuffer();
+    const pdfBytes = new Uint8Array(arrayBuffer);
+    
+    return await extractPDFText(pdfBytes);
+  } catch (error) {
+    console.error('Error in downloadAndExtractPDF:', error);
+    return null;
+  }
+}
+
+// Get document context with PDF text extraction
+async function getDocumentContext(
+  supabase: any, 
+  contributionId: string
+): Promise<{ 
+  hasDocuments: boolean; 
+  documentDescription: string;
+  extractedText: string;
+  extractionStats: { chars: number; pages: number; is_scanned_guess: boolean } | null;
+  needsOCR: boolean;
+  sourceEvidence: string[];
+}> {
   // Fetch documents attached to this contribution
   const { data: documents, error } = await supabase
     .from('contribution_documents')
-    .select('file_name, file_type, description')
+    .select('id, file_name, file_path, file_type, file_size, description')
     .eq('contribution_id', contributionId);
 
   if (error || !documents || documents.length === 0) {
-    return { hasDocuments: false, documentDescription: '' };
+    return { 
+      hasDocuments: false, 
+      documentDescription: '', 
+      extractedText: '',
+      extractionStats: null,
+      needsOCR: false,
+      sourceEvidence: ['Texte utilisateur uniquement']
+    };
+  }
+
+  let extractedText = '';
+  let extractionStats: { chars: number; pages: number; is_scanned_guess: boolean } | null = null;
+  let needsOCR = false;
+  const sourceEvidence: string[] = [];
+
+  // Try to extract text from PDF documents
+  for (const doc of documents as ContributionDocument[]) {
+    const isPDF = doc.file_type?.includes('pdf') || doc.file_name?.toLowerCase().endsWith('.pdf');
+    
+    if (isPDF && doc.file_path) {
+      console.log(`Found PDF document: ${doc.file_name}`);
+      const result = await downloadAndExtractPDF(supabase, doc.file_path);
+      
+      if (result) {
+        if (result.needs_ocr) {
+          needsOCR = true;
+          sourceEvidence.push('Document non extractible (scan)');
+          console.log(`PDF appears to be scanned: ${doc.file_name}`);
+        } else if (result.text.length > 0) {
+          extractedText += `\n--- Contenu extrait de ${doc.file_name} ---\n${result.text}\n`;
+          extractionStats = result.stats;
+          sourceEvidence.push('PDF officiel analysé');
+          console.log(`Extracted ${result.stats.chars} chars from ${doc.file_name}`);
+        }
+      }
+    }
+  }
+
+  // If no PDF was extracted, add user text only evidence
+  if (sourceEvidence.length === 0) {
+    sourceEvidence.push('Texte utilisateur uniquement');
   }
 
   // Build a description of attached documents for the AI
   const docDescriptions = documents.map((doc: ContributionDocument) => {
     let desc = `- Document: ${doc.file_name}`;
     if (doc.file_type) desc += ` (type: ${doc.file_type})`;
+    if (doc.file_size) desc += ` (${Math.round(doc.file_size / 1024)} Ko)`;
     if (doc.description) desc += ` - Description: ${doc.description}`;
     return desc;
   }).join('\n');
 
-  return {
-    hasDocuments: true,
-    documentDescription: `
+  let documentSection = `
 ═══════════════════════════════════════════
 DOCUMENTS JOINTS À CETTE CONTRIBUTION
 ═══════════════════════════════════════════
 ${docDescriptions}
+`;
 
-Note: Les documents ci-dessus ont été fournis par le contributeur. 
-Analyse les descriptions et compare avec le témoignage oral pour détecter d'éventuelles divergences.
-`
+  if (extractedText) {
+    documentSection += `
+═══════════════════════════════════════════
+DOCUMENT_OFFICIEL_EXTRACT (Texte extrait du PDF)
+═══════════════════════════════════════════
+${extractedText}
+
+IMPORTANT: Tu DOIS citer explicitement des éléments de ce texte dans ton analyse.
+Compare ce contenu officiel avec le témoignage oral du contributeur pour détecter les divergences.
+`;
+  } else if (needsOCR) {
+    documentSection += `
+⚠️ NOTE: Le PDF joint semble être un document scanné (image).
+L'extraction automatique du texte n'a pas été possible.
+L'analyse se base uniquement sur la description fournie par le contributeur.
+`;
+  }
+
+  return {
+    hasDocuments: true,
+    documentDescription: documentSection,
+    extractedText,
+    extractionStats,
+    needsOCR,
+    sourceEvidence
   };
 }
 
@@ -345,9 +514,31 @@ serve(async (req) => {
       .update({ processing_status: 'processing' })
       .eq('id', contribution_id);
 
-    // Get document context if any documents are attached
-    const { hasDocuments, documentDescription } = await getDocumentContext(supabase, contribution_id);
-    console.log(`Documents attached: ${hasDocuments}`);
+    // Get document context with PDF extraction
+    console.log('Extracting document content...');
+    const { 
+      hasDocuments, 
+      documentDescription, 
+      extractedText,
+      extractionStats,
+      needsOCR,
+      sourceEvidence 
+    } = await getDocumentContext(supabase, contribution_id);
+    
+    console.log(`Documents attached: ${hasDocuments}, extracted ${extractedText.length} chars, needsOCR: ${needsOCR}`);
+
+    // Store extraction results in raw_contributions (private storage)
+    if (extractedText || needsOCR) {
+      await supabase
+        .from('raw_contributions')
+        .update({
+          extracted_document_text: extractedText || null,
+          extracted_document_stats: extractionStats || null,
+          needs_ocr: needsOCR
+        })
+        .eq('id', contribution_id);
+      console.log('Stored extraction results in raw_contributions');
+    }
 
     // Build raw user content (preserved unmodified)
     const rawUserContent = `
@@ -533,6 +724,17 @@ ${documentDescription}
       ? aiResult.confidence_level 
       : 'medium';
 
+    // Use source evidence from extraction if AI didn't provide it
+    const finalSourceEvidence = (Array.isArray(aiResult.source_evidence) && aiResult.source_evidence.length > 0)
+      ? aiResult.source_evidence
+      : sourceEvidence;
+
+    // Adjust document analysis for scanned PDFs
+    let finalDocumentAnalysis = aiResult.document_analysis;
+    if (needsOCR && !extractedText) {
+      finalDocumentAnalysis = "PDF scanné/non-extractible sans OCR. L'analyse se base uniquement sur la description fournie par le contributeur.";
+    }
+
     console.log('Creating public contribution with enriched data...');
 
     // Insert into public_contributions
@@ -560,13 +762,15 @@ ${documentDescription}
         key_facts: aiResult.key_facts || [],
         mechanic_signals: aiResult.mechanic_signals || [],
         risk_indicators: aiResult.risk_indicators || [],
-        document_analysis: aiResult.document_analysis || null,
+        document_analysis: finalDocumentAnalysis,
         document_vs_oral_gap: aiResult.document_vs_oral_gap || null,
+        document_text_extracted: extractedText || null,
         technical_findings: aiResult.technical_findings || [],
         risk_level: aiResult.risk_level,
         confidence_level: confidenceLevel,
         confidence_source: finalConfidenceSource,
         source_credibility: finalSourceCredibility,
+        source_evidence: finalSourceEvidence,
         // Metadata
         is_anonymous: rawContribution.is_anonymous,
         publishable: aiResult.publishable,
@@ -608,6 +812,7 @@ ${documentDescription}
 
     console.log(`Contribution processed successfully: ${publicContribution.id}, publishable: ${aiResult.publishable}`);
     console.log(`Enriched data: ${aiResult.key_facts?.length || 0} facts, ${aiResult.mechanic_signals?.length || 0} signals, ${aiResult.risk_indicators?.length || 0} risks`);
+    console.log(`PDF extraction: ${extractedText ? extractedText.length + ' chars extracted' : needsOCR ? 'needs OCR' : 'no PDF'}`);
 
     return new Response(JSON.stringify({ 
       success: true,
@@ -617,8 +822,10 @@ ${documentDescription}
         key_facts_count: aiResult.key_facts?.length || 0,
         mechanic_signals_count: aiResult.mechanic_signals?.length || 0,
         risk_indicators_count: aiResult.risk_indicators?.length || 0,
-        has_document_analysis: !!aiResult.document_analysis,
-        has_gap_analysis: !!aiResult.document_vs_oral_gap
+        has_document_analysis: !!finalDocumentAnalysis,
+        has_gap_analysis: !!aiResult.document_vs_oral_gap,
+        pdf_extracted_chars: extractedText?.length || 0,
+        needs_ocr: needsOCR
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

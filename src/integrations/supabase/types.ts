@@ -307,6 +307,7 @@ export type Database = {
           risk_indicators: string[] | null
           risk_level: number | null
           source_credibility: string | null
+          source_evidence: string[] | null
           summary_public: string
           technical_findings: string[] | null
           updated_at: string
@@ -340,6 +341,7 @@ export type Database = {
           risk_indicators?: string[] | null
           risk_level?: number | null
           source_credibility?: string | null
+          source_evidence?: string[] | null
           summary_public: string
           technical_findings?: string[] | null
           updated_at?: string
@@ -373,6 +375,7 @@ export type Database = {
           risk_indicators?: string[] | null
           risk_level?: number | null
           source_credibility?: string | null
+          source_evidence?: string[] | null
           summary_public?: string
           technical_findings?: string[] | null
           updated_at?: string
@@ -401,6 +404,8 @@ export type Database = {
           contribution_type: Database["public"]["Enums"]["contribution_type"]
           created_at: string
           details: string | null
+          extracted_document_stats: Json | null
+          extracted_document_text: string | null
           id: string
           intervention_date: string | null
           intervention_type: string | null
@@ -408,6 +413,7 @@ export type Database = {
           is_former_owner: boolean | null
           is_owner_contribution: boolean | null
           mileage_at_intervention: number | null
+          needs_ocr: boolean | null
           processing_error: string | null
           processing_status: string
           summary: string | null
@@ -420,6 +426,8 @@ export type Database = {
           contribution_type: Database["public"]["Enums"]["contribution_type"]
           created_at?: string
           details?: string | null
+          extracted_document_stats?: Json | null
+          extracted_document_text?: string | null
           id?: string
           intervention_date?: string | null
           intervention_type?: string | null
@@ -427,6 +435,7 @@ export type Database = {
           is_former_owner?: boolean | null
           is_owner_contribution?: boolean | null
           mileage_at_intervention?: number | null
+          needs_ocr?: boolean | null
           processing_error?: string | null
           processing_status?: string
           summary?: string | null
@@ -439,6 +448,8 @@ export type Database = {
           contribution_type?: Database["public"]["Enums"]["contribution_type"]
           created_at?: string
           details?: string | null
+          extracted_document_stats?: Json | null
+          extracted_document_text?: string | null
           id?: string
           intervention_date?: string | null
           intervention_type?: string | null
@@ -446,6 +457,7 @@ export type Database = {
           is_former_owner?: boolean | null
           is_owner_contribution?: boolean | null
           mileage_at_intervention?: number | null
+          needs_ocr?: boolean | null
           processing_error?: string | null
           processing_status?: string
           summary?: string | null

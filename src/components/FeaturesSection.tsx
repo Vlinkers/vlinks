@@ -36,8 +36,8 @@ const features = [
   },
   {
     icon: FileText,
-    title: "Rapports Premium",
-    description: "Obtenez un dossier consolidé complet avec analyse technique et scoring de risque.",
+    title: "Dossiers complets",
+    description: "Consultez l'ensemble des contributions sur un véhicule, directement publiées par la communauté.",
     color: "accent",
   },
   {

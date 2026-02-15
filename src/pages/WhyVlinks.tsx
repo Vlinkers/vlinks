@@ -70,8 +70,8 @@ const WhyVlinks = () => {
     },
     {
       icon: Eye,
-      title: "Résumés objectifs",
-      description: "Des informations factuelles, sans jugement personnel.",
+      title: "Contributions directes",
+      description: "Les contributions sont publiées telles que soumises par leurs auteurs.",
     },
   ];
 

@@ -272,6 +272,16 @@ export function OwnerContributionForm({
 
     const dbContributionType = ownerTypeToDbType[data.contribution_type] || "observation";
 
+    // Get user profile for author label
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("username, public_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const authorLabel = data.is_anonymous ? "Anonyme" : (profile?.username || "Anonyme");
+    const authorPublicId = data.is_anonymous ? null : (profile?.public_id || null);
+
     const { data: rawContribution, error: rawError } = await supabase
       .from("raw_contributions")
       .insert({
@@ -286,7 +296,6 @@ export function OwnerContributionForm({
         intervention_date: data.intervention_date || null,
         mileage_at_intervention: data.mileage ? parseInt(data.mileage) : null,
         intervention_type: data.intervention_type || data.contribution_type,
-        processing_status: 'pending',
       })
       .select()
       .single();
@@ -308,6 +317,29 @@ export function OwnerContributionForm({
       .single();
 
     if (contributionError) throw contributionError;
+
+    // Publish directly to public_contributions - no AI processing
+    const { error: pubError } = await supabase
+      .from("public_contributions")
+      .insert({
+        raw_contribution_id: rawContribution.id,
+        user_id: userId,
+        vin_id: actualVinId,
+        contribution_type: dbContributionType as any,
+        summary_public: data.summary,
+        is_anonymous: data.is_anonymous,
+        is_owner_contribution: true,
+        intervention_type: data.intervention_type || data.contribution_type,
+        intervention_date: data.intervention_date || null,
+        mileage_at_intervention: data.mileage ? parseInt(data.mileage) : null,
+        author_label: authorLabel,
+        author_public_id: authorPublicId,
+        publishable: true,
+      });
+
+    if (pubError) {
+      console.error("Error publishing contribution:", pubError);
+    }
 
     for (const doc of documents) {
       const filePath = `${userId}/${contribution.id}/${doc.name}`;
@@ -345,35 +377,11 @@ export function OwnerContributionForm({
       }
     }
 
-    setProcessingStatus('processing');
-    
-    const { data: processResult, error: processError } = await supabase.functions.invoke(
-      'process-contribution',
-      {
-        body: { contribution_id: rawContribution.id },
-      }
-    );
-
-    if (processError) {
-      console.error("Error processing contribution:", processError);
-      toast({
-        title: "Contribution enregistrée",
-        description: "Votre contribution sera analysée sous peu.",
-      });
-    } else if (processResult?.success) {
-      setProcessingStatus('done');
-      toast({
-        title: "Contribution analysée",
-        description: processResult.publishable 
-          ? "Votre contribution a été analysée et sera publiée." 
-          : "Votre contribution a été analysée. Elle sera vérifiée par notre équipe.",
-      });
-    } else {
-      toast({
-        title: "Contribution enregistrée",
-        description: "Votre contribution sera analysée sous peu.",
-      });
-    }
+    setProcessingStatus('done');
+    toast({
+      title: "Contribution publiée",
+      description: "Votre contribution a été publiée avec succès.",
+    });
 
     reset();
     setDocuments([]);

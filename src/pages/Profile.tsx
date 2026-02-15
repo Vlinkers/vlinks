@@ -322,10 +322,10 @@ const Profile = () => {
   const handleDeleteContribution = async (contributionId: string) => {
     setDeletingId(contributionId);
     
-    // Soft delete: update processing_status to 'deleted'
+    // Soft delete: delete from raw_contributions
     const { error: rawError } = await supabase
       .from("raw_contributions")
-      .update({ processing_status: "deleted" })
+      .delete()
       .eq("id", contributionId)
       .eq("user_id", user?.id);
 

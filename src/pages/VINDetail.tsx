@@ -207,7 +207,7 @@ const VINDetail = () => {
   const { data, isLoading, error, refetch } = useVINData(vin);
   const { data: vinDecode, isLoading: isDecodingVIN } = useVINDecode(vin);
   const { toast } = useToast();
-  const [expandedContribution, setExpandedContribution] = useState<string | null>(null);
+  const [expandedContribution] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<ContributionType | "all">("all");
   const [showContributionForm, setShowContributionForm] = useState(false);
   const [showOwnerForm, setShowOwnerForm] = useState(false);
@@ -418,7 +418,7 @@ const VINDetail = () => {
                 {/* Sous-texte seulement si connecté */}
                 {currentUserId && (
                   <p className="text-xs text-muted-foreground mt-3 text-left">
-                    Votre contribution est analysée et reformulée automatiquement avant publication.
+                    Les contributions sont publiées telles que soumises par leurs auteurs.
                   </p>
                 )}
               </div>
@@ -809,7 +809,7 @@ const VINDetail = () => {
                             <Icon className="w-3 h-3" />
                           </div>
 
-                          {/* Contribution Card - AI-processed content only */}
+                          {/* Contribution Card */}
                           <div className="p-5 rounded-xl glass border border-border/50 hover:border-primary/30 transition-all">
                             {/* Header */}
                             <div className="flex items-start justify-between mb-3">
@@ -831,18 +831,6 @@ const VINDetail = () => {
                                       Vérifié
                                     </Badge>
                                   )}
-                                  {/* Risk Level Badge */}
-                                  {contribution.riskLevel >= 4 && (
-                                    <Badge variant="destructive" className="text-xs">
-                                      <AlertTriangle className="w-3 h-3 mr-1" />
-                                      Risque élevé
-                                    </Badge>
-                                  )}
-                                  {contribution.riskLevel === 3 && (
-                                    <Badge variant="warning" className="text-xs">
-                                      Attention requise
-                                    </Badge>
-                                  )}
                                 </div>
                                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                                   <span>{contribution.author}</span>
@@ -861,33 +849,10 @@ const VINDetail = () => {
                               </div>
                             </div>
 
-                            {/* AI-Processed Summary - NEVER raw user text */}
+                            {/* Contribution content - displayed as-is */}
                             <p className="text-sm text-foreground/90 mb-3">
                               {contribution.summaryPublic}
                             </p>
-
-                            {/* Source Credibility */}
-                            {contribution.sourceCredibility && (
-                              <div className="text-xs text-muted-foreground mb-3 flex items-center gap-1">
-                                <Shield className="w-3 h-3" />
-                                <span>{contribution.sourceCredibility}</span>
-                              </div>
-                            )}
-
-                            {/* Technical Findings - Expandable */}
-                            {isExpanded && contribution.technicalFindings.length > 0 && (
-                              <div className="p-4 rounded-lg bg-muted/20 mb-3 border-l-2 border-primary/50">
-                                <p className="text-xs font-medium text-muted-foreground mb-2">Constats techniques</p>
-                                <ul className="space-y-1">
-                                  {contribution.technicalFindings.map((finding, i) => (
-                                    <li key={i} className="text-sm text-foreground/70 flex items-start gap-2">
-                                      <span className="text-primary">•</span>
-                                      {finding}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
 
                             {/* Photo Gallery */}
                             {contribution.photos.length > 0 && (
@@ -910,17 +875,6 @@ const VINDetail = () => {
                                     <Camera className="w-4 h-4" />
                                     {contribution.photoCount} photo{contribution.photoCount > 1 ? "s" : ""}
                                   </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-3">
-                                {contribution.technicalFindings.length > 0 && (
-                                  <button
-                                    onClick={() => setExpandedContribution(isExpanded ? null : contribution.id)}
-                                    className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors"
-                                  >
-                                    <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                                    {isExpanded ? "Moins" : "Détails"}
-                                  </button>
                                 )}
                               </div>
                             </div>
@@ -986,126 +940,6 @@ const VINDetail = () => {
                     <span className="font-semibold">{contributions.filter(c => c.isOwnerContribution).length}</span>
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-border/50">
-                  <div className="flex items-center gap-2 text-sm">
-                    <div className="w-2 h-2 rounded-full bg-success" />
-                    <span className="text-muted-foreground">
-                      {contributions.filter(c => c.riskLevel <= 2).length} sans problème détecté
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm mt-1">
-                    <div className="w-2 h-2 rounded-full bg-warning" />
-                    <span className="text-muted-foreground">
-                      {contributions.filter(c => c.riskLevel >= 3).length} points d'attention
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Aggregated Signals Summary */}
-              {(data.allMechanicSignals.length > 0 || data.allRiskIndicators.length > 0) && (
-                <div className="p-6 rounded-2xl glass border border-warning/30">
-                  <h3 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-warning" />
-                    Points d'attention
-                  </h3>
-                  {data.allMechanicSignals.length > 0 && (
-                    <div className="mb-4">
-                      <p className="text-xs font-medium text-muted-foreground mb-2">Signaux mécaniques</p>
-                      <ul className="space-y-1">
-                        {data.allMechanicSignals.slice(0, 5).map((signal, i) => (
-                          <li key={i} className="text-sm flex items-start gap-2">
-                            <Wrench className="w-3 h-3 mt-1 text-warning flex-shrink-0" />
-                            {signal}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {data.allRiskIndicators.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-2">Indicateurs de risque</p>
-                      <ul className="space-y-1">
-                        {data.allRiskIndicators.slice(0, 3).map((risk, i) => (
-                          <li key={i} className="text-sm flex items-start gap-2 text-danger">
-                            <AlertTriangle className="w-3 h-3 mt-1 flex-shrink-0" />
-                            {risk}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Key Facts */}
-              {data.allKeyFacts.length > 0 && (
-                <div className="p-6 rounded-2xl glass">
-                  <h3 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-success" />
-                    Faits clés
-                  </h3>
-                  <ul className="space-y-2">
-                    {data.allKeyFacts.slice(0, 6).map((fact, i) => (
-                      <li key={i} className="text-sm flex items-start gap-2">
-                        <span className="text-primary">•</span>
-                        {fact}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Premium Upsell - Report Button */}
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
-                <div className="flex items-center gap-2 mb-3">
-                  <FileText className="w-5 h-5 text-primary" />
-                  <h3 className="font-display text-lg font-semibold">
-                    Rapport consolidé
-                  </h3>
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Rapport unifié avec synthèse, faits clés, signaux mécaniques et recommandation d'achat.
-                </p>
-                <ul className="space-y-2 mb-4">
-                  <li className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="w-4 h-4 text-success" />
-                    Synthèse complète
-                  </li>
-                  <li className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="w-4 h-4 text-success" />
-                    Score de confiance: {data.trustScore}/100
-                  </li>
-                  <li className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="w-4 h-4 text-success" />
-                    {data.totalContributions} contributions analysées
-                  </li>
-                </ul>
-                <Button 
-                  variant="hero" 
-                  className="w-full"
-                  onClick={async () => {
-                    try {
-                      const { data: reportData, error } = await supabase.functions.invoke('generate-report', {
-                        body: { vin_id: data.id }
-                      });
-                      if (error) throw error;
-                      if (reportData?.report) {
-                        // Open report in new window as JSON for now
-                        const blob = new Blob([JSON.stringify(reportData.report, null, 2)], { type: 'application/json' });
-                        const url = URL.createObjectURL(blob);
-                        window.open(url, '_blank');
-                        toast({ title: "Rapport généré", description: "Le rapport a été ouvert dans un nouvel onglet." });
-                      }
-                    } catch (err) {
-                      console.error('Report error:', err);
-                      toast({ title: "Erreur", description: "Impossible de générer le rapport.", variant: "destructive" });
-                    }
-                  }}
-                >
-                  <FileText className="w-4 h-4 mr-2" />
-                  Obtenir le rapport
-                </Button>
               </div>
 
               {/* Contribute CTA */}

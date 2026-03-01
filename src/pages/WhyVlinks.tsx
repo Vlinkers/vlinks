@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import LaunchBanner from "@/components/LaunchBanner";
 import SEO from "@/components/SEO";
 import {
   Users,
@@ -13,7 +14,6 @@ import {
   Sparkles,
   Network,
   Building2,
-  Brain,
   Infinity,
   Lock,
 } from "lucide-react";
@@ -41,7 +41,7 @@ const WhyVlinks = () => {
       description: "Aucun lien avec les concessionnaires, les assureurs ou les plateformes d'annonces. Notre seule loyauté : les acheteurs.",
     },
     {
-      icon: Brain,
+      icon: Users,
       title: "Intelligence collective",
       description: "Plus la communauté grandit, plus chaque dossier devient complet. Ensemble, nous voyons ce qu'aucun acheteur seul ne pourrait voir.",
     },
@@ -65,8 +65,8 @@ const WhyVlinks = () => {
     },
     {
       icon: Shield,
-      title: "Modération",
-      description: "Chaque contribution est vérifiée pour éviter les accusations injustes.",
+      title: "Validation manuelle",
+      description: "Les contributions sont revues et validées manuellement par VLINKS.",
     },
     {
       icon: Eye,
@@ -83,12 +83,12 @@ const WhyVlinks = () => {
         canonical="https://vlinks.ca/why"
       />
       <div className="min-h-screen bg-background">
+        <LaunchBanner />
         <Header />
 
-        {/* Spacer for header */}
         <div className="pt-24 md:pt-32" />
 
-        {/* Section 1 — Le problème fondamental */}
+        {/* Section 1 */}
         <section className="py-16 md:py-24 bg-muted/30">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center mb-12">
@@ -100,13 +100,9 @@ const WhyVlinks = () => {
                 Et chaque nouvel acheteur paie le prix de cette opacité.
               </p>
             </div>
-
             <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
               {problems.map((problem, index) => (
-                <div
-                  key={index}
-                  className="p-6 rounded-2xl bg-background border border-border/50"
-                >
+                <div key={index} className="p-6 rounded-2xl bg-background border border-border/50">
                   <h3 className="font-display text-lg font-semibold mb-3">{problem.title}</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">{problem.description}</p>
                 </div>
@@ -115,7 +111,7 @@ const WhyVlinks = () => {
           </div>
         </section>
 
-        {/* Section 2 — La vérité est une chaîne */}
+        {/* Section 2 */}
         <section className="py-16 md:py-24 overflow-hidden">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center mb-12">
@@ -131,11 +127,8 @@ const WhyVlinks = () => {
                 Elle émerge de l'addition des expériences individuelles.
               </p>
             </div>
-
-            {/* Visual Chain Metaphor */}
             <div className="relative max-w-4xl mx-auto mb-12">
               <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent -translate-y-1/2" />
-              
               <div className="grid grid-cols-5 gap-4">
                 {[
                   { label: "Votre inspection", icon: Eye },
@@ -160,7 +153,6 @@ const WhyVlinks = () => {
                 ))}
               </div>
             </div>
-
             <div className="max-w-2xl mx-auto text-center">
               <p className="text-muted-foreground">
                 Chaque expérience partagée est un maillon. Plus il y a de maillons, plus l'image est complète.
@@ -169,7 +161,7 @@ const WhyVlinks = () => {
           </div>
         </section>
 
-        {/* Section 3 — Pourquoi VLINKS est différent */}
+        {/* Section 3 */}
         <section className="py-16 md:py-24 bg-muted/30">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center mb-12">
@@ -177,13 +169,9 @@ const WhyVlinks = () => {
                 Pourquoi VLINKS est <span className="text-gradient">différent</span>
               </h2>
             </div>
-
             <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               {differences.map((diff, index) => (
-                <div
-                  key={index}
-                  className="p-6 rounded-2xl bg-background border border-border/50"
-                >
+                <div key={index} className="p-6 rounded-2xl bg-background border border-border/50">
                   <div className="flex items-start gap-4">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <diff.icon className="w-5 h-5 text-primary" />
@@ -199,7 +187,7 @@ const WhyVlinks = () => {
           </div>
         </section>
 
-        {/* Section 4 — Transparence ne veut pas dire anarchie */}
+        {/* Section 4 */}
         <section className="py-16 md:py-24">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center mb-12">
@@ -210,13 +198,9 @@ const WhyVlinks = () => {
                 VLINKS protège les contributeurs, les acheteurs, et les vendeurs honnêtes.
               </p>
             </div>
-
             <div className="flex flex-wrap justify-center gap-6 max-w-3xl mx-auto">
               {protections.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-3 px-5 py-3 rounded-full bg-background border border-border/50"
-                >
+                <div key={index} className="flex items-center gap-3 px-5 py-3 rounded-full bg-background border border-border/50">
                   <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center">
                     <item.icon className="w-4 h-4 text-success" />
                   </div>
@@ -230,30 +214,23 @@ const WhyVlinks = () => {
           </div>
         </section>
 
-        {/* Section 5 — Appel moral à contribution */}
+        {/* Section 5 — CTA */}
         <section className="py-16 md:py-24 bg-gradient-hero relative overflow-hidden">
           <div className="absolute inset-0 opacity-10">
-            <div
-              className="absolute inset-0"
+            <div className="absolute inset-0"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
               }}
             />
           </div>
-
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
                 Si vous avez déjà payé pour la vérité,{" "}
                 <span className="text-gradient">ne la laissez pas disparaître</span>
               </h2>
-              <p className="text-lg text-muted-foreground mb-3">
-                Devenez un maillon de la chaîne.
-              </p>
-              <p className="text-muted-foreground mb-10">
-                Aidez le prochain acheteur à voir clair.
-              </p>
-
+              <p className="text-lg text-muted-foreground mb-3">Devenez un maillon de la chaîne.</p>
+              <p className="text-muted-foreground mb-10">Aidez le prochain acheteur à voir clair.</p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
                 <Button variant="hero" size="lg" asChild>
                   <Link to="/auth" className="gap-2">
@@ -262,12 +239,9 @@ const WhyVlinks = () => {
                   </Link>
                 </Button>
                 <Button variant="outline" size="lg" asChild className="bg-background/10 border-border/30 hover:bg-background/20">
-                  <Link to="/" className="gap-2">
-                    Rechercher un VIN
-                  </Link>
+                  <Link to="/" className="gap-2">Rechercher un VIN</Link>
                 </Button>
               </div>
-
               <p className="font-display text-xl md:text-2xl font-medium text-primary">
                 « La vérité est une chaîne. Vous êtes le maillon. »
               </p>

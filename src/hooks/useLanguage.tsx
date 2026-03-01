@@ -10,7 +10,6 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-// Translations
 const translations: Record<Language, Record<string, string>> = {
   fr: {
     // Navigation
@@ -22,6 +21,9 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.contribute": "Contribuer",
     "nav.profile": "Mon profil",
     "nav.logout": "Déconnexion",
+
+    // Launch Banner
+    "launch.banner": "VLINKS est actuellement en phase de lancement. L'accès aux rapports est gratuit pour une durée limitée.",
 
     // Hero Section
     "hero.headline1": "Chaque VIN a une histoire.",
@@ -66,13 +68,13 @@ const translations: Record<Language, Record<string, string>> = {
     "how.step4.title": "Une image complète émerge",
     "how.step4.desc": "La combinaison de ces fragments de vérité révèle une vision transparente et fiable de l'historique réel du véhicule.",
     "how.benefitsTitle": "Ce que vous gagnez en contribuant",
-    "how.benefitsSubtitle": "VLINKS valorise les contributeurs qui partagent leurs découvertes.",
-    "how.benefit1.title": "Crédits et récompenses",
-    "how.benefit1.desc": "Chaque contribution validée vous rapporte des points échangeables contre des accès gratuits ou des avantages.",
+    "how.benefitsSubtitle": "VLINKS valorise la transparence et la solidarité entre acheteurs.",
+    "how.benefit1.title": "Transparence pour tous",
+    "how.benefit1.desc": "Chaque contribution enrichit le dossier d'un véhicule et aide de futurs acheteurs à prendre de meilleures décisions.",
     "how.benefit2.title": "Reconnaissance communautaire",
     "how.benefit2.desc": "Les contributeurs actifs sont reconnus et valorisés au sein de la communauté VLINKS.",
-    "how.benefit3.title": "Accès prioritaire",
-    "how.benefit3.desc": "Les contributeurs réguliers bénéficient d'un accès élargi aux informations de la plateforme.",
+    "how.benefit3.title": "Accès gratuit pendant le lancement",
+    "how.benefit3.desc": "Pendant la phase de lancement, l'accès à tous les dossiers VIN est entièrement gratuit.",
     "how.benefit4.title": "Protection de la vie privée",
     "how.benefit4.desc": "Vos informations personnelles sont automatiquement anonymisées. Seules les informations techniques sont partagées.",
     "how.orientation": "Que vous soyez en train d'acheter un véhicule ou que vous ayez déjà enquêté sur un VIN, VLINKS vous permet de transformer vos découvertes en informations utiles pour les autres.",
@@ -81,66 +83,39 @@ const translations: Record<Language, Record<string, string>> = {
     "how.conclusionP1": "Vous pouvez rechercher un VIN pour voir les informations déjà partagées, ou contribuer à un véhicule que vous avez déjà investigué.",
     "how.conclusionP2": "Vous n'êtes jamais obligé de contribuer. VLINKS fonctionne parce que chacun le fait quand c'est pertinent pour lui.",
 
-    // Pricing Page - Reassuring Introduction
-    "pricing.intro.title": "Vous restez toujours libre.",
-    "pricing.intro.p1": "Rechercher un VIN sur VLINKS est toujours gratuit. Vous pouvez voir si des informations existent sur un véhicule sans jamais payer.",
-    "pricing.intro.p2": "Le paiement n'intervient que si vous choisissez d'accéder aux contributions détaillées, afin de soutenir les personnes qui ont partagé leurs découvertes et de maintenir une plateforme indépendante.",
+    // Pricing Page
+    "pricing.intro.title": "Gratuit pendant le lancement.",
+    "pricing.intro.p1": "VLINKS est actuellement en phase de lancement. L'accès aux dossiers VIN et aux contributions de la communauté est entièrement gratuit.",
+    "pricing.intro.p2": "Un modèle tarifaire sera introduit ultérieurement pour assurer la pérennité de la plateforme. Les contributeurs actuels bénéficieront d'avantages exclusifs.",
     
-    // Pedagogical Steps
     "pricing.step1.title": "Rechercher un VIN",
     "pricing.step1.status": "gratuit",
-    "pricing.step2.title": "Voir s'il existe des informations",
+    "pricing.step2.title": "Consulter les contributions",
     "pricing.step2.status": "gratuit",
-    "pricing.step3.title": "Débloquer le détail",
-    "pricing.step3.status": "au choix : payer ou contribuer",
+    "pricing.step3.title": "Télécharger un rapport",
+    "pricing.step3.status": "gratuit (lancement)",
     
-    // Unlock VIN Section
-    "pricing.unlock.title": "Accès à un dossier VIN",
-    "pricing.unlock.cardTitle": "Débloquer un dossier VIN",
-    "pricing.unlock.perVin": "CAD",
-    "pricing.unlock.desc": "Cet accès permet de consulter l'ensemble des contributions existantes sur un véhicule et de soutenir les membres qui ont partagé leurs informations.",
+    "pricing.unlock.title": "Accès aux dossiers VIN",
+    "pricing.unlock.cardTitle": "Accès complet",
+    "pricing.unlock.perVin": "",
+    "pricing.unlock.desc": "Pendant la phase de lancement, l'accès à l'ensemble des contributions est gratuit. Consultez les rapports d'inspection, historiques et observations partagés par la communauté.",
     "pricing.unlock.f1": "Rapports d'inspection",
     "pricing.unlock.f2": "Historiques de véhicule (Carfax, etc.)",
     "pricing.unlock.f3": "Communications avec le vendeur",
     "pricing.unlock.f4": "Retours de mécaniciens",
     "pricing.unlock.f5": "Notes et alertes communautaires",
-    "pricing.unlock.cta": "Débloquer ce VIN",
-    "pricing.unlock.reassurance": "Paiement unique · Aucun abonnement · Aucun renouvellement automatique",
+    "pricing.unlock.cta": "Rechercher un VIN",
+    "pricing.unlock.reassurance": "Aucune inscription requise pour consulter · Compte requis pour contribuer",
     
-    // Contribute Alternative Section
-    "pricing.contribute.title": "Vous pouvez aussi ne rien payer.",
-    "pricing.contribute.p1": "Si vous avez vous-même des informations sur un véhicule, vous pouvez les partager et gagner des crédits qui débloquent l'accès aux dossiers VIN.",
-    "pricing.contribute.p2": "Plus vous contribuez, moins vous payez.",
+    "pricing.contribute.title": "Contribuez à la communauté.",
+    "pricing.contribute.p1": "Si vous avez des informations sur un véhicule, vous pouvez les partager pour aider d'autres acheteurs. Un compte utilisateur est nécessaire pour contribuer.",
+    "pricing.contribute.p2": "Les contributions sont revues et validées manuellement par VLINKS.",
     
-    // Credit Packs Section
-    "pricing.packs.title": "Paquets de crédits",
-    "pricing.packs.credits": "crédits",
-    "pricing.packs.cta": "Obtenir des crédits",
-    "pricing.packs.note": "1 crédit = 1 dossier VIN débloqué. Les crédits n'expirent jamais.",
-    "pricing.pack1.name": "Découverte",
-    "pricing.pack1.price": "14,90 $ CAD",
-    "pricing.pack1.desc": "Pour une recherche ponctuelle",
-    "pricing.pack2.name": "Acheteur sérieux",
-    "pricing.pack2.price": "24,90 $ CAD",
-    "pricing.pack2.desc": "Pour comparer plusieurs véhicules",
-    "pricing.pack3.name": "Contributeur",
-    "pricing.pack3.price": "44,90 $ CAD",
-    "pricing.pack3.desc": "Pour ceux qui partagent régulièrement",
-    
-    // Earn Credits Section
-    "pricing.earn.title": "Gagnez des crédits en contribuant",
-    "pricing.earn.inspection": "Rapports d'inspection",
-    "pricing.earn.history": "Historiques de véhicule",
-    "pricing.earn.seller": "Communications avec le vendeur",
-    "pricing.earn.mechanic": "Retours de mécaniciens",
-    "pricing.earn.cta": "Commencer à contribuer",
-    
-    // Philosophy Section
     "pricing.philosophy.title": "Pourquoi ce modèle existe",
-    "pricing.philosophy.intro": "VLINKS fonctionne grâce à sa communauté. Les frais d'accès servent à :",
-    "pricing.philosophy.reason1": "maintenir la plateforme",
-    "pricing.philosophy.reason2": "protéger l'anonymat",
-    "pricing.philosophy.reason3": "valoriser les contributions honnêtes",
+    "pricing.philosophy.intro": "VLINKS fonctionne grâce à sa communauté. La gratuité actuelle est temporaire et vise à :",
+    "pricing.philosophy.reason1": "construire une base de données fiable",
+    "pricing.philosophy.reason2": "protéger l'anonymat des contributeurs",
+    "pricing.philosophy.reason3": "prouver la valeur de la transparence collective",
     "pricing.philosophy.conclusion": "L'objectif n'est pas de faire payer, mais de récompenser la transparence.",
 
     // Footer & Common
@@ -156,6 +131,9 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.contribute": "Contribute",
     "nav.profile": "My Profile",
     "nav.logout": "Sign Out",
+
+    // Launch Banner
+    "launch.banner": "VLINKS is currently in launch phase. Access to reports is free for a limited time.",
 
     // Hero Section
     "hero.headline1": "Every VIN has a story.",
@@ -200,13 +178,13 @@ const translations: Record<Language, Record<string, string>> = {
     "how.step4.title": "A complete picture emerges",
     "how.step4.desc": "The combination of these fragments of truth reveals a transparent and reliable view of the vehicle's real history.",
     "how.benefitsTitle": "What you gain by contributing",
-    "how.benefitsSubtitle": "VLINKS values contributors who share their discoveries.",
-    "how.benefit1.title": "Credits and rewards",
-    "how.benefit1.desc": "Each validated contribution earns you points exchangeable for free access or benefits.",
+    "how.benefitsSubtitle": "VLINKS values transparency and solidarity between buyers.",
+    "how.benefit1.title": "Transparency for all",
+    "how.benefit1.desc": "Each contribution enriches a vehicle's file and helps future buyers make better decisions.",
     "how.benefit2.title": "Community recognition",
     "how.benefit2.desc": "Active contributors are recognized and valued within the VLINKS community.",
-    "how.benefit3.title": "Priority access",
-    "how.benefit3.desc": "Regular contributors benefit from expanded access to platform information.",
+    "how.benefit3.title": "Free access during launch",
+    "how.benefit3.desc": "During the launch phase, access to all VIN files is completely free.",
     "how.benefit4.title": "Privacy protection",
     "how.benefit4.desc": "Your personal information is automatically anonymized. Only technical information is shared.",
     "how.orientation": "Whether you're currently buying a vehicle or have already investigated a VIN, VLINKS allows you to turn your discoveries into useful information for others.",
@@ -215,66 +193,39 @@ const translations: Record<Language, Record<string, string>> = {
     "how.conclusionP1": "You can search a VIN to see information already shared, or contribute to a vehicle you've already investigated.",
     "how.conclusionP2": "You're never obligated to contribute. VLINKS works because everyone does it when it's relevant for them.",
 
-    // Pricing Page - Reassuring Introduction
-    "pricing.intro.title": "You always stay free.",
-    "pricing.intro.p1": "Searching a VIN on VLINKS is always free. You can see if information exists on a vehicle without ever paying.",
-    "pricing.intro.p2": "Payment only occurs if you choose to access detailed contributions, to support the people who shared their discoveries and to maintain an independent platform.",
+    // Pricing Page
+    "pricing.intro.title": "Free during launch.",
+    "pricing.intro.p1": "VLINKS is currently in its launch phase. Access to VIN files and community contributions is completely free.",
+    "pricing.intro.p2": "A pricing model will be introduced later to ensure the platform's sustainability. Current contributors will receive exclusive benefits.",
     
-    // Pedagogical Steps
     "pricing.step1.title": "Search a VIN",
     "pricing.step1.status": "free",
-    "pricing.step2.title": "See if information exists",
+    "pricing.step2.title": "View contributions",
     "pricing.step2.status": "free",
-    "pricing.step3.title": "Unlock the details",
-    "pricing.step3.status": "your choice: pay or contribute",
+    "pricing.step3.title": "Download a report",
+    "pricing.step3.status": "free (launch)",
     
-    // Unlock VIN Section
-    "pricing.unlock.title": "Access to a VIN dossier",
-    "pricing.unlock.cardTitle": "Unlock a VIN dossier",
-    "pricing.unlock.perVin": "CAD",
-    "pricing.unlock.desc": "This access allows you to view all existing contributions on a vehicle and support the members who shared their information.",
+    "pricing.unlock.title": "Access to VIN files",
+    "pricing.unlock.cardTitle": "Full access",
+    "pricing.unlock.perVin": "",
+    "pricing.unlock.desc": "During the launch phase, access to all contributions is free. View inspection reports, histories and observations shared by the community.",
     "pricing.unlock.f1": "Inspection reports",
     "pricing.unlock.f2": "Vehicle history reports (e.g. Carfax)",
     "pricing.unlock.f3": "Seller communications",
     "pricing.unlock.f4": "Mechanic feedback",
     "pricing.unlock.f5": "Community notes and alerts",
-    "pricing.unlock.cta": "Unlock this VIN",
-    "pricing.unlock.reassurance": "One-time payment · No subscription · No automatic renewal",
+    "pricing.unlock.cta": "Search a VIN",
+    "pricing.unlock.reassurance": "No registration required to view · Account required to contribute",
     
-    // Contribute Alternative Section
-    "pricing.contribute.title": "You can also pay nothing.",
-    "pricing.contribute.p1": "If you have information about a vehicle yourself, you can share it and earn credits that unlock access to VIN dossiers.",
-    "pricing.contribute.p2": "The more you contribute, the less you pay.",
+    "pricing.contribute.title": "Contribute to the community.",
+    "pricing.contribute.p1": "If you have information about a vehicle, you can share it to help other buyers. A user account is required to contribute.",
+    "pricing.contribute.p2": "Contributions are reviewed and validated manually by VLINKS.",
     
-    // Credit Packs Section
-    "pricing.packs.title": "Credit packs",
-    "pricing.packs.credits": "credits",
-    "pricing.packs.cta": "Get credits",
-    "pricing.packs.note": "1 credit = 1 VIN dossier unlocked. Credits never expire.",
-    "pricing.pack1.name": "Discovery",
-    "pricing.pack1.price": "$14.90 CAD",
-    "pricing.pack1.desc": "For a one-time search",
-    "pricing.pack2.name": "Serious Buyer",
-    "pricing.pack2.price": "$24.90 CAD",
-    "pricing.pack2.desc": "To compare several vehicles",
-    "pricing.pack3.name": "Contributor",
-    "pricing.pack3.price": "$44.90 CAD",
-    "pricing.pack3.desc": "For those who share regularly",
-    
-    // Earn Credits Section
-    "pricing.earn.title": "Earn credits by contributing",
-    "pricing.earn.inspection": "Inspection reports",
-    "pricing.earn.history": "Vehicle history reports",
-    "pricing.earn.seller": "Seller communications",
-    "pricing.earn.mechanic": "Mechanic insights",
-    "pricing.earn.cta": "Start contributing",
-    
-    // Philosophy Section
     "pricing.philosophy.title": "Why this model exists",
-    "pricing.philosophy.intro": "VLINKS works thanks to its community. Access fees are used to:",
-    "pricing.philosophy.reason1": "maintain the platform",
-    "pricing.philosophy.reason2": "protect anonymity",
-    "pricing.philosophy.reason3": "value honest contributions",
+    "pricing.philosophy.intro": "VLINKS works thanks to its community. The current free access is temporary and aims to:",
+    "pricing.philosophy.reason1": "build a reliable database",
+    "pricing.philosophy.reason2": "protect contributor anonymity",
+    "pricing.philosophy.reason3": "prove the value of collective transparency",
     "pricing.philosophy.conclusion": "The goal is not to charge money, but to reward transparency.",
 
     // Footer & Common

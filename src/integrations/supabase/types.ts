@@ -291,10 +291,6 @@ export type Database = {
           is_anonymous: boolean | null
           is_owner_contribution: boolean | null
           mileage_at_intervention: number | null
-          processed_at: string
-          publishable: boolean
-          raw_contribution_id: string
-          summary_public: string
           updated_at: string
           user_id: string
           vin_id: string
@@ -310,10 +306,6 @@ export type Database = {
           is_anonymous?: boolean | null
           is_owner_contribution?: boolean | null
           mileage_at_intervention?: number | null
-          processed_at?: string
-          publishable?: boolean
-          raw_contribution_id: string
-          summary_public: string
           updated_at?: string
           user_id: string
           vin_id: string
@@ -329,22 +321,11 @@ export type Database = {
           is_anonymous?: boolean | null
           is_owner_contribution?: boolean | null
           mileage_at_intervention?: number | null
-          processed_at?: string
-          publishable?: boolean
-          raw_contribution_id?: string
-          summary_public?: string
           updated_at?: string
           user_id?: string
           vin_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "public_contributions_raw_contribution_id_fkey"
-            columns: ["raw_contribution_id"]
-            isOneToOne: false
-            referencedRelation: "raw_contributions"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "public_contributions_vin_id_fkey"
             columns: ["vin_id"]

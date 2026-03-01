@@ -344,20 +344,17 @@ export function ContributionForm({
 
     if (contributionError) throw contributionError;
 
-    // Publish directly to public_contributions - no AI processing
+    // Publish directly to public_contributions
     const { error: pubError } = await supabase
       .from("public_contributions")
       .insert({
-        raw_contribution_id: rawContribution.id,
         user_id: userId,
         vin_id: actualVinId,
         contribution_type: data.contribution_type,
-        summary_public: data.summary,
         is_anonymous: data.is_anonymous,
         is_owner_contribution: isOwnerClaim,
         author_label: authorLabel,
         author_public_id: authorPublicId,
-        publishable: true,
       });
 
     if (pubError) {

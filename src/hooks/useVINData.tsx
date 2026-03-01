@@ -60,7 +60,6 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
     .select(`
       id,
       contribution_type,
-      summary_public,
       is_anonymous,
       is_owner_contribution,
       intervention_type,
@@ -71,7 +70,6 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       author_public_id
     `)
     .eq("vin_id", vinRecord.id)
-    .eq("publishable", true)
     .order("created_at", { ascending: false });
 
   if (contribError) throw contribError;
@@ -87,7 +85,7 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
     author: c.author_label || "Anonyme",
     authorPublicId: c.author_public_id,
     authorVerified: c.is_owner_contribution || false,
-    summaryPublic: c.summary_public,
+    summaryPublic: "",
     isOwnerContribution: c.is_owner_contribution || false,
     interventionType: c.intervention_type,
     interventionDate: c.intervention_date,

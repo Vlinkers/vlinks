@@ -318,15 +318,13 @@ export function OwnerContributionForm({
 
     if (contributionError) throw contributionError;
 
-    // Publish directly to public_contributions - no AI processing
+    // Publish directly to public_contributions
     const { error: pubError } = await supabase
       .from("public_contributions")
       .insert({
-        raw_contribution_id: rawContribution.id,
         user_id: userId,
         vin_id: actualVinId,
         contribution_type: dbContributionType as any,
-        summary_public: data.summary,
         is_anonymous: data.is_anonymous,
         is_owner_contribution: true,
         intervention_type: data.intervention_type || data.contribution_type,
@@ -334,7 +332,6 @@ export function OwnerContributionForm({
         mileage_at_intervention: data.mileage ? parseInt(data.mileage) : null,
         author_label: authorLabel,
         author_public_id: authorPublicId,
-        publishable: true,
       });
 
     if (pubError) {

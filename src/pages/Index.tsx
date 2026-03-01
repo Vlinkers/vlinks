@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
+import SocialProofSection from "@/components/SocialProofSection";
 import Footer from "@/components/Footer";
 import LaunchBanner from "@/components/LaunchBanner";
 import SEO from "@/components/SEO";
@@ -17,6 +18,7 @@ const Index = () => {
         <Header />
         <main>
           <HeroSection />
+          <SocialProofSection />
         </main>
         <Footer />
       </div>

@@ -1,6 +1,7 @@
 import { Rocket } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 
+
 const LaunchBanner = () => {
   const { t } = useLanguage();
   

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Shield, EyeOff, Building2, ArrowRight, Check } from "lucide-react";
+import { Search, ArrowRight, FileText, MessageSquare, Eye, Plus } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 
 const HeroSection = () => {
@@ -17,76 +17,59 @@ const HeroSection = () => {
     }
   };
 
-  const trustPoints = [
-    { icon: EyeOff, label: t("hero.trust1") },
-    { icon: Shield, label: t("hero.trust2") },
-    { icon: Building2, label: t("hero.trust3") },
+  const handleContribute = () => {
+    const vin = vinInput.trim().toUpperCase();
+    if (vin) {
+      navigate(`/vin/${vin}`);
+    } else {
+      navigate("/auth?redirect=/");
+    }
+  };
+
+  const bullets = [
+    { icon: FileText, label: t("hero.bullet1") },
+    { icon: MessageSquare, label: t("hero.bullet2") },
+    { icon: Eye, label: t("hero.bullet3") },
   ];
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center pt-20 pb-12 overflow-hidden">
+    <section className="relative min-h-[85vh] flex items-center justify-center pt-24 pb-16 overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-gradient-hero" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" />
-      
-      {/* Grid Pattern */}
-      <div 
-        className="absolute inset-0 opacity-[0.02]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }}
-      />
+      <div className="absolute top-1/3 left-1/4 w-72 h-72 bg-primary/8 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/3 right-1/4 w-72 h-72 bg-secondary/8 rounded-full blur-3xl" />
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-4xl mx-auto text-center">
-          {/* Main Headline - H1 */}
-          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in-up">
+        <div className="max-w-3xl mx-auto text-center">
+          {/* H1 */}
+          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 animate-fade-in-up">
             {t("hero.headline1")}
           </h1>
 
-          {/* Subtitle - H2 */}
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-medium text-foreground/90 mb-10 animate-fade-in-up stagger-1">
+          {/* Subtitle */}
+          <h2 className="text-lg sm:text-xl md:text-2xl font-medium text-muted-foreground mb-10 animate-fade-in-up stagger-1">
             {t("hero.subtitle")}
           </h2>
 
-          {/* Explanatory Content */}
-          <div className="max-w-3xl mx-auto mb-10 space-y-5 animate-fade-in-up stagger-2">
-            <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-              {t("hero.p1")}
-            </p>
-            <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-              {t("hero.p2")}
-            </p>
-          </div>
-
-          {/* Guiding sentence */}
-          <p className="text-lg md:text-xl font-medium text-foreground/90 mb-6 animate-fade-in-up stagger-3">
-            {t("hero.cta")}
-          </p>
-
-          {/* Micro-reassurance badges */}
-          <div className="flex flex-wrap justify-center gap-4 md:gap-6 mb-8 animate-fade-in-up stagger-3">
-            {trustPoints.map((point, index) => (
-              <div 
-                key={index} 
-                className="flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-muted-foreground"
-              >
-                <Check className="w-4 h-4 text-success" />
-                <span>{point.label}</span>
+          {/* 3 Bullet Points */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mb-12 animate-fade-in-up stagger-2">
+            {bullets.map((item, i) => (
+              <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                <item.icon className="w-4 h-4 text-primary" />
+                <span>{item.label}</span>
               </div>
             ))}
           </div>
 
-          {/* Search Bar */}
-          <form 
+          {/* VIN Search Bar — Main CTA */}
+          <form
             onSubmit={handleSearch}
-            className="max-w-2xl mx-auto mb-6 animate-fade-in-up stagger-4"
+            className="max-w-2xl mx-auto mb-4 animate-fade-in-up stagger-3"
           >
             <div className="relative group">
               <div className="absolute -inset-1 bg-gradient-primary rounded-2xl opacity-20 blur group-hover:opacity-30 transition-opacity" />
               <div className="relative flex items-center gap-2 p-2 rounded-xl glass-strong">
-                <Search className="w-6 h-6 text-muted-foreground ml-4" />
+                <Search className="w-6 h-6 text-muted-foreground ml-4 shrink-0" />
                 <Input
                   variant="vin"
                   placeholder={t("hero.searchPlaceholder")}
@@ -101,20 +84,23 @@ const HeroSection = () => {
                 </Button>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground mt-3">
+            <p className="text-xs text-muted-foreground/60 mt-2">
               {t("hero.vinLocation")}
             </p>
           </form>
 
-          {/* Contribution Message */}
-          <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl mx-auto mb-8 animate-fade-in-up stagger-4">
-            {t("hero.contribution")}
-          </p>
-
-          {/* Tagline */}
-          <p className="text-sm text-muted-foreground/70 italic mb-10 animate-fade-in-up stagger-4">
-            {t("hero.tagline")}
-          </p>
+          {/* Secondary CTA */}
+          <div className="animate-fade-in-up stagger-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground gap-2"
+              onClick={handleContribute}
+            >
+              <Plus className="w-4 h-4" />
+              {t("hero.contributeCta")}
+            </Button>
+          </div>
         </div>
       </div>
     </section>

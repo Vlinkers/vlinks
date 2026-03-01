@@ -27,18 +27,19 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Hero Section
     "hero.headline1": "Chaque VIN a une histoire.",
-    "hero.subtitle": "Avant d'acheter un véhicule d'occasion, découvrez ce que d'autres ont déjà découvert.",
-    "hero.p1": "Quand vous cherchez un véhicule d'occasion, la vérité se trouve rarement dans un seul document. Elle est dispersée entre les rapports d'inspection, les historiques Carfax, les échanges avec les vendeurs, les discussions avec les mécaniciens, les photos, les notes et les décisions prises par d'autres acheteurs avant vous.",
-    "hero.p2": "VLINKS centralise ces informations autour d'un seul numéro VIN, pour révéler une image plus claire, plus complète et plus transparente de l'état réel d'un véhicule — avant que vous ne preniez votre décision.",
-    "hero.cta": "Recherchez un VIN pour voir ce que d'autres ont déjà découvert.",
-    "hero.searchPlaceholder": "Entrez un numéro VIN (ex: WVWZZZ3CZWE123456)",
+    "hero.subtitle": "Avant de signer. Découvrez ce que d'autres ont déjà trouvé.",
+    "hero.bullet1": "Rapports d'inspection et documents",
+    "hero.bullet2": "Historique et échanges vérifiés",
+    "hero.bullet3": "Observations d'acheteurs précédents",
+    "hero.searchPlaceholder": "Entrez un VIN",
     "hero.search": "Rechercher",
     "hero.vinLocation": "Le VIN se trouve sur le tableau de bord, la portière ou les documents du véhicule",
-    "hero.tagline": "« La vérité est une chaîne. Vous êtes le maillon. »",
-    "hero.trust1": "Recherche anonyme",
-    "hero.trust2": "Données anonymisées",
-    "hero.trust3": "Plateforme indépendante",
-    "hero.contribution": "VLINKS existe parce que d'autres ont pris le temps de partager ce qu'ils ont découvert. Vous pourrez, vous aussi, contribuer quand ce sera pertinent pour vous.",
+    "hero.contributeCta": "Contribuer à un VIN",
+
+    // Social Proof
+    "social.vins": "VIN enrichis",
+    "social.contributions": "Contributions validées",
+    "social.documents": "Documents ajoutés",
 
     // How It Works Page
     "how.title": "Comment fonctionne",
@@ -137,18 +138,19 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Hero Section
     "hero.headline1": "Every VIN has a story.",
-    "hero.subtitle": "Before buying a used vehicle, discover what others have already found.",
-    "hero.p1": "When searching for a used vehicle, the truth is rarely found in a single document. It is scattered across inspection reports, Carfax histories, exchanges with sellers, discussions with mechanics, photos, notes, and decisions made by previous buyers before you.",
-    "hero.p2": "VLINKS centralizes this information around a single VIN number, to reveal a clearer, more complete, and more transparent picture of a vehicle's real condition — before you make your decision.",
-    "hero.cta": "Search a VIN to see what others have already discovered.",
-    "hero.searchPlaceholder": "Enter a VIN number (e.g., WVWZZZ3CZWE123456)",
+    "hero.subtitle": "Before you sign. Discover what others have already found.",
+    "hero.bullet1": "Inspection reports and documents",
+    "hero.bullet2": "Verified history and exchanges",
+    "hero.bullet3": "Observations from previous buyers",
+    "hero.searchPlaceholder": "Enter a VIN",
     "hero.search": "Search",
     "hero.vinLocation": "The VIN is located on the dashboard, door jamb, or vehicle documents",
-    "hero.tagline": '"Truth is a chain. You are the link."',
-    "hero.trust1": "Anonymous search",
-    "hero.trust2": "Anonymized data",
-    "hero.trust3": "Independent platform",
-    "hero.contribution": "VLINKS exists because others took the time to share what they discovered. You too can contribute when it's relevant for you.",
+    "hero.contributeCta": "Contribute to a VIN",
+
+    // Social Proof
+    "social.vins": "VINs enriched",
+    "social.contributions": "Validated contributions",
+    "social.documents": "Documents added",
 
     // How It Works Page
     "how.title": "How",

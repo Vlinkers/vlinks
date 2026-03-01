@@ -50,10 +50,7 @@ interface UserContribution {
   vin_id: string;
   contribution_type: string;
   created_at: string;
-  processing_status: string;
-  summary_public: string | null;
   is_owner_contribution: boolean;
-  publishable: boolean;
 }
 
 interface OwnerClaim {
@@ -162,36 +159,15 @@ const Profile = () => {
       return;
     }
 
-    // Fetch corresponding public contributions
-    const { data: publicData, error: publicError } = await supabase
-      .from("public_contributions")
-      .select("raw_contribution_id, summary_public, publishable")
-      .eq("user_id", user.id);
-
-    if (publicError) {
-      console.error("Error fetching public contributions:", publicError);
-    }
-
-    // Create a map of raw_contribution_id to public data
-    const publicMap = new Map(
-      (publicData || []).map(p => [p.raw_contribution_id, p])
-    );
-
     // Combine the data
-    const combined: UserContribution[] = (rawData || []).map((raw: any) => {
-      const pub = publicMap.get(raw.id);
-      return {
-        id: raw.id,
-        vin: raw.vins?.vin || "N/A",
-        vin_id: raw.vin_id,
-        contribution_type: raw.contribution_type,
-        created_at: raw.created_at,
-        processing_status: raw.processing_status,
-        summary_public: pub?.summary_public || null,
-        is_owner_contribution: raw.is_owner_contribution || false,
-        publishable: pub?.publishable || false,
-      };
-    });
+    const combined: UserContribution[] = (rawData || []).map((raw: any) => ({
+      id: raw.id,
+      vin: raw.vins?.vin || "N/A",
+      vin_id: raw.vin_id,
+      contribution_type: raw.contribution_type,
+      created_at: raw.created_at,
+      is_owner_contribution: raw.is_owner_contribution || false,
+    }));
 
     setContributions(combined);
   };
@@ -322,18 +298,19 @@ const Profile = () => {
   const handleDeleteContribution = async (contributionId: string) => {
     setDeletingId(contributionId);
     
-    // Soft delete: delete from raw_contributions
+    // Delete from raw_contributions
     const { error: rawError } = await supabase
       .from("raw_contributions")
       .delete()
       .eq("id", contributionId)
       .eq("user_id", user?.id);
 
-    // Also mark public_contribution as not publishable
+    // Also delete from public_contributions
     const { error: pubError } = await supabase
       .from("public_contributions")
-      .update({ publishable: false })
-      .eq("raw_contribution_id", contributionId);
+      .delete()
+      .eq("user_id", user?.id)
+      .eq("vin_id", contributions.find(c => c.id === contributionId)?.vin_id);
 
     setDeletingId(null);
     setDeleteContributionId(null);
@@ -362,29 +339,13 @@ const Profile = () => {
     navigate("/");
   };
 
-  const getStatusBadge = (status: string, publishable: boolean) => {
-    if (status === "deleted") {
-      return <Badge variant="destructive">{language === "fr" ? "Supprimée" : "Deleted"}</Badge>;
-    }
-    if (status === "failed") {
-      return <Badge variant="destructive">{language === "fr" ? "Échec analyse" : "Analysis Failed"}</Badge>;
-    }
-    if (status === "pending" || status === "processing") {
-      return <Badge variant="secondary" className="bg-amber-500/20 text-amber-600">{language === "fr" ? "En analyse" : "Processing"}</Badge>;
-    }
-    if (status === "completed" && publishable) {
-      return <Badge variant="default" className="bg-green-500/20 text-green-600">{language === "fr" ? "Publiée" : "Published"}</Badge>;
-    }
-    if (status === "completed" && !publishable) {
-      return <Badge variant="secondary">{language === "fr" ? "Non publiée" : "Not Published"}</Badge>;
-    }
-    return <Badge variant="secondary">{status}</Badge>;
+  const getStatusBadge = () => {
+    return <Badge variant="default" className="bg-green-500/20 text-green-600">{language === "fr" ? "Publiée" : "Published"}</Badge>;
   };
 
   const filteredContributions = contributions.filter(c => {
     if (filterType !== "all" && c.contribution_type !== filterType) return false;
     if (filterVin && !c.vin.toLowerCase().includes(filterVin.toLowerCase())) return false;
-    if (c.processing_status === "deleted") return false; // Hide deleted
     return true;
   });
 
@@ -606,13 +567,8 @@ const Profile = () => {
                                     language === "fr" ? "fr-CA" : "en-CA"
                                   )}
                                 </span>
-                                {getStatusBadge(contribution.processing_status, contribution.publishable)}
+                                {getStatusBadge()}
                               </div>
-                              {contribution.summary_public && (
-                                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                                  {contribution.summary_public}
-                                </p>
-                              )}
                             </div>
                             <div className="flex items-center gap-2">
                               <Button

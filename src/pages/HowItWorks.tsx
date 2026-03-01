@@ -2,22 +2,14 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import LaunchBanner from "@/components/LaunchBanner";
 import SEO from "@/components/SEO";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
-  FileText, 
-  Camera, 
-  MessageSquare, 
-  Wrench, 
-  AlertTriangle, 
-  ClipboardCheck,
-  Users,
-  TrendingUp,
-  Shield,
-  Gift,
-  Search
+  FileText, Camera, MessageSquare, Wrench, AlertTriangle, ClipboardCheck,
+  Users, Shield, Search
 } from "lucide-react";
 
 const HowItWorks = () => {
@@ -27,56 +19,30 @@ const HowItWorks = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (vinInput.trim()) {
-      navigate(`/vin/${vinInput.toUpperCase()}`);
-    }
+    if (vinInput.trim()) navigate(`/vin/${vinInput.toUpperCase()}`);
   };
 
   const contributionTypes = [
-    {
-      icon: ClipboardCheck,
-      titleKey: "how.type1.title",
-      descKey: "how.type1.desc"
-    },
-    {
-      icon: FileText,
-      titleKey: "how.type2.title",
-      descKey: "how.type2.desc"
-    },
-    {
-      icon: MessageSquare,
-      titleKey: "how.type3.title",
-      descKey: "how.type3.desc"
-    },
-    {
-      icon: Wrench,
-      titleKey: "how.type4.title",
-      descKey: "how.type4.desc"
-    },
-    {
-      icon: Camera,
-      titleKey: "how.type5.title",
-      descKey: "how.type5.desc"
-    },
-    {
-      icon: AlertTriangle,
-      titleKey: "how.type6.title",
-      descKey: "how.type6.desc"
-    }
+    { icon: ClipboardCheck, titleKey: "how.type1.title", descKey: "how.type1.desc" },
+    { icon: FileText, titleKey: "how.type2.title", descKey: "how.type2.desc" },
+    { icon: MessageSquare, titleKey: "how.type3.title", descKey: "how.type3.desc" },
+    { icon: Wrench, titleKey: "how.type4.title", descKey: "how.type4.desc" },
+    { icon: Camera, titleKey: "how.type5.title", descKey: "how.type5.desc" },
+    { icon: AlertTriangle, titleKey: "how.type6.title", descKey: "how.type6.desc" },
   ];
 
   const howItBuilds = [
     { step: "01", titleKey: "how.step1.title", descKey: "how.step1.desc" },
     { step: "02", titleKey: "how.step2.title", descKey: "how.step2.desc" },
     { step: "03", titleKey: "how.step3.title", descKey: "how.step3.desc" },
-    { step: "04", titleKey: "how.step4.title", descKey: "how.step4.desc" }
+    { step: "04", titleKey: "how.step4.title", descKey: "how.step4.desc" },
   ];
 
   const contributorBenefits = [
-    { icon: Gift, titleKey: "how.benefit1.title", descKey: "how.benefit1.desc" },
+    { icon: Users, titleKey: "how.benefit1.title", descKey: "how.benefit1.desc" },
     { icon: Users, titleKey: "how.benefit2.title", descKey: "how.benefit2.desc" },
-    { icon: TrendingUp, titleKey: "how.benefit3.title", descKey: "how.benefit3.desc" },
-    { icon: Shield, titleKey: "how.benefit4.title", descKey: "how.benefit4.desc" }
+    { icon: Shield, titleKey: "how.benefit3.title", descKey: "how.benefit3.desc" },
+    { icon: Shield, titleKey: "how.benefit4.title", descKey: "how.benefit4.desc" },
   ];
 
   return (
@@ -87,39 +53,28 @@ const HowItWorks = () => {
         canonical="https://vlinks.ca/how-it-works"
       />
       <div className="min-h-screen bg-background">
+        <LaunchBanner />
         <Header />
         <main className="pt-24 pb-16">
-        {/* Hero Section */}
+        {/* Hero */}
         <section className="container mx-auto px-4 mb-20">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-6">
               {t("how.title")} <span className="text-gradient">VLINKS</span>
             </h1>
-            <p className="text-lg text-muted-foreground leading-relaxed mb-4">
-              {t("how.subtitle")}
-            </p>
-            <p className="text-muted-foreground leading-relaxed">
-              {t("how.orientation")}
-            </p>
+            <p className="text-lg text-muted-foreground leading-relaxed mb-4">{t("how.subtitle")}</p>
+            <p className="text-muted-foreground leading-relaxed">{t("how.orientation")}</p>
           </div>
         </section>
 
         {/* Contribution Types */}
         <section className="container mx-auto px-4 mb-20">
           <div className="max-w-4xl mx-auto">
-            <h2 className="font-display text-2xl md:text-3xl font-bold mb-4 text-center">
-              {t("how.typesTitle")}
-            </h2>
-            <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-              {t("how.typesSubtitle")}
-            </p>
-            
+            <h2 className="font-display text-2xl md:text-3xl font-bold mb-4 text-center">{t("how.typesTitle")}</h2>
+            <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">{t("how.typesSubtitle")}</p>
             <div className="grid md:grid-cols-2 gap-6">
               {contributionTypes.map((type, index) => (
-                <div 
-                  key={index}
-                  className="p-6 rounded-xl glass hover:bg-muted/30 transition-colors"
-                >
+                <div key={index} className="p-6 rounded-xl glass hover:bg-muted/30 transition-colors">
                   <div className="flex gap-4">
                     <div className="shrink-0 w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
                       <type.icon className="w-6 h-6 text-primary" />
@@ -132,29 +87,18 @@ const HowItWorks = () => {
                 </div>
               ))}
             </div>
-            
-            <p className="text-sm text-muted-foreground/80 text-center mt-8 italic">
-              {t("how.typesDisclaimer")}
-            </p>
+            <p className="text-sm text-muted-foreground/80 text-center mt-8 italic">{t("how.typesDisclaimer")}</p>
           </div>
         </section>
 
         {/* How It Builds */}
         <section className="container mx-auto px-4 mb-20">
           <div className="max-w-4xl mx-auto">
-            <h2 className="font-display text-2xl md:text-3xl font-bold mb-4 text-center">
-              {t("how.buildTitle")}
-            </h2>
-            <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-              {t("how.buildSubtitle")}
-            </p>
-            
+            <h2 className="font-display text-2xl md:text-3xl font-bold mb-4 text-center">{t("how.buildTitle")}</h2>
+            <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">{t("how.buildSubtitle")}</p>
             <div className="space-y-8">
               {howItBuilds.map((item, index) => (
-                <div 
-                  key={index}
-                  className="flex gap-6 items-start"
-                >
+                <div key={index} className="flex gap-6 items-start">
                   <div className="shrink-0 w-14 h-14 rounded-full bg-gradient-primary flex items-center justify-center">
                     <span className="font-display text-lg font-bold text-primary-foreground">{item.step}</span>
                   </div>
@@ -168,22 +112,14 @@ const HowItWorks = () => {
           </div>
         </section>
 
-        {/* Contributor Benefits */}
+        {/* Benefits */}
         <section className="container mx-auto px-4 mb-20">
           <div className="max-w-4xl mx-auto">
-            <h2 className="font-display text-2xl md:text-3xl font-bold mb-4 text-center">
-              {t("how.benefitsTitle")}
-            </h2>
-            <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-              {t("how.benefitsSubtitle")}
-            </p>
-            
+            <h2 className="font-display text-2xl md:text-3xl font-bold mb-4 text-center">{t("how.benefitsTitle")}</h2>
+            <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">{t("how.benefitsSubtitle")}</p>
             <div className="grid md:grid-cols-2 gap-6">
               {contributorBenefits.map((benefit, index) => (
-                <div 
-                  key={index}
-                  className="p-6 rounded-xl border border-border/50 bg-card/50"
-                >
+                <div key={index} className="p-6 rounded-xl border border-border/50 bg-card/50">
                   <div className="flex gap-4">
                     <div className="shrink-0 w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
                       <benefit.icon className="w-5 h-5 text-success" />
@@ -202,48 +138,24 @@ const HowItWorks = () => {
         {/* Conclusion */}
         <section className="container mx-auto px-4 mb-16">
           <div className="max-w-2xl mx-auto text-center p-8 rounded-2xl border border-border/50 bg-card/30">
-            <h2 className="font-display text-2xl font-bold mb-4">
-              {t("how.conclusionTitle")}
-            </h2>
-            <p className="text-muted-foreground leading-relaxed mb-4">
-              {t("how.conclusionP1")}
-            </p>
-            <p className="text-muted-foreground/80 text-sm mb-8">
-              {t("how.conclusionP2")}
-            </p>
+            <h2 className="font-display text-2xl font-bold mb-4">{t("how.conclusionTitle")}</h2>
+            <p className="text-muted-foreground leading-relaxed mb-4">{t("how.conclusionP1")}</p>
+            <p className="text-muted-foreground/80 text-sm mb-8">{t("how.conclusionP2")}</p>
 
-            {/* VIN Search Bar */}
             <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto mb-6">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder={t("hero.searchPlaceholder")}
-                  value={vinInput}
-                  onChange={(e) => setVinInput(e.target.value)}
-                  className="pl-12 h-12 bg-background/80 border-border/50 text-base"
-                />
+                <Input type="text" placeholder={t("hero.searchPlaceholder")} value={vinInput}
+                  onChange={(e) => setVinInput(e.target.value)} className="pl-12 h-12 bg-background/80 border-border/50 text-base" />
               </div>
-              <Button type="submit" size="lg" className="h-12 px-6">
-                {t("hero.search")}
-              </Button>
+              <Button type="submit" size="lg" className="h-12 px-6">{t("hero.search")}</Button>
             </form>
-
-            {/* Contribute Button */}
-            <Link to="/contribute">
-              <Button variant="outline" size="lg" className="h-12 px-8">
-                {t("nav.contribute")}
-              </Button>
-            </Link>
           </div>
         </section>
 
-        {/* Tagline */}
         <section className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto text-center">
-            <p className="text-muted-foreground/70 italic">
-              {t("common.tagline")}
-            </p>
+            <p className="text-muted-foreground/70 italic">{t("common.tagline")}</p>
           </div>
         </section>
         </main>

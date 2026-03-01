@@ -122,6 +122,27 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          vin: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          vin: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          vin?: string
+        }
+        Relationships: []
+      }
       owner_claims: {
         Row: {
           created_at: string

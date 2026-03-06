@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, X, LogOut, User, Search } from "lucide-react";
+import { Menu, X, LogOut, User, Search, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 import { useLanguage } from "@/hooks/useLanguage";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import vlinksLogo from "@/assets/vlinks-logo.svg";
@@ -21,6 +22,7 @@ const Header = () => {
   const [vinSearch, setVinSearch] = useState("");
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const { t } = useLanguage();
   const navigate = useNavigate();
 
@@ -118,6 +120,14 @@ const Header = () => {
                       {t("nav.profile")}
                     </Link>
                   </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
+                        <Shield className="w-4 h-4" />
+                        Administration
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-danger cursor-pointer">
                     <LogOut className="w-4 h-4 mr-2" />
@@ -188,6 +198,16 @@ const Header = () => {
                       <User className="w-5 h-5" />
                       {t("nav.profile")}
                     </Link>
+                    {isAdmin && (
+                      <Link
+                        to="/admin"
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-primary hover:bg-primary/10 transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Shield className="w-5 h-5" />
+                        Administration
+                      </Link>
+                    )}
                     <Button
                       variant="ghost"
                       className="justify-start text-danger"

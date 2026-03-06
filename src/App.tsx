@@ -16,6 +16,11 @@ import HowItWorks from "./pages/HowItWorks";
 import Pricing from "./pages/Pricing";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminContributions from "./pages/admin/AdminContributions";
+import AdminVINs from "./pages/admin/AdminVINs";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminAuditLog from "./pages/admin/AdminAuditLog";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +43,12 @@ const App = () => (
                 <Route path="/update-password" element={<UpdatePassword />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/vin/:vin" element={<VINDetail />} />
+                {/* Admin routes */}
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/contributions" element={<AdminContributions />} />
+                <Route path="/admin/vins" element={<AdminVINs />} />
+                <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/audit" element={<AdminAuditLog />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

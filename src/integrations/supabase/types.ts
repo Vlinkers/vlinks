@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action_type: string
+          admin_user_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          action_type: string
+          admin_user_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          action_type?: string
+          admin_user_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
       contribution_documents: {
         Row: {
           contribution_id: string
@@ -312,6 +342,7 @@ export type Database = {
           is_anonymous: boolean | null
           is_owner_contribution: boolean | null
           mileage_at_intervention: number | null
+          status: string
           updated_at: string
           user_id: string
           vin_id: string
@@ -327,6 +358,7 @@ export type Database = {
           is_anonymous?: boolean | null
           is_owner_contribution?: boolean | null
           mileage_at_intervention?: number | null
+          status?: string
           updated_at?: string
           user_id: string
           vin_id: string
@@ -342,6 +374,7 @@ export type Database = {
           is_anonymous?: boolean | null
           is_owner_contribution?: boolean | null
           mileage_at_intervention?: number | null
+          status?: string
           updated_at?: string
           user_id?: string
           vin_id?: string

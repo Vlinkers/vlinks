@@ -19,6 +19,7 @@ export interface PublicContribution {
   authorPublicId: string | null;
   authorVerified: boolean;
   summaryPublic: string;
+  title: string | null;
   isOwnerContribution: boolean;
   interventionType: string | null;
   interventionDate: string | null;
@@ -67,7 +68,10 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       mileage_at_intervention,
       created_at,
       author_label,
-      author_public_id
+      author_public_id,
+      title,
+      summary,
+      details
     `)
     .eq("vin_id", vinRecord.id) as any)
     .eq("status", "approved")
@@ -86,7 +90,8 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
     author: c.author_label || "Anonyme",
     authorPublicId: c.author_public_id,
     authorVerified: c.is_owner_contribution || false,
-    summaryPublic: "",
+    summaryPublic: c.summary || c.title || "",
+    title: c.title || null,
     isOwnerContribution: c.is_owner_contribution || false,
     interventionType: c.intervention_type,
     interventionDate: c.intervention_date,

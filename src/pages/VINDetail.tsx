@@ -470,233 +470,267 @@ const VINDetail = () => {
             </div>
           )}
 
-          {/* CONTRIBUTIONS - ALWAYS VISIBLE (no auth gating) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              {/* Truth Chain Header */}
-              <div className="p-6 rounded-2xl glass">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="font-display text-xl font-semibold flex items-center gap-2">
-                      <Link2 className="w-5 h-5 text-primary" />
-                      Dossier communautaire
-                    </h2>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Contributions revues et validées manuellement par VLINKS.
-                    </p>
-                  </div>
-                  <Button variant="hero" size="sm" onClick={handleContributeClick}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Contribuer
-                  </Button>
-                </div>
-
-                {/* Filter Tabs */}
-                <div className="flex gap-2 flex-wrap">
-                  {contributionTypesFiltered.map((ct) => (
-                    <button key={ct.type} onClick={() => setFilterType(ct.type)}
-                      className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                        filterType === ct.type
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                      }`}>
-                      {ct.label}
-                      <span className="ml-1.5 opacity-70">({ct.count})</span>
-                    </button>
-                  ))}
-                </div>
+          {/* ═══ DOSSIER SUMMARY ═══ */}
+          <div className="p-6 rounded-2xl glass mb-8">
+            <h2 className="font-display text-xl font-semibold flex items-center gap-2 mb-4">
+              <Shield className="w-5 h-5 text-primary" />
+              Aperçu du dossier
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+              <div className="p-3 rounded-xl bg-muted/30 text-center">
+                <span className="font-display text-2xl font-bold text-foreground">{contributions.length}</span>
+                <p className="text-xs text-muted-foreground mt-1">Contributions</p>
               </div>
+              <div className="p-3 rounded-xl bg-muted/30 text-center">
+                <span className="font-display text-2xl font-bold text-foreground">
+                  {contributions.filter(c => c.type === "inspection_report").length}
+                </span>
+                <p className="text-xs text-muted-foreground mt-1">Inspections</p>
+              </div>
+              <div className="p-3 rounded-xl bg-muted/30 text-center">
+                <span className="font-display text-2xl font-bold text-foreground">
+                  {contributions.reduce((acc, c) => acc + c.documentCount, 0)}
+                </span>
+                <p className="text-xs text-muted-foreground mt-1">Documents</p>
+              </div>
+              <div className="p-3 rounded-xl bg-muted/30 text-center">
+                <span className="font-display text-2xl font-bold text-foreground">
+                  {contributions.reduce((acc, c) => acc + c.photoCount, 0)}
+                </span>
+                <p className="text-xs text-muted-foreground mt-1">Photos</p>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Contributions revues et validées manuellement par VLINKS.
+            </p>
+          </div>
 
-              {/* Timeline */}
-              {filteredContributions.length > 0 ? (
-                <div className="relative">
-                  <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-secondary to-accent opacity-30" />
-                  <div className="space-y-4">
-                    {filteredContributions.map((contribution, index) => {
-                      const Icon = getContributionIcon(contribution.type);
-                      return (
-                        <div key={contribution.id} className="relative pl-16 animate-fade-in-up"
-                          style={{ animationDelay: `${index * 0.05}s` }}>
-                          <div className={`absolute left-3 w-6 h-6 rounded-full flex items-center justify-center border-2 ${getContributionColor(contribution.type)}`}>
-                            <Icon className="w-3 h-3" />
-                          </div>
-                          <div className="p-5 rounded-xl glass border border-border/50 hover:border-primary/30 transition-all">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 flex-wrap mb-2">
-                                  <Badge variant="outline" className={`text-xs ${getContributionColor(contribution.type)}`}>
-                                    <Icon className="w-3 h-3 mr-1" />
-                                    {getContributionLabel(contribution.type)}
-                                  </Badge>
-                                  {contribution.isOwnerContribution && (
-                                    <Badge variant="info" className="text-xs">
-                                      <User className="w-3 h-3 mr-1" />
-                                      Propriétaire
-                                    </Badge>
-                                  )}
-                                  {contribution.authorVerified && (
-                                    <Badge variant="verified" className="text-xs">
-                                      <CheckCircle className="w-3 h-3 mr-1" />
-                                      Vérifié
-                                    </Badge>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                  <span>{contribution.author}</span>
+          {/* ═══ INSPECTIONS & DOCUMENTS ═══ */}
+          {contributions.filter(c => c.type === "inspection_report" || c.type === "vehicle_history" || c.type === "mechanic_conversation").length > 0 && (
+            <div className="mb-8">
+              <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
+                <FileSearch className="w-5 h-5 text-primary" />
+                Rapports & Documents
+              </h2>
+              <div className="space-y-3">
+                {contributions
+                  .filter(c => c.type === "inspection_report" || c.type === "vehicle_history" || c.type === "mechanic_conversation")
+                  .map((contribution) => {
+                    const Icon = getContributionIcon(contribution.type);
+                    return (
+                      <div key={contribution.id} className="p-5 rounded-xl glass border border-border/50">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap mb-2">
+                              <Badge variant="outline" className={`text-xs ${getContributionColor(contribution.type)}`}>
+                                <Icon className="w-3 h-3 mr-1" />
+                                {getContributionLabel(contribution.type)}
+                              </Badge>
+                              {contribution.isOwnerContribution && (
+                                <Badge variant="info" className="text-xs">
+                                  <User className="w-3 h-3 mr-1" />
+                                  Propriétaire
+                                </Badge>
+                              )}
+                              {contribution.authorVerified && (
+                                <Badge variant="verified" className="text-xs">
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Vérifié
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                              <span>{contribution.author}</span>
+                              <span>•</span>
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {contribution.interventionDate || contribution.date}
+                              </span>
+                              {contribution.mileageAtIntervention && (
+                                <>
                                   <span>•</span>
-                                  <span className="flex items-center gap-1">
-                                    <Calendar className="w-3 h-3" />
-                                    {contribution.date}
-                                  </span>
-                                  {contribution.mileageAtIntervention && (
-                                    <>
-                                      <span>•</span>
-                                      <span>{contribution.mileageAtIntervention.toLocaleString()} km</span>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
+                                  <span>{contribution.mileageAtIntervention.toLocaleString()} km</span>
+                                </>
+                              )}
                             </div>
-
                             {contribution.summaryPublic && (
-                              <p className="text-sm text-foreground/90 mb-3">{contribution.summaryPublic}</p>
+                              <p className="text-sm text-foreground/90 mt-2">{contribution.summaryPublic}</p>
                             )}
-
-                            {contribution.photos.length > 0 && (
-                              <div className="mb-3">
-                                <PhotoGallery photos={contribution.photos} />
-                              </div>
-                            )}
-
-                            <div className="flex items-center justify-between pt-3 border-t border-border/30">
-                              <div className="flex items-center gap-4">
-                                {contribution.hasDocuments && (
-                                  <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                                    <FileText className="w-4 h-4" />
-                                    {contribution.documentCount} doc{contribution.documentCount > 1 ? "s" : ""}
-                                  </span>
-                                )}
-                                {contribution.hasPhotos && (
-                                  <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                                    <Camera className="w-4 h-4" />
-                                    {contribution.photoCount} photo{contribution.photoCount > 1 ? "s" : ""}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <div className="p-8 rounded-xl glass text-center">
-                  <p className="text-muted-foreground">
-                    {filterType === "all" 
-                      ? "Aucune contribution pour ce VIN. Soyez le premier à contribuer!"
-                      : "Aucune contribution de ce type."}
-                  </p>
-                </div>
-              )}
-
-              {/* End of Timeline CTA */}
-              <div className="pl-16 relative">
-                <div className="absolute left-3 w-6 h-6 rounded-full bg-gradient-primary flex items-center justify-center">
-                  <Plus className="w-3 h-3 text-primary-foreground" />
-                </div>
-                <div className="p-6 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 text-center">
-                  <h3 className="font-display font-semibold mb-2">
-                    Vous avez de l'information sur ce véhicule ?
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Chaque détail compte. Vos observations, photos, ou échanges peuvent aider le prochain acheteur.
-                  </p>
-                  {!currentUserId && (
-                    <p className="text-xs text-muted-foreground mb-4">
-                      Les contributions nécessitent un compte utilisateur pour assurer la qualité et la traçabilité.
-                    </p>
-                  )}
-                  <Button variant="hero" onClick={handleContributeClick}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    {currentUserId ? "Ajouter ma contribution" : "Se connecter pour contribuer"}
-                  </Button>
-                </div>
+                        {(contribution.hasDocuments || contribution.hasPhotos) && (
+                          <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/30">
+                            {contribution.hasDocuments && (
+                              <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <FileText className="w-4 h-4" />
+                                {contribution.documentCount} doc{contribution.documentCount > 1 ? "s" : ""}
+                              </span>
+                            )}
+                            {contribution.hasPhotos && (
+                              <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <Camera className="w-4 h-4" />
+                                {contribution.photoCount} photo{contribution.photoCount > 1 ? "s" : ""}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
               </div>
             </div>
+          )}
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Contribution Stats */}
-              <div className="p-6 rounded-2xl glass">
-                <h3 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-secondary" />
-                  Résumé des contributions
-                </h3>
+          {/* ═══ OBSERVATIONS ═══ */}
+          {contributions.filter(c => c.type === "observation" || c.type === "owner_exchange" || c.type === "purchase_decision").length > 0 && (
+            <div className="mb-8">
+              <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
+                <Eye className="w-5 h-5 text-accent" />
+                Observations des acheteurs
+              </h2>
+              <div className="space-y-3">
+                {contributions
+                  .filter(c => c.type === "observation" || c.type === "owner_exchange" || c.type === "purchase_decision")
+                  .map((contribution) => {
+                    const Icon = getContributionIcon(contribution.type);
+                    return (
+                      <div key={contribution.id} className="p-5 rounded-xl glass border border-border/50">
+                        <div className="flex items-center gap-2 flex-wrap mb-2">
+                          <Badge variant="outline" className={`text-xs ${getContributionColor(contribution.type)}`}>
+                            <Icon className="w-3 h-3 mr-1" />
+                            {getContributionLabel(contribution.type)}
+                          </Badge>
+                          {contribution.isOwnerContribution && (
+                            <Badge variant="info" className="text-xs">
+                              <User className="w-3 h-3 mr-1" />
+                              Propriétaire
+                            </Badge>
+                          )}
+                        </div>
+                        {contribution.summaryPublic && (
+                          <blockquote className="text-sm text-foreground/90 border-l-2 border-primary/30 pl-3 my-2 italic">
+                            {contribution.summaryPublic}
+                          </blockquote>
+                        )}
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-2">
+                          <span>{contribution.author}</span>
+                          <span>•</span>
+                          <span>{contribution.date}</span>
+                          {contribution.authorVerified && (
+                            <>
+                              <span>•</span>
+                              <span className="text-success flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" />
+                                Contribution validée
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+
+          {/* ═══ PHOTOS ═══ */}
+          {contributions.some(c => c.photos.length > 0) && (
+            <div className="mb-8">
+              <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
+                <Camera className="w-5 h-5 text-secondary" />
+                Photos
+              </h2>
+              <div className="space-y-4">
+                {contributions
+                  .filter(c => c.photos.length > 0)
+                  .map((contribution) => (
+                    <div key={contribution.id} className="p-4 rounded-xl glass border border-border/50">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                        <span>{contribution.author}</span>
+                        <span>•</span>
+                        <span>{contribution.date}</span>
+                      </div>
+                      <PhotoGallery photos={contribution.photos} />
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* ═══ TIMELINE CHRONOLOGIQUE ═══ */}
+          <div className="mb-8">
+            <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
+              <Clock className="w-5 h-5 text-muted-foreground" />
+              Historique des contributions
+            </h2>
+
+            {contributions.length > 0 ? (
+              <div className="relative">
+                <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-secondary to-accent opacity-30" />
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Inspections pro</span>
-                    <span className="font-semibold">{contributions.filter(c => c.type === "inspection_report").length}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Rapports historique</span>
-                    <span className="font-semibold">{contributions.filter(c => c.type === "vehicle_history").length}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Observations terrain</span>
-                    <span className="font-semibold">{contributions.filter(c => c.type === "observation" || c.type === "photo_evidence").length}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Contributions propriétaire</span>
-                    <span className="font-semibold">{contributions.filter(c => c.isOwnerContribution).length}</span>
-                  </div>
+                  {contributions.map((contribution, index) => {
+                    const Icon = getContributionIcon(contribution.type);
+                    return (
+                      <div key={contribution.id} className="relative pl-16 animate-fade-in-up"
+                        style={{ animationDelay: `${index * 0.05}s` }}>
+                        <div className={`absolute left-3 w-6 h-6 rounded-full flex items-center justify-center border-2 ${getContributionColor(contribution.type)}`}>
+                          <Icon className="w-3 h-3" />
+                        </div>
+                        <div className="p-4 rounded-xl glass border border-border/50">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="outline" className={`text-xs ${getContributionColor(contribution.type)}`}>
+                              {getContributionLabel(contribution.type)}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">{contribution.author}</span>
+                            <span className="text-xs text-muted-foreground">•</span>
+                            <span className="text-xs text-muted-foreground">{contribution.date}</span>
+                            {contribution.mileageAtIntervention && (
+                              <span className="text-xs text-muted-foreground">
+                                • {contribution.mileageAtIntervention.toLocaleString()} km
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-
-              {/* Download Report CTA */}
-              {data.totalContributions > 0 && (
-                <div className="p-6 rounded-2xl glass">
-                  <h3 className="font-display text-lg font-semibold mb-2 flex items-center gap-2">
-                    <FileDown className="w-5 h-5 text-primary" />
-                    Rapport consolidé
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Téléchargez un rapport PDF regroupant toutes les contributions de ce dossier.
-                  </p>
-                  <Button variant="outline" className="w-full" onClick={() => setShowPDFDialog(true)}>
-                    <FileDown className="w-4 h-4 mr-2" />
-                    Télécharger le rapport
-                  </Button>
-                  <p className="text-xs text-muted-foreground text-center mt-2">
-                    🚀 Gratuit pendant le lancement
-                  </p>
-                </div>
-              )}
-
-              {/* Contribute CTA */}
-              <div className="p-6 rounded-2xl glass border-2 border-dashed border-secondary/30">
-                <h3 className="font-display text-lg font-semibold mb-2">
-                  Contribuer à ce dossier
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Vos inspections, photos et observations aident d'autres acheteurs à prendre de meilleures décisions.
+            ) : (
+              <div className="p-8 rounded-xl glass text-center">
+                <p className="text-muted-foreground">
+                  Aucune contribution pour ce VIN. Soyez le premier à contribuer !
                 </p>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Shield className="w-4 h-4 text-primary" />
-                    <span>Contribuez anonymement si désiré</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="w-4 h-4 text-success" />
-                    <span>Contributions validées manuellement</span>
-                  </div>
-                </div>
-                <Button variant="outline" className="w-full mt-4" onClick={handleContributeClick}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  {currentUserId ? "Ajouter ma contribution" : "Se connecter pour contribuer"}
-                </Button>
               </div>
+            )}
+          </div>
+
+          {/* ═══ FINAL CTA ═══ */}
+          <div className="p-8 rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 text-center mb-8">
+            <h3 className="font-display text-xl font-semibold mb-2">
+              Vous avez de l'information sur ce véhicule ?
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4 max-w-lg mx-auto">
+              Chaque détail compte. Vos observations, photos, ou échanges peuvent aider le prochain acheteur.
+            </p>
+            {!currentUserId && (
+              <p className="text-xs text-muted-foreground mb-4">
+                Les contributions nécessitent un compte utilisateur pour assurer la qualité et la traçabilité.
+              </p>
+            )}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button variant="hero" size="lg" onClick={handleContributeClick}>
+                <Plus className="w-4 h-4 mr-2" />
+                {currentUserId ? "Ajouter ma contribution" : "Se connecter pour contribuer"}
+              </Button>
+              {data.totalContributions > 0 && (
+                <Button variant="outline" size="lg" onClick={() => setShowPDFDialog(true)}>
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Rapport PDF
+                </Button>
+              )}
             </div>
+            <p className="text-xs text-muted-foreground mt-3">🚀 Gratuit pendant le lancement</p>
           </div>
         </div>
       </main>

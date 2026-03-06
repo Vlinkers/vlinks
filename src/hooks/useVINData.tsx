@@ -55,7 +55,7 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
   if (vinError) throw vinError;
   if (!vinRecord) return null;
 
-  const { data: contributions, error: contribError } = await supabase
+  const { data: contributions, error: contribError } = await (supabase
     .from("public_contributions")
     .select(`
       id,
@@ -69,7 +69,8 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       author_label,
       author_public_id
     `)
-    .eq("vin_id", vinRecord.id)
+    .eq("vin_id", vinRecord.id) as any)
+    .eq("status", "approved")
     .order("created_at", { ascending: false });
 
   if (contribError) throw contribError;

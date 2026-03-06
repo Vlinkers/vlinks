@@ -344,7 +344,7 @@ export function ContributionForm({
 
     if (contributionError) throw contributionError;
 
-    // Publish directly to public_contributions
+    // Insert to public_contributions with status pending (moderation required)
     const { error: pubError } = await supabase
       .from("public_contributions")
       .insert({
@@ -355,7 +355,8 @@ export function ContributionForm({
         is_owner_contribution: isOwnerClaim,
         author_label: authorLabel,
         author_public_id: authorPublicId,
-      });
+        status: "pending",
+      } as any);
 
     if (pubError) {
       console.error("Error publishing contribution:", pubError);
@@ -409,8 +410,8 @@ export function ContributionForm({
 
     setProcessingStatus('done');
     toast({
-      title: "Contribution publiée",
-      description: "Votre contribution a été publiée avec succès.",
+      title: "Contribution soumise",
+      description: "Votre contribution sera examinée et publiée après validation par VLINKS.",
     });
 
     // Notify VIN followers (fire and forget)

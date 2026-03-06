@@ -13,6 +13,7 @@ import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { useVINDecode } from "@/hooks/useVINDecode";
 import { VehicleIdentificationCard } from "@/components/VehicleIdentificationCard";
 import { useVINFollow } from "@/hooks/useVINFollow";
+import { useAdmin } from "@/hooks/useAdmin";
 import { 
   Shield, 
   AlertTriangle, 
@@ -30,6 +31,7 @@ import {
   Wrench,
   XCircle,
   Eye,
+  EyeOff,
   Link2,
   Plus,
   Loader2,
@@ -38,7 +40,9 @@ import {
   Fuel,
   Settings,
   FileDown,
-  Star
+  Star,
+  Trash2,
+  Pencil
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,6 +95,7 @@ const VINDetail = () => {
   const { data, isLoading, error, refetch } = useVINData(vin);
   const { data: vinDecode, isLoading: isDecodingVIN } = useVINDecode(vin);
   const { toast } = useToast();
+  const { isAdmin, logAction } = useAdmin();
   const { isFollowing, isLoading: isFollowLoading, toggleFollow } = useVINFollow(vin);
   const [filterType, setFilterType] = useState<ContributionType | "all">("all");
   const [showContributionForm, setShowContributionForm] = useState(false);
@@ -214,6 +219,42 @@ const VINDetail = () => {
       });
     }
   };
+
+  const handleAdminAction = async (contributionId: string, action: string) => {
+    const statusMap: Record<string, string> = {
+      approve: "approved",
+      hide: "hidden",
+      delete: "deleted",
+    };
+    const newStatus = statusMap[action];
+    if (!newStatus) return;
+
+    const { error } = await (supabase
+      .from("public_contributions")
+      .update({ status: newStatus } as any)
+      .eq("id", contributionId) as any);
+
+    if (!error) {
+      await logAction(`contribution_${newStatus}`, "contribution", contributionId);
+      toast({ title: action === "approve" ? "Contribution approuvée" : action === "hide" ? "Contribution masquée" : "Contribution supprimée" });
+      refetch();
+    }
+  };
+
+  const AdminActions = ({ contributionId }: { contributionId: string }) => {
+    if (!isAdmin) return null;
+    return (
+      <div className="flex gap-1 mt-2">
+        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); handleAdminAction(contributionId, "hide"); }}>
+          <EyeOff className="w-3 h-3 mr-1" /> Masquer
+        </Button>
+        <Button size="sm" variant="ghost" className="h-7 text-xs text-danger" onClick={(e) => { e.stopPropagation(); handleAdminAction(contributionId, "delete"); }}>
+          <Trash2 className="w-3 h-3 mr-1" /> Supprimer
+        </Button>
+      </div>
+    );
+  };
+
 
   const getTrustColor = (score: number) => {
     if (score >= 80) return "text-success";
@@ -501,6 +542,14 @@ const VINDetail = () => {
                 <Plus className="w-4 h-4 mr-2" />
                 Contribuer
               </Button>
+              {isAdmin && (
+                <Button variant="outline" size="sm" asChild className="border-primary/30 text-primary">
+                  <Link to="/admin/contributions">
+                    <Shield className="w-4 h-4 mr-2" />
+                    Modérer
+                  </Link>
+                </Button>
+              )}
               <p className="w-full text-xs text-muted-foreground mt-1">
                 Contributions revues et validées manuellement par VLINKS.
               </p>
@@ -607,6 +656,7 @@ const VINDetail = () => {
                             )}
                           </div>
                         )}
+                        <AdminActions contributionId={contribution.id} />
                       </div>
                     );
                   })}
@@ -659,6 +709,7 @@ const VINDetail = () => {
                             </>
                           )}
                         </div>
+                        <AdminActions contributionId={contribution.id} />
                       </div>
                     );
                   })}
@@ -723,6 +774,7 @@ const VINDetail = () => {
                               </span>
                             )}
                           </div>
+                          <AdminActions contributionId={contribution.id} />
                         </div>
                       </div>
                     );

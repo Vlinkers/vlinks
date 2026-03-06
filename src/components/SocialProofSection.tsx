@@ -17,7 +17,7 @@ const SocialProofSection = () => {
     const fetchStats = async () => {
       const [vinsRes, contribRes, docsRes] = await Promise.all([
         supabase.from("vins").select("id", { count: "exact", head: true }),
-        supabase.from("public_contributions").select("id", { count: "exact", head: true }),
+        (supabase.from("public_contributions").select("id", { count: "exact", head: true }) as any).eq("status", "approved"),
         supabase.from("contribution_documents").select("id", { count: "exact", head: true }),
       ]);
       setStats({

@@ -1,0 +1,1 @@
+ALTER TABLE public.public_contributions ALTER COLUMN status SET DEFAULT 'pending';

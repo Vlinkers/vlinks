@@ -12,6 +12,7 @@ import { PDFDownloadDialog } from "@/components/PDFDownloadDialog";
 import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { useVINDecode } from "@/hooks/useVINDecode";
 import { VehicleIdentificationCard } from "@/components/VehicleIdentificationCard";
+import { useVINFollow } from "@/hooks/useVINFollow";
 import { 
   Shield, 
   AlertTriangle, 
@@ -36,7 +37,8 @@ import {
   Gauge,
   Fuel,
   Settings,
-  FileDown
+  FileDown,
+  Star
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,6 +91,7 @@ const VINDetail = () => {
   const { data, isLoading, error, refetch } = useVINData(vin);
   const { data: vinDecode, isLoading: isDecodingVIN } = useVINDecode(vin);
   const { toast } = useToast();
+  const { isFollowing, isLoading: isFollowLoading, toggleFollow } = useVINFollow(vin);
   const [filterType, setFilterType] = useState<ContributionType | "all">("all");
   const [showContributionForm, setShowContributionForm] = useState(false);
   const [showOwnerForm, setShowOwnerForm] = useState(false);
@@ -194,6 +197,22 @@ const VINDetail = () => {
       return;
     }
     setShowContributionForm(true);
+  };
+
+  const handleFollowClick = async () => {
+    if (!currentUserId) {
+      navigate(`/auth?redirect=/vin/${vin}`);
+      return;
+    }
+    const success = await toggleFollow();
+    if (success) {
+      toast({
+        title: isFollowing ? "VIN retiré" : "VIN suivi",
+        description: isFollowing 
+          ? "Vous ne suivez plus ce VIN." 
+          : "Vous recevrez les mises à jour pour ce VIN.",
+      });
+    }
   };
 
   const getTrustColor = (score: number) => {
@@ -401,7 +420,16 @@ const VINDetail = () => {
               />
 
               {/* Action buttons */}
-              <div className="flex gap-3 mb-6">
+              <div className="flex flex-wrap gap-3 mb-6">
+                <Button 
+                  variant={isFollowing ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={handleFollowClick}
+                  disabled={isFollowLoading}
+                >
+                  <Star className={`w-4 h-4 mr-2 ${isFollowing ? "fill-current" : ""}`} />
+                  {isFollowing ? "VIN suivi" : "Suivre ce VIN"}
+                </Button>
                 {data.totalContributions > 0 && (
                   <Button variant="outline" size="sm" onClick={() => setShowPDFDialog(true)}>
                     <FileDown className="w-4 h-4 mr-2" />

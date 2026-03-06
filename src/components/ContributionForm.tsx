@@ -413,6 +413,11 @@ export function ContributionForm({
       description: "Votre contribution a été publiée avec succès.",
     });
 
+    // Notify VIN followers (fire and forget)
+    supabase.functions.invoke('notify-vin-followers', {
+      body: { vin, contribution_type: data.contribution_type },
+    }).catch(err => console.error('Notification error:', err));
+
     // Reset form
     reset();
     setDocuments([]);

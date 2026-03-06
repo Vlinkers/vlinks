@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { User, FileText, LogOut, Calendar, Trash2, Eye, Loader2, AlertCircle, Car, Shield } from "lucide-react";
+import { User, FileText, LogOut, Calendar, Trash2, Eye, Loader2, AlertCircle, Car, Shield, Star } from "lucide-react";
 import { validateUsernameFormat, checkUsernameAvailability } from "@/lib/usernameValidation";
 import {
   AlertDialog,
@@ -62,6 +62,12 @@ interface OwnerClaim {
   verified_at: string | null;
 }
 
+interface FollowedVIN {
+  id: string;
+  vin: string;
+  created_at: string;
+}
+
 const CONTRIBUTION_TYPE_LABELS: Record<string, { fr: string; en: string }> = {
   inspection_report: { fr: "Rapport d'inspection", en: "Inspection Report" },
   vehicle_history: { fr: "Historique véhicule", en: "Vehicle History" },
@@ -81,6 +87,7 @@ const Profile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [contributions, setContributions] = useState<UserContribution[]>([]);
   const [ownerClaims, setOwnerClaims] = useState<OwnerClaim[]>([]);
+  const [followedVINs, setFollowedVINs] = useState<FollowedVIN[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [username, setUsername] = useState("");
@@ -107,6 +114,7 @@ const Profile = () => {
       fetchProfile();
       fetchContributions();
       fetchOwnerClaims();
+      fetchFollowedVINs();
     }
   }, [user]);
 
@@ -203,6 +211,43 @@ const Profile = () => {
     }));
 
     setOwnerClaims(claims);
+  };
+
+  const fetchFollowedVINs = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("vin_followers")
+      .select("id, vin, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching followed VINs:", error);
+      return;
+    }
+    setFollowedVINs(data || []);
+  };
+
+  const handleUnfollow = async (id: string) => {
+    const { error } = await supabase
+      .from("vin_followers")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user?.id);
+
+    if (error) {
+      toast({
+        title: language === "fr" ? "Erreur" : "Error",
+        description: language === "fr" ? "Impossible de retirer le suivi" : "Failed to unfollow",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: language === "fr" ? "Retiré" : "Removed",
+        description: language === "fr" ? "VIN retiré de votre liste" : "VIN removed from your list",
+      });
+      fetchFollowedVINs();
+    }
   };
 
   const handleRevokeClaim = async (claimId: string) => {
@@ -376,7 +421,7 @@ const Profile = () => {
             </h1>
 
             <Tabs defaultValue="profile" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3 max-w-lg">
+              <TabsList className="grid w-full grid-cols-4 max-w-2xl">
                 <TabsTrigger value="profile" className="flex items-center gap-2">
                   <User className="w-4 h-4" />
                   {language === "fr" ? "Profil" : "Profile"}
@@ -384,6 +429,10 @@ const Profile = () => {
                 <TabsTrigger value="contributions" className="flex items-center gap-2">
                   <FileText className="w-4 h-4" />
                   {language === "fr" ? "Contributions" : "Contributions"}
+                </TabsTrigger>
+                <TabsTrigger value="followed" className="flex items-center gap-2">
+                  <Star className="w-4 h-4" />
+                  {language === "fr" ? "VIN suivis" : "Followed"}
                 </TabsTrigger>
                 <TabsTrigger value="claims" className="flex items-center gap-2">
                   <Car className="w-4 h-4" />
@@ -585,6 +634,77 @@ const Profile = () => {
                                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
                                 onClick={() => setDeleteContributionId(contribution.id)}
                                 title={language === "fr" ? "Supprimer" : "Delete"}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Followed VINs Tab */}
+              <TabsContent value="followed" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Star className="w-5 h-5 text-primary" />
+                      {language === "fr" ? "VIN suivis" : "Followed VINs"}
+                    </CardTitle>
+                    <CardDescription>
+                      {language === "fr" 
+                        ? "Recevez des notifications quand de nouvelles informations sont ajoutées" 
+                        : "Get notified when new information is added"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {followedVINs.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <Star className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p>{language === "fr" ? "Aucun VIN suivi" : "No followed VINs"}</p>
+                        <p className="text-sm mt-2">
+                          {language === "fr" 
+                            ? "Suivez un VIN depuis sa page pour recevoir les mises à jour." 
+                            : "Follow a VIN from its page to get updates."}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {followedVINs.map((fv) => (
+                          <div 
+                            key={fv.id}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="flex-1 space-y-1">
+                              <code className="text-sm font-mono text-primary">{fv.vin}</code>
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {language === "fr" ? "Suivi depuis " : "Following since "}
+                                  {new Date(fv.created_at).toLocaleDateString(
+                                    language === "fr" ? "fr-CA" : "en-CA"
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => navigate(`/vin/${fv.vin}`)}
+                                title={language === "fr" ? "Voir" : "View"}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => handleUnfollow(fv.id)}
+                                title={language === "fr" ? "Ne plus suivre" : "Unfollow"}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>

@@ -564,6 +564,27 @@ export type Database = {
         }
         Relationships: []
       }
+      vin_followers: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          vin: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          vin: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          vin?: string
+        }
+        Relationships: []
+      }
       vins: {
         Row: {
           contributions_count: number | null

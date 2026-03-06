@@ -11,6 +11,7 @@ import { UsernameRequiredDialog } from "@/components/UsernameRequiredDialog";
 import { PDFDownloadDialog } from "@/components/PDFDownloadDialog";
 import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { useVINDecode } from "@/hooks/useVINDecode";
+import { VehicleIdentificationCard } from "@/components/VehicleIdentificationCard";
 import { 
   Shield, 
   AlertTriangle, 
@@ -80,95 +81,7 @@ const getContributionColor = (type: ContributionType) => {
   }
 };
 
-// Vehicle Detected Block Component
-interface VehicleDetectedBlockProps {
-  vinDecode: {
-    make: string | null;
-    model: string | null;
-    model_year: number | null;
-    trim: string | null;
-    engine: string | null;
-    body_class: string | null;
-    drive_type: string | null;
-    fuel_type: string | null;
-    is_valid: boolean;
-    error_message: string | null;
-  } | null | undefined;
-  isLoading: boolean;
-}
 
-const VehicleDetectedBlock = ({ vinDecode, isLoading }: VehicleDetectedBlockProps) => {
-  if (isLoading) {
-    return (
-      <div className="p-4 rounded-xl bg-muted/30 border border-border/50 mb-4">
-        <div className="flex items-center gap-3">
-          <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
-          <span className="text-sm text-muted-foreground">Identification du véhicule...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!vinDecode) return null;
-
-  if (!vinDecode.is_valid) {
-    return (
-      <div className="p-4 rounded-xl bg-danger/10 border border-danger/30 mb-4">
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-danger mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="font-medium text-danger">VIN non reconnu</p>
-            <p className="text-sm text-muted-foreground">
-              {vinDecode.error_message || "Ce VIN ne correspond pas à un véhicule valide ou n'est pas reconnu par la base NHTSA."}
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const vehicleName = [vinDecode.model_year, vinDecode.make, vinDecode.model, vinDecode.trim].filter(Boolean).join(' ');
-
-  return (
-    <div className="p-4 rounded-xl bg-success/10 border border-success/30 mb-4">
-      <div className="flex items-start gap-3">
-        <CheckCircle className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-success mb-1">Véhicule détecté</p>
-          <p className="font-display text-lg font-semibold text-foreground truncate">
-            {vehicleName || "Véhicule identifié"}
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
-            {vinDecode.body_class && (
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Car className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate">{vinDecode.body_class}</span>
-              </div>
-            )}
-            {vinDecode.engine && (
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Settings className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate">{vinDecode.engine}</span>
-              </div>
-            )}
-            {vinDecode.fuel_type && (
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Fuel className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate">{vinDecode.fuel_type}</span>
-              </div>
-            )}
-            {vinDecode.drive_type && (
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Gauge className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate">{vinDecode.drive_type}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const VINDetail = () => {
   const { vin } = useParams();
@@ -349,7 +262,12 @@ const VINDetail = () => {
             </div>
 
             <div className="max-w-3xl mx-auto">
-              <VehicleDetectedBlock vinDecode={vinDecode} isLoading={isDecodingVIN} />
+              <VehicleIdentificationCard
+                vin={vin || ""}
+                vinDecode={vinDecode}
+                isLoading={isDecodingVIN}
+                onContribute={handleContributeClick}
+              />
               
               <div className="text-center mb-6 p-6 rounded-2xl glass border border-border/50">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -466,101 +384,39 @@ const VINDetail = () => {
             <span className="text-foreground font-mono">{vin}</span>
           </div>
 
-          {/* Header Section */}
+          {/* Vehicle Identification Card */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            <div className="lg:col-span-2 p-8 rounded-2xl glass">
-              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-6">
-                <div>
-                  <div className="flex items-center gap-3 mb-2 flex-wrap">
-                    <Badge variant="verified">
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                      VIN vérifié
-                    </Badge>
-                    <Badge variant="info">
-                      <Link2 className="w-3 h-3 mr-1" />
-                      {data.totalContributions} contribution{data.totalContributions > 1 ? 's' : ''}
-                    </Badge>
-                    <Badge variant="outline">
-                      <Users className="w-3 h-3 mr-1" />
-                      {data.uniqueContributors} contributeur{data.uniqueContributors > 1 ? 's' : ''}
-                    </Badge>
-                  </div>
-                  <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
-                    {vehicleName || "Véhicule"}
-                  </h1>
-                  <p className="text-muted-foreground font-mono text-lg">{vin}</p>
-                  {vinDecode?.is_valid && (vinDecode.engine || vinDecode.fuel_type || vinDecode.drive_type) && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {vinDecode.engine && (
-                        <Badge variant="outline" className="text-xs">
-                          <Settings className="w-3 h-3 mr-1" />
-                          {vinDecode.engine}
-                        </Badge>
-                      )}
-                      {vinDecode.fuel_type && (
-                        <Badge variant="outline" className="text-xs">
-                          <Fuel className="w-3 h-3 mr-1" />
-                          {vinDecode.fuel_type}
-                        </Badge>
-                      )}
-                      {vinDecode.drive_type && (
-                        <Badge variant="outline" className="text-xs">
-                          <Gauge className="w-3 h-3 mr-1" />
-                          {vinDecode.drive_type}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-3">
-                  {data.totalContributions > 0 && (
-                    <Button variant="outline" size="sm" onClick={() => setShowPDFDialog(true)}>
-                      <FileDown className="w-4 h-4 mr-2" />
-                      Rapport PDF
-                    </Button>
-                  )}
-                  <Button variant="hero" size="sm" onClick={handleContributeClick}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Contribuer
-                  </Button>
-                </div>
-              </div>
+            <div className="lg:col-span-2">
+              <VehicleIdentificationCard
+                vin={vin || ""}
+                vinDecode={vinDecode}
+                isLoading={isDecodingVIN}
+                dossier={{
+                  totalContributions: data.totalContributions,
+                  documentCount: data.contributions.reduce((acc, c) => acc + c.documentCount, 0),
+                  photoCount: data.contributions.reduce((acc, c) => acc + c.photoCount, 0),
+                }}
+                lastUpdated={data.lastUpdated}
+                onContribute={handleContributeClick}
+              />
 
-              {/* Quick Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 rounded-xl bg-muted/30">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Calendar className="w-4 h-4" />
-                    <span className="text-sm">Année</span>
-                  </div>
-                  <span className="text-xl font-semibold">{data.year || "—"}</span>
-                </div>
-                <div className="p-4 rounded-xl bg-muted/30">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Car className="w-4 h-4" />
-                    <span className="text-sm">Marque</span>
-                  </div>
-                  <span className="text-xl font-semibold">{data.make || "—"}</span>
-                </div>
-                <div className="p-4 rounded-xl bg-muted/30">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Car className="w-4 h-4" />
-                    <span className="text-sm">Modèle</span>
-                  </div>
-                  <span className="text-xl font-semibold">{data.model || "—"}</span>
-                </div>
-                <div className="p-4 rounded-xl bg-muted/30">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm">Mis à jour</span>
-                  </div>
-                  <span className="text-lg font-semibold">{data.lastUpdated}</span>
-                </div>
+              {/* Action buttons */}
+              <div className="flex gap-3 mb-6">
+                {data.totalContributions > 0 && (
+                  <Button variant="outline" size="sm" onClick={() => setShowPDFDialog(true)}>
+                    <FileDown className="w-4 h-4 mr-2" />
+                    Rapport PDF
+                  </Button>
+                )}
+                <Button variant="hero" size="sm" onClick={handleContributeClick}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Contribuer
+                </Button>
               </div>
             </div>
 
             {/* Trust Score Card */}
-            <div className="p-8 rounded-2xl glass text-center">
+            <div className="p-8 rounded-2xl glass text-center h-fit">
               <h3 className="font-display text-lg font-semibold mb-4">Score de confiance</h3>
               <div className="relative w-32 h-32 mx-auto mb-4">
                 <svg className="w-full h-full transform -rotate-90">

@@ -621,7 +621,10 @@ const VINDetail = () => {
                                 </Badge>
                               )}
                             </div>
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            {contribution.title && (
+                              <h3 className="text-sm font-semibold text-foreground mt-2">{contribution.title}</h3>
+                            )}
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
                               <span>{contribution.author}</span>
                               <span>•</span>
                               <span className="flex items-center gap-1">
@@ -690,6 +693,9 @@ const VINDetail = () => {
                             </Badge>
                           )}
                         </div>
+                        {contribution.title && (
+                          <h3 className="text-sm font-semibold text-foreground mt-2">{contribution.title}</h3>
+                        )}
                         {contribution.summaryPublic && (
                           <blockquote className="text-sm text-foreground/90 border-l-2 border-primary/30 pl-3 my-2 italic">
                             {contribution.summaryPublic}

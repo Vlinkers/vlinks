@@ -336,6 +336,7 @@ export type Database = {
           author_public_id: string | null
           contribution_type: Database["public"]["Enums"]["contribution_type"]
           created_at: string
+          details: string | null
           id: string
           intervention_date: string | null
           intervention_type: string | null
@@ -343,6 +344,8 @@ export type Database = {
           is_owner_contribution: boolean | null
           mileage_at_intervention: number | null
           status: string
+          summary: string | null
+          title: string | null
           updated_at: string
           user_id: string
           vin_id: string
@@ -352,6 +355,7 @@ export type Database = {
           author_public_id?: string | null
           contribution_type: Database["public"]["Enums"]["contribution_type"]
           created_at?: string
+          details?: string | null
           id?: string
           intervention_date?: string | null
           intervention_type?: string | null
@@ -359,6 +363,8 @@ export type Database = {
           is_owner_contribution?: boolean | null
           mileage_at_intervention?: number | null
           status?: string
+          summary?: string | null
+          title?: string | null
           updated_at?: string
           user_id: string
           vin_id: string
@@ -368,6 +374,7 @@ export type Database = {
           author_public_id?: string | null
           contribution_type?: Database["public"]["Enums"]["contribution_type"]
           created_at?: string
+          details?: string | null
           id?: string
           intervention_date?: string | null
           intervention_type?: string | null
@@ -375,6 +382,8 @@ export type Database = {
           is_owner_contribution?: boolean | null
           mileage_at_intervention?: number | null
           status?: string
+          summary?: string | null
+          title?: string | null
           updated_at?: string
           user_id?: string
           vin_id?: string

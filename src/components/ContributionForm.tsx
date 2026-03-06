@@ -356,6 +356,9 @@ export function ContributionForm({
         author_label: authorLabel,
         author_public_id: authorPublicId,
         status: "pending",
+        title: data.title,
+        summary: data.summary || null,
+        details: data.details || null,
       } as any);
 
     if (pubError) {

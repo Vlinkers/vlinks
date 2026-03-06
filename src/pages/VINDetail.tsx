@@ -404,66 +404,105 @@ const VINDetail = () => {
           </div>
 
           {/* Vehicle Identification Card */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            <div className="lg:col-span-2">
-              <VehicleIdentificationCard
-                vin={vin || ""}
-                vinDecode={vinDecode}
-                isLoading={isDecodingVIN}
-                dossier={{
-                  totalContributions: data.totalContributions,
-                  documentCount: data.contributions.reduce((acc, c) => acc + c.documentCount, 0),
-                  photoCount: data.contributions.reduce((acc, c) => acc + c.photoCount, 0),
-                }}
-                lastUpdated={data.lastUpdated}
-                onContribute={handleContributeClick}
-              />
+          <VehicleIdentificationCard
+            vin={vin || ""}
+            vinDecode={vinDecode}
+            isLoading={isDecodingVIN}
+            dossier={{
+              totalContributions: data.totalContributions,
+              documentCount: data.contributions.reduce((acc, c) => acc + c.documentCount, 0),
+              photoCount: data.contributions.reduce((acc, c) => acc + c.photoCount, 0),
+            }}
+            lastUpdated={data.lastUpdated}
+            onContribute={handleContributeClick}
+            showContributeButton={false}
+          />
 
-              {/* Action buttons */}
-              <div className="flex flex-wrap gap-3 mb-6">
-                <Button 
-                  variant={isFollowing ? "default" : "outline"} 
-                  size="sm" 
-                  onClick={handleFollowClick}
-                  disabled={isFollowLoading}
-                >
-                  <Star className={`w-4 h-4 mr-2 ${isFollowing ? "fill-current" : ""}`} />
-                  {isFollowing ? "VIN suivi" : "Suivre ce VIN"}
-                </Button>
-                {data.totalContributions > 0 && (
-                  <Button variant="outline" size="sm" onClick={() => setShowPDFDialog(true)}>
-                    <FileDown className="w-4 h-4 mr-2" />
-                    Rapport PDF
-                  </Button>
-                )}
-                <Button variant="hero" size="sm" onClick={handleContributeClick}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Contribuer
-                </Button>
+          {/* ═══ TABLEAU DE BORD — Score + Aperçu ═══ */}
+          <div className="rounded-2xl glass border border-border/50 overflow-hidden mb-8">
+            <div className="p-6 pb-4 flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" />
+              <h2 className="font-display text-lg font-semibold">Tableau de bord</h2>
+              {data.lastUpdated && (
+                <span className="text-xs text-muted-foreground ml-auto">Mis à jour : {data.lastUpdated}</span>
+              )}
+            </div>
+
+            <div className="px-6 pb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                {/* Trust Score */}
+                <div className="col-span-2 sm:col-span-1 p-4 rounded-xl bg-muted/30 flex flex-col items-center justify-center">
+                  <div className="relative w-20 h-20 mb-2">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle cx="40" cy="40" r="34" stroke="currentColor" strokeWidth="6" fill="none" className="text-muted" />
+                      <circle cx="40" cy="40" r="34" stroke="currentColor" strokeWidth="6" fill="none"
+                        strokeDasharray={`${(data.trustScore / 100) * 213.6} 213.6`}
+                        className={getTrustColor(data.trustScore)} strokeLinecap="round" />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className={`font-display text-2xl font-bold ${getTrustColor(data.trustScore)}`}>
+                        {data.trustScore}
+                      </span>
+                    </div>
+                  </div>
+                  <Badge variant={data.trustScore >= 80 ? "verified" : "warning"} className="text-[10px]">
+                    {getTrustLabel(data.trustScore)}
+                  </Badge>
+                  <p className="text-[10px] text-muted-foreground mt-1">Score de confiance</p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-muted/30 flex flex-col items-center justify-center text-center">
+                  <FileText className="w-5 h-5 text-primary mb-1" />
+                  <span className="font-display text-2xl font-bold text-foreground">{contributions.length}</span>
+                  <p className="text-xs text-muted-foreground mt-1">Contributions</p>
+                </div>
+                <div className="p-4 rounded-xl bg-muted/30 flex flex-col items-center justify-center text-center">
+                  <FileSearch className="w-5 h-5 text-primary mb-1" />
+                  <span className="font-display text-2xl font-bold text-foreground">
+                    {contributions.filter(c => c.type === "inspection_report").length}
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-1">Inspections</p>
+                </div>
+                <div className="p-4 rounded-xl bg-muted/30 flex flex-col items-center justify-center text-center">
+                  <FileText className="w-5 h-5 text-muted-foreground mb-1" />
+                  <span className="font-display text-2xl font-bold text-foreground">
+                    {contributions.reduce((acc, c) => acc + c.documentCount, 0)}
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-1">Documents</p>
+                </div>
+                <div className="p-4 rounded-xl bg-muted/30 flex flex-col items-center justify-center text-center">
+                  <Camera className="w-5 h-5 text-muted-foreground mb-1" />
+                  <span className="font-display text-2xl font-bold text-foreground">
+                    {contributions.reduce((acc, c) => acc + c.photoCount, 0)}
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-1">Photos</p>
+                </div>
               </div>
             </div>
 
-            {/* Trust Score Card */}
-            <div className="p-8 rounded-2xl glass text-center h-fit">
-              <h3 className="font-display text-lg font-semibold mb-4">Score de confiance</h3>
-              <div className="relative w-32 h-32 mx-auto mb-4">
-                <svg className="w-full h-full transform -rotate-90">
-                  <circle cx="64" cy="64" r="56" stroke="currentColor" strokeWidth="8" fill="none" className="text-muted" />
-                  <circle cx="64" cy="64" r="56" stroke="currentColor" strokeWidth="8" fill="none"
-                    strokeDasharray={`${(data.trustScore / 100) * 352} 352`}
-                    className={getTrustColor(data.trustScore)} strokeLinecap="round" />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className={`font-display text-4xl font-bold ${getTrustColor(data.trustScore)}`}>
-                    {data.trustScore}
-                  </span>
-                </div>
-              </div>
-              <Badge variant={data.trustScore >= 80 ? "verified" : "warning"}>
-                {getTrustLabel(data.trustScore)}
-              </Badge>
-              <p className="text-sm text-muted-foreground mt-4">
-                Basé sur {data.totalContributions} contribution{data.totalContributions > 1 ? 's' : ''}
+            {/* Actions */}
+            <div className="px-6 pb-5 flex flex-wrap gap-3 border-t border-border/30 pt-4">
+              <Button 
+                variant={isFollowing ? "default" : "outline"} 
+                size="sm" 
+                onClick={handleFollowClick}
+                disabled={isFollowLoading}
+              >
+                <Star className={`w-4 h-4 mr-2 ${isFollowing ? "fill-current" : ""}`} />
+                {isFollowing ? "VIN suivi" : "Suivre ce VIN"}
+              </Button>
+              {data.totalContributions > 0 && (
+                <Button variant="outline" size="sm" onClick={() => setShowPDFDialog(true)}>
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Rapport PDF
+                </Button>
+              )}
+              <Button variant="hero" size="sm" onClick={handleContributeClick}>
+                <Plus className="w-4 h-4 mr-2" />
+                Contribuer
+              </Button>
+              <p className="w-full text-xs text-muted-foreground mt-1">
+                Contributions revues et validées manuellement par VLINKS.
               </p>
             </div>
           </div>
@@ -498,40 +537,6 @@ const VINDetail = () => {
             </div>
           )}
 
-          {/* ═══ DOSSIER SUMMARY ═══ */}
-          <div className="p-6 rounded-2xl glass mb-8">
-            <h2 className="font-display text-xl font-semibold flex items-center gap-2 mb-4">
-              <Shield className="w-5 h-5 text-primary" />
-              Aperçu du dossier
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-              <div className="p-3 rounded-xl bg-muted/30 text-center">
-                <span className="font-display text-2xl font-bold text-foreground">{contributions.length}</span>
-                <p className="text-xs text-muted-foreground mt-1">Contributions</p>
-              </div>
-              <div className="p-3 rounded-xl bg-muted/30 text-center">
-                <span className="font-display text-2xl font-bold text-foreground">
-                  {contributions.filter(c => c.type === "inspection_report").length}
-                </span>
-                <p className="text-xs text-muted-foreground mt-1">Inspections</p>
-              </div>
-              <div className="p-3 rounded-xl bg-muted/30 text-center">
-                <span className="font-display text-2xl font-bold text-foreground">
-                  {contributions.reduce((acc, c) => acc + c.documentCount, 0)}
-                </span>
-                <p className="text-xs text-muted-foreground mt-1">Documents</p>
-              </div>
-              <div className="p-3 rounded-xl bg-muted/30 text-center">
-                <span className="font-display text-2xl font-bold text-foreground">
-                  {contributions.reduce((acc, c) => acc + c.photoCount, 0)}
-                </span>
-                <p className="text-xs text-muted-foreground mt-1">Photos</p>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Contributions revues et validées manuellement par VLINKS.
-            </p>
-          </div>
 
           {/* ═══ INSPECTIONS & DOCUMENTS ═══ */}
           {contributions.filter(c => c.type === "inspection_report" || c.type === "vehicle_history" || c.type === "mechanic_conversation").length > 0 && (

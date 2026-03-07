@@ -1071,7 +1071,7 @@ export function ContributionForm({
           {/* 5. Context (optional) */}
           <div className="space-y-2">
             <Label htmlFor="context" className="text-sm font-semibold">
-              {contributionType === "ownership_change"
+              {contributionType === "ownership_change" || contributionType === "for_sale"
                 ? "Contexte ou information complémentaire"
                 : "Dans quel contexte avez-vous obtenu cette information ?"}
               <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
@@ -1082,6 +1082,8 @@ export function ContributionForm({
               placeholder={
                 contributionType === "ownership_change"
                   ? "Ex: Le véhicule était en vente chez Uslynn Auto et a été vendu en février 2026."
+                  : contributionType === "for_sale"
+                  ? "Ex: Véhicule affiché depuis janvier 2026 chez le concessionnaire."
                   : "Ex: visite du véhicule, inspection mécanique, discussion avec vendeur..."
               }
               className="bg-muted/30"

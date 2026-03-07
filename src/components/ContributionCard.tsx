@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { supabase } from "@/integrations/supabase/client";
-import type { PublicContribution, ContributionType } from "@/hooks/useVINData";
+import type { PublicContribution, ContributionType, ContributionDocument } from "@/hooks/useVINData";
 import {
   FileSearch, FileText, MessageCircle, Wrench, Camera, Eye, XCircle,
   Calendar, User, CheckCircle, ChevronDown, ChevronUp, Download, File, ExternalLink

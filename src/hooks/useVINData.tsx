@@ -115,7 +115,7 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
   if (contribIds.length > 0) {
     const { data: docs } = await supabase
       .from("contribution_documents")
-      .select("id, contribution_id, file_name, file_type, file_size, description")
+      .select("id, contribution_id, file_name, file_path, file_type, file_size, description")
       .in("contribution_id", contribIds);
     allDocuments = docs || [];
   }

@@ -124,24 +124,47 @@ const VINDetail = () => {
     checkUserAndOwnerStatus();
   }, [data?.id]);
 
-  // Fetch observed signals from database
+  // Fetch observed signals with junction table data
   useEffect(() => {
     const fetchSignals = async () => {
       if (!data?.id) return;
       const { data: signalsData } = await supabase
-        .from("observed_signals" as any)
-        .select("signal_text")
+        .from("observed_signals")
+        .select("id, signal_text, first_observed_at, last_observed_at")
         .eq("vin_id", data.id);
-      if (signalsData && (signalsData as any[]).length > 0) {
-        const countMap = new Map<string, number>();
-        (signalsData as any[]).forEach((s: any) => {
-          const text = s.signal_text;
-          countMap.set(text, (countMap.get(text) || 0) + 1);
-        });
-        setObservedSignals(Array.from(countMap.entries()).map(([text, count]) => ({ text, count })));
-      } else {
+
+      if (!signalsData || signalsData.length === 0) {
         setObservedSignals([]);
+        return;
       }
+
+      // Fetch all signal_contributions for these signals
+      const signalIds = signalsData.map((s) => s.id);
+      const { data: links } = await (supabase
+        .from("signal_contributions" as any)
+        .select("signal_id, contribution_id")
+        .in("signal_id", signalIds) as any);
+
+      const linksBySignal = new Map<string, string[]>();
+      ((links as any[]) || []).forEach((l: any) => {
+        const arr = linksBySignal.get(l.signal_id) || [];
+        arr.push(l.contribution_id);
+        linksBySignal.set(l.signal_id, arr);
+      });
+
+      const result = signalsData
+        .map((s: any) => ({
+          id: s.id,
+          text: s.signal_text,
+          count: (linksBySignal.get(s.id) || []).length,
+          firstObserved: s.first_observed_at,
+          lastObserved: s.last_observed_at,
+          contributionIds: linksBySignal.get(s.id) || [],
+        }))
+        .filter((s) => s.count > 0)
+        .sort((a, b) => b.count - a.count || new Date(b.lastObserved || 0).getTime() - new Date(a.lastObserved || 0).getTime());
+
+      setObservedSignals(result);
     };
     fetchSignals();
   }, [data?.id]);

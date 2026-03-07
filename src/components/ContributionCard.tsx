@@ -204,7 +204,7 @@ function renderTextContent(
     return (
       <div className="mt-3">
         {summaryText && (
-          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
             {expanded ? (contribution.details || summaryText) : summaryText.slice(0, TEXT_TRUNCATE_LENGTH)}
           </p>
         )}

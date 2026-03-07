@@ -48,6 +48,7 @@ const getContributionColor = (type: ContributionType) => {
     case "photo_evidence": return "bg-success/20 text-success border-success/30";
     case "observation": return "bg-danger/20 text-danger border-danger/30";
     case "purchase_decision": return "bg-muted text-muted-foreground border-border";
+    case "ownership_change": return "bg-primary/20 text-primary border-primary/30";
     default: return "bg-muted text-muted-foreground border-border";
   }
 };

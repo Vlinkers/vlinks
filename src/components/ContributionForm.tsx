@@ -830,13 +830,19 @@ export function ContributionForm({
           {/* 5. Context (optional) */}
           <div className="space-y-2">
             <Label htmlFor="context" className="text-sm font-semibold">
-              Dans quel contexte avez-vous obtenu cette information ?
+              {contributionType === "ownership_change"
+                ? "Contexte ou information complémentaire"
+                : "Dans quel contexte avez-vous obtenu cette information ?"}
               <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
             </Label>
             <Input
               id="context"
               {...register("context")}
-              placeholder="Ex: visite du véhicule, inspection mécanique, discussion avec vendeur..."
+              placeholder={
+                contributionType === "ownership_change"
+                  ? "Ex: Le véhicule était en vente chez Uslynn Auto et a été vendu en février 2026."
+                  : "Ex: visite du véhicule, inspection mécanique, discussion avec vendeur..."
+              }
               className="bg-muted/30"
             />
           </div>

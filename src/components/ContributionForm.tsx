@@ -898,7 +898,7 @@ export function ContributionForm({
                   ? "Ex: Annonce AutoTrader mise à jour avec baisse de prix..."
                   : "Ex: Jantes avant abîmées côté passager, traces de rouille sous le châssis, le vendeur mentionne un changement de courroie..."
               }
-              rows={contributionType === "ownership_change" || contributionType === "for_sale" ? 3 : 4}
+              rows={contributionType === "ownership_change" || contributionType === "for_sale" || contributionType === "price_change" ? 3 : 4}
               className="bg-muted/30 resize-none"
             />
             {errors.observation && (

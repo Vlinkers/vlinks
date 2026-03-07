@@ -78,6 +78,12 @@ const contributionTypes = [
     icon: XCircle,
     description: "Pourquoi vous avez acheté ou renoncé",
   },
+  {
+    value: "ownership_change",
+    label: "Changement de propriétaire",
+    icon: XCircle, // placeholder, we use emoji in rendering
+    description: "Signaler que le véhicule a changé de propriétaire",
+  },
 ] as const;
 
 const documentTypes = [

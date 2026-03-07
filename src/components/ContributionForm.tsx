@@ -1023,6 +1023,42 @@ export function ContributionForm({
             </>
           )}
 
+          {/* Price change specific: Old price and New price */}
+          {contributionType === "price_change" && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="old_price" className="text-sm font-semibold">
+                    Ancien prix ($)
+                  </Label>
+                  <Input
+                    id="old_price"
+                    {...register("old_price")}
+                    placeholder="Ex: 39900"
+                    type="number"
+                    min="0"
+                    max="99999999"
+                    className="bg-muted/30"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="asking_price" className="text-sm font-semibold">
+                    Nouveau prix ($)
+                  </Label>
+                  <Input
+                    id="asking_price"
+                    {...register("asking_price")}
+                    placeholder="Ex: 36900"
+                    type="number"
+                    min="0"
+                    max="99999999"
+                    className="bg-muted/30"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
           <div className="space-y-2">
             <Label className="flex items-center gap-2 text-sm font-semibold">
               <Camera className="w-4 h-4" />

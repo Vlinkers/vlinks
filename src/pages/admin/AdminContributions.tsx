@@ -126,33 +126,37 @@ export default function AdminContributions() {
   const openDetail = async (c: ContributionRow) => {
     setSelected(c);
     setIsEditing(false);
-    setRawData(null);
     setDocuments([]);
     setPhotos([]);
 
-    // Fetch raw contribution data
+    // Use the public_contributions own title/summary/details (already on the row via select *)
+    // Also fetch from raw_contributions by matching on the exact contribution id timeline
     const { data: raw } = await supabase
       .from("raw_contributions")
       .select("title, summary, details")
       .eq("vin_id", c.vin_id)
       .eq("user_id", c.user_id)
+      .eq("contribution_type", c.contribution_type as any)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    if (raw) {
-      setRawData(raw);
-      setEditTitle(raw.title);
-      setEditSummary(raw.summary || "");
-      setEditDetails(raw.details || "");
-    }
+    // Fallback: use fields from public_contributions itself
+    const title = raw?.title || (c as any).title || "";
+    const summary = raw?.summary || (c as any).summary || "";
+    const details = raw?.details || (c as any).details || "";
+    setRawData({ title, summary, details });
+    setEditTitle(title);
+    setEditSummary(summary);
+    setEditDetails(details);
 
-    // Fetch documents & photos via vin_contributions
+    // Fetch documents & photos via vin_contributions matching same user+vin+type
     const { data: vc } = await supabase
       .from("vin_contributions")
       .select("id")
       .eq("vin_id", c.vin_id)
       .eq("user_id", c.user_id)
+      .eq("contribution_type", c.contribution_type as any)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();

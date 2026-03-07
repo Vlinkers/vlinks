@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PhotoGallery } from "@/components/PhotoGallery";
+import { supabase } from "@/integrations/supabase/client";
 import type { PublicContribution, ContributionType } from "@/hooks/useVINData";
 import {
   FileSearch, FileText, MessageCircle, Wrench, Camera, Eye, XCircle,
-  Calendar, User, CheckCircle, ChevronDown, ChevronUp, Download, File
+  Calendar, User, CheckCircle, ChevronDown, ChevronUp, Download, File, ExternalLink
 } from "lucide-react";
 
 const getContributionIcon = (type: ContributionType) => {

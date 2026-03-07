@@ -846,7 +846,9 @@ export function ContributionForm({
           {typesWithDate.includes(contributionType) && (
             <div className="space-y-2">
               <Label className="text-sm font-semibold">
-                {contributionType === "ownership_change" ? "Date du changement de propriétaire" : "Date de mise en vente"}
+                {contributionType === "ownership_change" ? "Date du changement de propriétaire"
+                  : contributionType === "price_change" ? "Date de modification du prix"
+                  : "Date de mise en vente"}
               </Label>
               <div className="grid grid-cols-2 gap-3">
                 <Select onValueChange={(v) => setValue("ownership_month", v)} value={watch("ownership_month") || ""}>

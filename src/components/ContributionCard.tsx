@@ -147,7 +147,7 @@ export function ContributionCard({ contribution, adminActions }: ContributionCar
     </div>
   );
 }
-import type { ContributionDocument } from "@/hooks/useVINData";
+
 
 function DocumentsList({ documents }: { documents: ContributionDocument[] }) {
   const handleOpenDocument = useCallback(async (doc: ContributionDocument) => {

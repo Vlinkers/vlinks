@@ -322,6 +322,63 @@ function renderTextContent(
     );
   }
 
+  // For for_sale: show structured listing info
+  if (type === "for_sale") {
+    const holderLabel = contribution.holderType === "concessionnaire" && contribution.dealerName
+      ? contribution.dealerName
+      : contribution.holderType === "concessionnaire" ? "Concessionnaire"
+      : contribution.holderType === "depot_vente" ? "Dépôt-vente"
+      : contribution.holderType === "particulier" ? "Particulier"
+      : null;
+
+    let dateDisplay: string | null = null;
+    if (contribution.interventionDate) {
+      const d = new Date(contribution.interventionDate + "T00:00:00");
+      const monthNames = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+      dateDisplay = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+    }
+
+    return (
+      <div className="mt-3 space-y-1.5">
+        {summaryText && (
+          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
+            🏷️ {summaryText}
+          </p>
+        )}
+        {dateDisplay && (
+          <p className="text-xs text-muted-foreground">{dateDisplay}</p>
+        )}
+        {holderLabel && (
+          <p className="text-xs text-muted-foreground">
+            Vendeur : <span className="text-foreground/80">{holderLabel}</span>
+          </p>
+        )}
+        {contribution.province && (
+          <p className="text-xs text-muted-foreground">
+            Province : <span className="text-foreground/80">{contribution.province}</span>
+          </p>
+        )}
+        {contribution.askingPrice && (
+          <p className="text-xs text-muted-foreground">
+            Prix demandé : <span className="text-foreground/80 font-medium">{contribution.askingPrice.toLocaleString()} $</span>
+          </p>
+        )}
+        {contribution.listingUrl && (
+          <p className="text-xs">
+            <a href={contribution.listingUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 underline">
+              Voir l'annonce ↗
+            </a>
+          </p>
+        )}
+        {contribution.details && (
+          <p className="text-xs text-muted-foreground italic whitespace-pre-line mt-1">
+            {contribution.details}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   // For inspection_report, vehicle_history: show summary, then details
   if (type === "inspection_report" || type === "vehicle_history") {
     return (

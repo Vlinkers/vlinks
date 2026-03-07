@@ -358,6 +358,8 @@ export function ContributionForm({
     // Parse asking price
     const askingPrice = data.asking_price ? parseInt(data.asking_price.replace(/\s/g, ''), 10) : null;
     const validAskingPrice = askingPrice && !isNaN(askingPrice) ? askingPrice : null;
+    const oldPriceVal = data.old_price ? parseInt(data.old_price.replace(/\s/g, ''), 10) : null;
+    const validOldPrice = oldPriceVal && !isNaN(oldPriceVal) ? oldPriceVal : null;
     const listingUrl = data.listing_url && data.listing_url.trim() ? data.listing_url.trim() : null;
 
     // Create raw contribution for audit trail

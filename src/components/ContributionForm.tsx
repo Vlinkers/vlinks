@@ -25,11 +25,9 @@ import {
   XCircle,
   Upload,
   X,
-  Plus,
   Image as ImageIcon,
   File,
   CheckCircle,
-  AlertTriangle,
   Shield,
   User,
   Loader2,
@@ -39,40 +37,40 @@ import { useToast } from "@/hooks/use-toast";
 
 const contributionTypes = [
   {
+    value: "photo_evidence",
+    label: "Photos du véhicule",
+    icon: Camera,
+    description: "Photos détaillées du véhicule",
+  },
+  {
     value: "inspection_report",
-    label: "Rapport d'inspection",
+    label: "Inspection mécanique",
     icon: FileSearch,
-    description: "Inspection professionnelle ou pré-achat",
+    description: "Résultat d'une inspection professionnelle",
   },
   {
     value: "vehicle_history",
-    label: "Historique véhicule",
+    label: "Document / historique",
     icon: FileText,
-    description: "Carfax, CarVertical ou autre rapport d'historique",
+    description: "Carfax, facture, rapport d'historique",
   },
   {
-    value: "owner_exchange",
-    label: "Échange avec vendeur",
-    icon: MessageCircle,
-    description: "Conversations avec le propriétaire ou concessionnaire",
+    value: "observation",
+    label: "Observation lors d'une visite",
+    icon: Eye,
+    description: "Ce que vous avez constaté sur place",
   },
   {
     value: "mechanic_conversation",
     label: "Avis mécanicien",
     icon: Wrench,
-    description: "Opinion de votre mécanicien ou garagiste",
+    description: "Opinion d'un professionnel",
   },
   {
-    value: "photo_evidence",
-    label: "Preuves photo",
-    icon: Camera,
-    description: "Photos détaillées du véhicule",
-  },
-  {
-    value: "observation",
-    label: "Observation personnelle",
-    icon: Eye,
-    description: "Notes, red flags, ou observations lors de la visite",
+    value: "owner_exchange",
+    label: "Échange avec vendeur",
+    icon: MessageCircle,
+    description: "Informations obtenues du vendeur",
   },
   {
     value: "purchase_decision",
@@ -99,29 +97,17 @@ const contributionSchema = z.object({
     "observation",
     "purchase_decision",
   ]),
-  title: z
+  observation: z
     .string()
     .trim()
-    .min(5, "Le titre doit contenir au moins 5 caractères")
-    .max(200, "Le titre ne peut pas dépasser 200 caractères"),
-  summary: z
+    .min(10, "Veuillez décrire votre observation (minimum 10 caractères)")
+    .max(3000, "L'observation ne peut pas dépasser 3000 caractères"),
+  context: z
     .string()
     .trim()
-    .min(20, "Le résumé doit contenir au moins 20 caractères")
-    .max(500, "Le résumé ne peut pas dépasser 500 caractères"),
-  details: z
-    .string()
-    .trim()
-    .max(5000, "Les détails ne peuvent pas dépasser 5000 caractères")
+    .max(500, "Le contexte ne peut pas dépasser 500 caractères")
     .optional(),
   is_anonymous: z.boolean().default(false),
-  decision: z.enum(["purchased", "passed", "none"]).optional(),
-  pass_reason: z
-    .string()
-    .trim()
-    .max(300, "La raison ne peut pas dépasser 300 caractères")
-    .optional(),
-  tags: z.array(z.string()).max(5, "Maximum 5 tags autorisés").optional(),
 });
 
 type ContributionFormData = z.infer<typeof contributionSchema>;
@@ -149,10 +135,7 @@ export function ContributionForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [documents, setDocuments] = useState<File[]>([]);
   const [photos, setPhotos] = useState<File[]>([]);
-  const [tagInput, setTagInput] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const [processingStatus, setProcessingStatus] = useState<'idle' | 'submitting' | 'processing' | 'done' | 'error'>('idle');
-  
+
   // Owner verification state
   const [currentStep, setCurrentStep] = useState<FormStep>('contribution');
   const [ownerVerificationStatus, setOwnerVerificationStatus] = useState<'none' | 'pending' | 'verified'>('none');
@@ -171,23 +154,19 @@ export function ContributionForm({
     resolver: zodResolver(contributionSchema),
     defaultValues: {
       is_anonymous: false,
-      decision: "none",
-      tags: [],
     },
   });
 
   const contributionType = watch("contribution_type");
-  const decision = watch("decision");
 
   // Check owner verification status on mount
   useEffect(() => {
     const checkOwnerStatus = async () => {
       if (!isOwnerClaim || !open) return;
-      
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get VIN ID if exists
       let checkVinId = vinId;
       if (!checkVinId) {
         const { data: existingVin } = await supabase
@@ -280,25 +259,7 @@ export function ContributionForm({
     setPhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const addTag = () => {
-    const trimmedTag = tagInput.trim();
-    if (trimmedTag && tags.length < 5 && !tags.includes(trimmedTag)) {
-      const newTags = [...tags, trimmedTag];
-      setTags(newTags);
-      setValue("tags", newTags);
-      setTagInput("");
-    }
-  };
-
-  const removeTag = (tagToRemove: string) => {
-    const newTags = tags.filter((tag) => tag !== tagToRemove);
-    setTags(newTags);
-    setValue("tags", newTags);
-  };
-
   const submitContribution = async (data: ContributionFormData, actualVinId: string, userId: string) => {
-    setProcessingStatus('submitting');
-
     // Get user profile for author label
     const { data: profile } = await supabase
       .from("profiles")
@@ -309,21 +270,24 @@ export function ContributionForm({
     const authorLabel = data.is_anonymous ? "Anonyme" : (profile?.username || "Anonyme");
     const authorPublicId = data.is_anonymous ? null : (profile?.public_id || null);
 
+    // Map new fields to DB columns: observation → title+summary, context → details
+    const title = data.observation.substring(0, 200);
+    const summary = data.observation;
+    const details = data.context || null;
+
     // Create raw contribution for audit trail
-    const { data: rawContribution, error: rawError } = await supabase
+    const { error: rawError } = await supabase
       .from("raw_contributions")
       .insert({
         vin_id: actualVinId,
         user_id: userId,
         contribution_type: data.contribution_type,
-        title: data.title,
-        summary: data.summary,
-        details: data.details || null,
+        title,
+        summary,
+        details,
         is_anonymous: data.is_anonymous,
         is_owner_contribution: isOwnerClaim,
-      })
-      .select()
-      .single();
+      });
 
     if (rawError) throw rawError;
 
@@ -334,9 +298,9 @@ export function ContributionForm({
         vin_id: actualVinId,
         user_id: userId,
         contribution_type: data.contribution_type,
-        title: data.title,
-        summary: data.summary,
-        details: data.details || null,
+        title,
+        summary,
+        details,
         is_anonymous: data.is_anonymous,
       })
       .select()
@@ -344,7 +308,7 @@ export function ContributionForm({
 
     if (contributionError) throw contributionError;
 
-    // Insert to public_contributions with status pending (moderation required)
+    // Insert to public_contributions with status pending
     const { error: pubError } = await supabase
       .from("public_contributions")
       .insert({
@@ -356,9 +320,9 @@ export function ContributionForm({
         author_label: authorLabel,
         author_public_id: authorPublicId,
         status: "pending",
-        title: data.title,
-        summary: data.summary || null,
-        details: data.details || null,
+        title,
+        summary,
+        details,
       } as any);
 
     if (pubError) {
@@ -403,15 +367,6 @@ export function ContributionForm({
       }
     }
 
-    // Add tags
-    for (const tag of tags) {
-      await supabase.from("contribution_tags").insert({
-        contribution_id: contribution.id,
-        tag,
-      });
-    }
-
-    setProcessingStatus('done');
     toast({
       title: "Contribution soumise",
       description: "Votre contribution sera examinée et publiée après validation par VLINKS.",
@@ -426,8 +381,6 @@ export function ContributionForm({
     reset();
     setDocuments([]);
     setPhotos([]);
-    setTags([]);
-    setProcessingStatus('idle');
     onOpenChange(false);
     onSuccess?.();
   };
@@ -477,12 +430,10 @@ export function ContributionForm({
         return;
       }
 
-      // Otherwise, submit directly
       await submitContribution(data, actualVinId, user.id);
 
     } catch (error) {
       console.error("Error submitting contribution:", error);
-      setProcessingStatus('error');
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de l'envoi",
@@ -508,63 +459,37 @@ export function ContributionForm({
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast({
-          title: "Erreur",
-          description: "Vous devez être connecté",
-          variant: "destructive",
-        });
+        toast({ title: "Erreur", description: "Vous devez être connecté", variant: "destructive" });
         return;
       }
 
-      // Get or create VIN record
       let actualVinId = vinId;
       if (!actualVinId) {
-        const { data: existingVin } = await supabase
-          .from("vins")
-          .select("id")
-          .eq("vin", vin)
-          .maybeSingle();
-
+        const { data: existingVin } = await supabase.from("vins").select("id").eq("vin", vin).maybeSingle();
         if (existingVin) {
           actualVinId = existingVin.id;
         } else {
-          const { data: newVin, error: vinError } = await supabase
-            .from("vins")
-            .insert({ vin })
-            .select("id")
-            .single();
-
+          const { data: newVin, error: vinError } = await supabase.from("vins").insert({ vin }).select("id").single();
           if (vinError) throw vinError;
           actualVinId = newVin.id;
         }
       }
 
-      // Upload verification document
       const filePath = `${user.id}/${actualVinId}/${Date.now()}_${verificationDocument.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from("owner-verification-docs")
-        .upload(filePath, verificationDocument);
-
+      const { error: uploadError } = await supabase.storage.from("owner-verification-docs").upload(filePath, verificationDocument);
       if (uploadError) throw uploadError;
 
-      // Create verification record
-      const { error: insertError } = await supabase
-        .from("owner_verifications")
-        .insert({
-          user_id: user.id,
-          vin_id: actualVinId,
-          document_path: filePath,
-          document_type: verificationDocumentType,
-          verification_status: "pending",
-        });
+      const { error: insertError } = await supabase.from("owner_verifications").insert({
+        user_id: user.id,
+        vin_id: actualVinId,
+        document_path: filePath,
+        document_type: verificationDocumentType,
+        verification_status: "pending",
+      });
 
       if (insertError) {
         if (insertError.code === "23505") {
-          toast({
-            title: "Demande existante",
-            description: "Une demande de vérification existe déjà pour ce véhicule",
-            variant: "destructive",
-          });
+          toast({ title: "Demande existante", description: "Une demande de vérification existe déjà pour ce véhicule", variant: "destructive" });
           return;
         }
         throw insertError;
@@ -572,23 +497,15 @@ export function ContributionForm({
 
       setOwnerVerificationStatus('pending');
 
-      // Now submit the contribution
       if (pendingContributionData) {
         await submitContribution(pendingContributionData, actualVinId, user.id);
       }
 
-      toast({
-        title: "Contribution et vérification envoyées",
-        description: "Votre statut de propriétaire sera vérifié sous peu.",
-      });
+      toast({ title: "Contribution et vérification envoyées", description: "Votre statut de propriétaire sera vérifié sous peu." });
 
     } catch (error) {
       console.error("Error submitting verification:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de l'envoi",
-        variant: "destructive",
-      });
+      toast({ title: "Erreur", description: "Une erreur est survenue lors de l'envoi", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -596,7 +513,6 @@ export function ContributionForm({
 
   const skipVerification = async () => {
     if (!pendingContributionData) return;
-
     setIsSubmitting(true);
 
     try {
@@ -605,43 +521,24 @@ export function ContributionForm({
 
       let actualVinId = vinId;
       if (!actualVinId) {
-        const { data: existingVin } = await supabase
-          .from("vins")
-          .select("id")
-          .eq("vin", vin)
-          .maybeSingle();
-
+        const { data: existingVin } = await supabase.from("vins").select("id").eq("vin", vin).maybeSingle();
         if (existingVin) {
           actualVinId = existingVin.id;
         } else {
-          const { data: newVin, error: vinError } = await supabase
-            .from("vins")
-            .insert({ vin })
-            .select("id")
-            .single();
-
+          const { data: newVin, error: vinError } = await supabase.from("vins").insert({ vin }).select("id").single();
           if (vinError) throw vinError;
           actualVinId = newVin.id;
         }
       }
 
       await submitContribution(pendingContributionData, actualVinId, user.id);
-
     } catch (error) {
       console.error("Error:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue",
-        variant: "destructive",
-      });
+      toast({ title: "Erreur", description: "Une erreur est survenue", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const selectedType = contributionTypes.find(
-    (t) => t.value === contributionType
-  );
 
   // Verification step UI
   if (currentStep === 'verification') {
@@ -663,7 +560,7 @@ export function ContributionForm({
               Vous avez indiqué être propriétaire de ce véhicule.
             </p>
             <p className="text-sm text-muted-foreground">
-              Pour valider votre statut, téléversez un document prouvant votre propriété. 
+              Pour valider votre statut, téléversez un document prouvant votre propriété.
               Cette vérification n'est demandée qu'une seule fois.
             </p>
           </div>
@@ -672,9 +569,7 @@ export function ContributionForm({
             <div className="flex items-start gap-3">
               <FileText className="w-5 h-5 text-muted-foreground mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-foreground">
-                  Document confidentiel
-                </p>
+                <p className="text-sm font-medium text-foreground">Document confidentiel</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   🔒 Ce document n'est jamais publié. Il sert uniquement à valider votre statut de propriétaire.
                 </p>
@@ -683,11 +578,8 @@ export function ContributionForm({
           </div>
 
           <div className="space-y-4">
-            {/* Document Type Selection */}
             <div className="space-y-3">
-              <Label className="text-base font-semibold">
-                Type de document
-              </Label>
+              <Label className="text-base font-semibold">Type de document</Label>
               <div className="grid grid-cols-1 gap-2">
                 {documentTypes.map((type) => (
                   <button
@@ -700,60 +592,34 @@ export function ContributionForm({
                         : "border-border hover:border-muted-foreground/50 bg-muted/30"
                     }`}
                   >
-                    <p className={`font-medium text-sm ${
-                      verificationDocumentType === type.value ? "text-success" : "text-foreground"
-                    }`}>
+                    <p className={`font-medium text-sm ${verificationDocumentType === type.value ? "text-success" : "text-foreground"}`}>
                       {type.label}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {type.description}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{type.description}</p>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Document Upload */}
             <div className="space-y-3">
-              <Label className="text-base font-semibold">
-                Document de vérification
-              </Label>
-              
+              <Label className="text-base font-semibold">Document de vérification</Label>
               {!verificationDocument ? (
                 <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-success/50 transition-colors bg-muted/20">
                   <Upload className="w-8 h-8 text-muted-foreground mb-2" />
-                  <span className="text-sm text-muted-foreground">
-                    Cliquez pour téléverser
-                  </span>
-                  <span className="text-xs text-muted-foreground mt-1">
-                    PDF, JPG, PNG (max 10 Mo)
-                  </span>
-                  <input
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={handleVerificationDocumentUpload}
-                    className="hidden"
-                  />
+                  <span className="text-sm text-muted-foreground">Cliquez pour téléverser</span>
+                  <span className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG (max 10 Mo)</span>
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleVerificationDocumentUpload} className="hidden" />
                 </label>
               ) : (
                 <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/30">
                   <div className="flex items-center gap-3">
                     <FileText className="w-5 h-5 text-success" />
                     <div>
-                      <p className="text-sm font-medium truncate max-w-[200px]">
-                        {verificationDocument.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {(verificationDocument.size / 1024).toFixed(1)} Ko
-                      </p>
+                      <p className="text-sm font-medium truncate max-w-[200px]">{verificationDocument.name}</p>
+                      <p className="text-xs text-muted-foreground">{(verificationDocument.size / 1024).toFixed(1)} Ko</p>
                     </div>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setVerificationDocument(null)}
-                  >
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setVerificationDocument(null)}>
                     <X className="w-4 h-4" />
                   </Button>
                 </div>
@@ -769,25 +635,12 @@ export function ContributionForm({
               disabled={isSubmitting || !verificationDocument || !verificationDocumentType}
             >
               {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Envoi en cours...
-                </>
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Envoi en cours...</>
               ) : (
-                <>
-                  <Shield className="w-4 h-4 mr-2" />
-                  Valider mon statut de propriétaire
-                </>
+                <><Shield className="w-4 h-4 mr-2" />Valider mon statut de propriétaire</>
               )}
             </Button>
-            
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={skipVerification}
-              disabled={isSubmitting}
-              className="text-muted-foreground"
-            >
+            <Button type="button" variant="ghost" onClick={skipVerification} disabled={isSubmitting} className="text-muted-foreground">
               Continuer sans vérification
             </Button>
           </div>
@@ -802,313 +655,107 @@ export function ContributionForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto glass-strong">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto glass-strong">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl flex items-center gap-2">
             {isOwnerClaim && <User className="w-6 h-6 text-success" />}
-            Ajouter un maillon d'information
+            Contribuer
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             VIN: <span className="font-mono">{vin}</span>
           </DialogDescription>
         </DialogHeader>
 
-        {/* Owner claim badge */}
-        {isOwnerClaim && (
-          <div className="bg-success/10 border border-success/30 rounded-xl p-4 space-y-2">
-            <div className="flex items-center gap-2">
-              <User className="w-5 h-5 text-success" />
-              <p className="text-sm text-foreground font-medium">
-                Vous contribuez en tant que propriétaire
-              </p>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Vos informations sont analysées et reformulées automatiquement par VLINKS avant toute publication.
-            </p>
-            {ownerVerificationStatus === 'verified' && (
-              <Badge variant="verified" className="mt-2">
-                <CheckCircle className="w-3 h-3 mr-1" />
-                Propriétaire vérifié
-              </Badge>
-            )}
-            {ownerVerificationStatus === 'pending' && (
-              <Badge variant="info" className="mt-2">
-                <Shield className="w-3 h-3 mr-1" />
-                Vérification en cours
-              </Badge>
-            )}
-          </div>
-        )}
-
-        {/* Encadré pédagogique principal */}
-        {!isOwnerClaim && (
-          <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 space-y-3">
-            <p className="text-sm text-foreground font-medium">
-              Vous ajoutez un maillon à la chaîne d'information de ce véhicule.
-            </p>
-            <ul className="text-sm text-muted-foreground space-y-1.5">
-              <li className="flex items-start gap-2">
-                <span className="text-primary mt-0.5">→</span>
-                <span>Vos contributions ne sont pas publiées telles quelles</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-primary mt-0.5">→</span>
-                <span>VLINKS revoit, assemble et reformule les maillons</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-primary mt-0.5">→</span>
-                <span>Les documents bruts restent privés</span>
-              </li>
-            </ul>
-          </div>
-        )}
-
-        {/* Micro-indicateur du processus */}
-        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground py-2">
-          <span className="flex items-center gap-1">
-            <span className={`w-2 h-2 rounded-full ${isOwnerClaim ? 'bg-success/60' : 'bg-primary/60'}`}></span>
-            Transmission
-          </span>
-          <span className="text-muted-foreground/50">→</span>
-          <span className="flex items-center gap-1">
-            <span className={`w-2 h-2 rounded-full ${isOwnerClaim ? 'bg-success/40' : 'bg-primary/40'}`}></span>
-            Analyse VLINKS
-          </span>
-          <span className="text-muted-foreground/50">→</span>
-          <span className="flex items-center gap-1">
-            <span className={`w-2 h-2 rounded-full ${isOwnerClaim ? 'bg-success/40' : 'bg-primary/40'}`}></span>
-            Assemblage
-          </span>
-          <span className="text-muted-foreground/50">→</span>
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-success/40"></span>
-            Publication
-          </span>
-        </div>
-
-        {/* Note d'encouragement */}
+        {/* Explanatory message */}
         <div className="bg-muted/30 border border-border rounded-xl p-4">
           <p className="text-sm text-foreground">
-            Chaque maillon compte. Information partielle ou complète, positive ou négative — tout enrichit la vision collective.
+            Décrivez simplement ce que vous avez observé.
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            VLINKS vérifiera et publiera l'information si elle est pertinente.
           </p>
           <p className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
             <span>⏱️</span>
-            <span>2–5 minutes · Contribution anonyme possible</span>
+            <span>Moins d'1 minute · Contribution anonyme possible</span>
           </p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Contribution Type Selection */}
+        {/* Owner claim badge */}
+        {isOwnerClaim && (
+          <div className="bg-success/10 border border-success/30 rounded-xl p-3 flex items-center gap-2">
+            <User className="w-4 h-4 text-success" />
+            <p className="text-sm text-foreground font-medium">Vous contribuez en tant que propriétaire</p>
+            {ownerVerificationStatus === 'verified' && (
+              <Badge variant="verified" className="ml-auto">
+                <CheckCircle className="w-3 h-3 mr-1" />Vérifié
+              </Badge>
+            )}
+            {ownerVerificationStatus === 'pending' && (
+              <Badge variant="info" className="ml-auto">
+                <Shield className="w-3 h-3 mr-1" />En cours
+              </Badge>
+            )}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          {/* 1. Contribution Type */}
           <div className="space-y-3">
-            <Label className="text-base font-semibold">
-              Quelle(s) information(s) apportez-vous ?
-            </Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Label className="text-sm font-semibold">Type de contribution *</Label>
+            <div className="grid grid-cols-1 gap-2">
               {contributionTypes.map((type) => {
                 const Icon = type.icon;
                 const isSelected = contributionType === type.value;
-                const accentColor = isOwnerClaim ? 'success' : 'primary';
                 return (
                   <button
                     key={type.value}
                     type="button"
                     onClick={() => setValue("contribution_type", type.value)}
-                    className={`p-4 rounded-xl border text-left transition-all ${
+                    className={`p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${
                       isSelected
-                        ? `border-${accentColor} bg-${accentColor}/10`
-                        : "border-border hover:border-muted-foreground/50 bg-muted/30"
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-muted-foreground/50 bg-muted/20"
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`p-2 rounded-lg ${
-                          isSelected ? `bg-${accentColor}/20` : "bg-muted"
-                        }`}
-                      >
-                        <Icon
-                          className={`w-5 h-5 ${
-                            isSelected ? `text-${accentColor}` : "text-muted-foreground"
-                          }`}
-                        />
-                      </div>
-                      <div>
-                        <p
-                          className={`font-medium ${
-                            isSelected ? `text-${accentColor}` : "text-foreground"
-                          }`}
-                        >
-                          {type.label}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {type.description}
-                        </p>
-                      </div>
+                    <Icon className={`w-4 h-4 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                    <div>
+                      <p className={`font-medium text-sm ${isSelected ? "text-primary" : "text-foreground"}`}>
+                        {type.label}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{type.description}</p>
                     </div>
                   </button>
                 );
               })}
             </div>
             {errors.contribution_type && (
-              <p className="text-sm text-danger">
-                Veuillez sélectionner un type
-              </p>
-            )}
-            <p className="text-sm text-muted-foreground flex items-center gap-2 pt-1">
-              <span>🎁</span>
-              <span>Cette contribution peut vous rapporter des crédits</span>
-            </p>
-          </div>
-
-          {/* Information principale */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Information principale *</Label>
-            <Input
-              id="title"
-              {...register("title")}
-              placeholder="Ex: Problème de rouille, Historique d'entretien complet, État général du véhicule..."
-              className="bg-muted/30"
-            />
-            <p className="text-xs text-muted-foreground">
-              🔒 Ce champ n'est pas visible publiquement — Il aide VLINKS à comprendre votre contribution.
-            </p>
-            {errors.title && (
-              <p className="text-sm text-danger">{errors.title.message}</p>
+              <p className="text-sm text-destructive">Veuillez sélectionner un type</p>
             )}
           </div>
 
-          {/* Éléments de contexte */}
+          {/* 2. Observation principale */}
           <div className="space-y-2">
-            <Label htmlFor="summary">Éléments de contexte *</Label>
+            <Label htmlFor="observation" className="text-sm font-semibold">
+              Qu'avez-vous observé ou appris concernant ce véhicule ? *
+            </Label>
             <Textarea
-              id="summary"
-              {...register("summary")}
-              placeholder="Décrivez librement ce que vous savez ou avez observé. Écrivez naturellement, sans vous soucier de la forme."
-              rows={3}
-              className="bg-muted/30 resize-none"
-            />
-            <p className="text-xs text-muted-foreground">
-              🔒 Ce champ n'est pas visible publiquement — VLINKS reformule automatiquement vos informations.
-            </p>
-            {errors.summary && (
-              <p className="text-sm text-danger">{errors.summary.message}</p>
-            )}
-          </div>
-
-          {/* Détails additionnels */}
-          <div className="space-y-2">
-            <Label htmlFor="details">Détails additionnels (optionnel)</Label>
-            <Textarea
-              id="details"
-              {...register("details")}
-              placeholder="Ajoutez tout ce qui pourrait être utile : circonstances, échanges avec le vendeur, impressions..."
+              id="observation"
+              {...register("observation")}
+              placeholder="Ex: Jantes avant abîmées côté passager, traces de rouille sous le châssis, le vendeur mentionne un changement de courroie..."
               rows={4}
               className="bg-muted/30 resize-none"
             />
-            <p className="text-xs text-muted-foreground">
-              🔒 Ce champ n'est pas visible publiquement — Ces informations enrichissent l'analyse.
-            </p>
-            {errors.details && (
-              <p className="text-sm text-danger">{errors.details.message}</p>
+            {errors.observation && (
+              <p className="text-sm text-destructive">{errors.observation.message}</p>
             )}
           </div>
 
-          {/* Purchase Decision (for purchase_decision type) */}
-          {contributionType === "purchase_decision" && (
-            <div className="space-y-4 p-4 rounded-xl bg-muted/30 border border-border">
-              <Label className="text-base font-semibold">
-                Quelle a été votre décision?
-              </Label>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setValue("decision", "purchased")}
-                  className={`flex-1 p-4 rounded-xl border flex items-center justify-center gap-2 transition-all ${
-                    decision === "purchased"
-                      ? "border-success bg-success/10 text-success"
-                      : "border-border hover:border-success/50"
-                  }`}
-                >
-                  <CheckCircle className="w-5 h-5" />
-                  <span className="font-medium">J'ai acheté</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setValue("decision", "passed")}
-                  className={`flex-1 p-4 rounded-xl border flex items-center justify-center gap-2 transition-all ${
-                    decision === "passed"
-                      ? "border-warning bg-warning/10 text-warning"
-                      : "border-border hover:border-warning/50"
-                  }`}
-                >
-                  <AlertTriangle className="w-5 h-5" />
-                  <span className="font-medium">J'ai renoncé</span>
-                </button>
-              </div>
-              {decision === "passed" && (
-                <div className="space-y-2">
-                  <Label htmlFor="pass_reason">
-                    Pourquoi avez-vous renoncé?
-                  </Label>
-                  <Input
-                    id="pass_reason"
-                    {...register("pass_reason")}
-                    placeholder="Ex: Prix trop élevé, défauts cachés, mauvais feeling..."
-                    className="bg-background/50"
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Documents Upload */}
-          <div className="space-y-3">
-            <Label className="flex items-center gap-2">
-              <File className="w-4 h-4" />
-              Documents justificatifs ({documents.length}/5)
-            </Label>
-            <div className="flex flex-wrap gap-2">
-              {documents.map((doc, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border"
-                >
-                  <FileText className={`w-4 h-4 ${isOwnerClaim ? 'text-success' : 'text-primary'}`} />
-                  <span className="text-sm truncate max-w-[150px]">
-                    {doc.name}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeDocument(index)}
-                    className="text-muted-foreground hover:text-danger"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-              {documents.length < 5 && (
-                <label className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-dashed border-border hover:border-${isOwnerClaim ? 'success' : 'primary'} cursor-pointer transition-colors`}>
-                  <Upload className="w-4 h-4" />
-                  <span className="text-sm">Ajouter</span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    onChange={handleDocumentUpload}
-                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
-                    multiple
-                  />
-                </label>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              🔒 Les documents originaux ne sont jamais publiés. Seuls des résumés techniques anonymisés peuvent l'être.
-            </p>
-          </div>
-
-          {/* Photos Upload */}
-          <div className="space-y-3">
-            <Label className="flex items-center gap-2">
+          {/* 3. Photos (optional) */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2 text-sm font-semibold">
               <Camera className="w-4 h-4" />
               Photos ({photos.length}/10)
+              <span className="text-muted-foreground font-normal">— optionnel</span>
             </Label>
             <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
               {photos.map((photo, index) => (
@@ -1121,79 +768,71 @@ export function ContributionForm({
                   <button
                     type="button"
                     onClick={() => removePhoto(index)}
-                    className="absolute -top-2 -right-2 p-1 rounded-full bg-danger text-danger-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute -top-2 -right-2 p-1 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <X className="w-3 h-3" />
                   </button>
                 </div>
               ))}
               {photos.length < 10 && (
-                <label className={`aspect-square flex flex-col items-center justify-center rounded-lg border border-dashed border-border hover:border-${isOwnerClaim ? 'success' : 'primary'} cursor-pointer transition-colors`}>
+                <label className="aspect-square flex flex-col items-center justify-center rounded-lg border border-dashed border-border hover:border-primary cursor-pointer transition-colors">
                   <ImageIcon className="w-6 h-6 text-muted-foreground mb-1" />
                   <span className="text-xs text-muted-foreground">Ajouter</span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    onChange={handlePhotoUpload}
-                    accept="image/*"
-                    multiple
-                  />
+                  <input type="file" className="hidden" onChange={handlePhotoUpload} accept="image/*" multiple />
                 </label>
               )}
             </div>
           </div>
 
-          {/* Tags */}
-          <div className="space-y-3">
-            <Label>Tags ({tags.length}/5)</Label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {tags.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="secondary"
-                  className="flex items-center gap-1"
-                >
-                  {tag}
-                  <button
-                    type="button"
-                    onClick={() => removeTag(tag)}
-                    className="hover:text-danger"
-                  >
-                    <X className="w-3 h-3" />
+          {/* 4. Documents (optional) */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2 text-sm font-semibold">
+              <File className="w-4 h-4" />
+              Documents ({documents.length}/5)
+              <span className="text-muted-foreground font-normal">— optionnel</span>
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {documents.map((doc, index) => (
+                <div key={index} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
+                  <FileText className="w-4 h-4 text-primary" />
+                  <span className="text-sm truncate max-w-[150px]">{doc.name}</span>
+                  <button type="button" onClick={() => removeDocument(index)} className="text-muted-foreground hover:text-destructive">
+                    <X className="w-4 h-4" />
                   </button>
-                </Badge>
+                </div>
               ))}
+              {documents.length < 5 && (
+                <label className="flex items-center gap-2 px-4 py-2 rounded-lg border border-dashed border-border hover:border-primary cursor-pointer transition-colors">
+                  <Upload className="w-4 h-4" />
+                  <span className="text-sm">Ajouter</span>
+                  <input type="file" className="hidden" onChange={handleDocumentUpload} accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png" multiple />
+                </label>
+              )}
             </div>
-            {tags.length < 5 && (
-              <div className="flex gap-2">
-                <Input
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addTag();
-                    }
-                  }}
-                  placeholder="Ex: Sans accident, Bon état..."
-                  className="bg-muted/30"
-                />
-                <Button type="button" variant="outline" onClick={addTag}>
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
+            <p className="text-xs text-muted-foreground">
+              🔒 Les documents ne sont jamais publiés. Ils servent uniquement de preuves internes.
+            </p>
+          </div>
+
+          {/* 5. Context (optional) */}
+          <div className="space-y-2">
+            <Label htmlFor="context" className="text-sm font-semibold">
+              Dans quel contexte avez-vous obtenu cette information ?
+              <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
+            </Label>
+            <Input
+              id="context"
+              {...register("context")}
+              placeholder="Ex: visite du véhicule, inspection mécanique, discussion avec vendeur..."
+              className="bg-muted/30"
+            />
           </div>
 
           {/* Anonymous Toggle */}
-          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border">
+          <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border">
             <div>
-              <Label htmlFor="anonymous" className="font-medium">
-                Contribution anonyme
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Votre nom ne sera pas affiché publiquement
-              </p>
+              <Label htmlFor="anonymous" className="font-medium text-sm">Contribution anonyme</Label>
+              <p className="text-xs text-muted-foreground">Votre nom ne sera pas affiché</p>
             </div>
             <Switch
               id="anonymous"
@@ -1202,39 +841,22 @@ export function ContributionForm({
             />
           </div>
 
-          {/* Processing Status */}
-          {processingStatus === 'processing' && (
-            <div className={`flex items-center justify-center gap-3 p-4 rounded-lg ${isOwnerClaim ? 'bg-success/10 border border-success/20' : 'bg-primary/10 border border-primary/20'}`}>
-              <div className={`w-4 h-4 border-2 ${isOwnerClaim ? 'border-success' : 'border-primary'} border-t-transparent rounded-full animate-spin`} />
-              <div className="text-sm">
-                <span className={`${isOwnerClaim ? 'text-success' : 'text-primary'} font-medium`}>Analyse VLINKS en cours</span>
-                <span className="text-muted-foreground"> → Reformulation → Publication contrôlée</span>
-              </div>
-            </div>
-          )}
-
           {/* Submit */}
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="flex-1"
-              disabled={isSubmitting}
-            >
+          <div className="flex gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1" disabled={isSubmitting}>
               Annuler
             </Button>
             <Button
               type="submit"
               variant="hero"
-              disabled={isSubmitting || processingStatus === 'processing'}
+              disabled={isSubmitting}
               className={`flex-1 ${isOwnerClaim ? 'bg-success hover:bg-success/90' : ''}`}
             >
-              {processingStatus === 'submitting' && "Ajout en cours..."}
-              {processingStatus === 'processing' && "Analyse en cours..."}
-              {processingStatus === 'idle' && "Ajouter ce maillon à la chaîne"}
-              {processingStatus === 'done' && "Ajouter ce maillon à la chaîne"}
-              {processingStatus === 'error' && "Réessayer"}
+              {isSubmitting ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Envoi...</>
+              ) : (
+                "Envoyer"
+              )}
             </Button>
           </div>
         </form>

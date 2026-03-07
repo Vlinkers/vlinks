@@ -48,8 +48,48 @@ import {
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { PublicContribution } from "@/hooks/useVINData";
 
-
+function SignalProofs({ contributionIds, allContributions }: { contributionIds: string[]; allContributions: PublicContribution[] }) {
+  const matched = allContributions.filter((c) => contributionIds.includes(c.id));
+  if (matched.length === 0) {
+    return (
+      <div className="px-3 pb-3">
+        <p className="text-xs text-muted-foreground">Aucune preuve accessible pour ce signal.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="border-t border-border/20 px-3 pb-3 pt-2 space-y-2">
+      {matched.map((c) => (
+        <div key={c.id} className="p-2 rounded-lg bg-muted/10 border border-border/10 text-xs space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="font-medium text-foreground">{c.author}</span>
+            <span className="text-muted-foreground">{c.date}</span>
+          </div>
+          {c.title && <p className="text-foreground/80">{c.title}</p>}
+          {c.summaryPublic && !c.title && <p className="text-foreground/80">{c.summaryPublic}</p>}
+          {c.hasPhotos && (
+            <div className="flex gap-1 mt-1">
+              {c.photos.slice(0, 3).map((p) => (
+                <img key={p.id} src={p.url} alt={p.caption || p.fileName} className="w-12 h-12 object-cover rounded" />
+              ))}
+              {c.photos.length > 3 && (
+                <span className="text-muted-foreground self-end">+{c.photos.length - 3}</span>
+              )}
+            </div>
+          )}
+          {c.hasDocuments && (
+            <div className="flex items-center gap-1 text-muted-foreground mt-1">
+              <FileText className="w-3 h-3" />
+              <span>{c.documentCount} document{c.documentCount > 1 ? "s" : ""}</span>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 
 const VINDetail = () => {

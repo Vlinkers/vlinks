@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ContributionForm } from "@/components/ContributionForm";
 import { OwnerClaimForm } from "@/components/OwnerClaimForm";
-import { PhotoGallery } from "@/components/PhotoGallery";
 import { UsernameRequiredDialog } from "@/components/UsernameRequiredDialog";
 import { PDFDownloadDialog } from "@/components/PDFDownloadDialog";
 import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { useVINDecode } from "@/hooks/useVINDecode";
 import { VehicleIdentificationCard } from "@/components/VehicleIdentificationCard";
+import { ContributionCard, getContributionIcon, getContributionLabel, getContributionColor } from "@/components/ContributionCard";
 import { useVINFollow } from "@/hooks/useVINFollow";
 import { useAdmin } from "@/hooks/useAdmin";
 import { 
@@ -48,44 +48,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const getContributionIcon = (type: ContributionType) => {
-  switch (type) {
-    case "inspection_report": return FileSearch;
-    case "vehicle_history": return FileText;
-    case "owner_exchange": return MessageCircle;
-    case "mechanic_conversation": return Wrench;
-    case "photo_evidence": return Camera;
-    case "observation": return Eye;
-    case "purchase_decision": return XCircle;
-    default: return FileText;
-  }
-};
-
-const getContributionLabel = (type: ContributionType) => {
-  switch (type) {
-    case "inspection_report": return "Rapport d'inspection";
-    case "vehicle_history": return "Historique véhicule";
-    case "owner_exchange": return "Échange avec vendeur";
-    case "mechanic_conversation": return "Avis mécanicien";
-    case "photo_evidence": return "Preuves photo";
-    case "observation": return "Observation personnelle";
-    case "purchase_decision": return "Décision d'achat";
-    default: return "Contribution";
-  }
-};
-
-const getContributionColor = (type: ContributionType) => {
-  switch (type) {
-    case "inspection_report": return "bg-primary/20 text-primary border-primary/30";
-    case "vehicle_history": return "bg-secondary/20 text-secondary border-secondary/30";
-    case "owner_exchange": return "bg-accent/20 text-accent border-accent/30";
-    case "mechanic_conversation": return "bg-warning/20 text-warning border-warning/30";
-    case "photo_evidence": return "bg-success/20 text-success border-success/30";
-    case "observation": return "bg-danger/20 text-danger border-danger/30";
-    case "purchase_decision": return "bg-muted text-muted-foreground border-border";
-    default: return "bg-muted text-muted-foreground border-border";
-  }
-};
 
 
 
@@ -587,161 +549,86 @@ const VINDetail = () => {
           )}
 
 
-          {/* ═══ INSPECTIONS & DOCUMENTS ═══ */}
+          {/* ═══ CONTRIBUTIONS BY TYPE ═══ */}
+          {/* Rapports & Documents */}
           {contributions.filter(c => c.type === "inspection_report" || c.type === "vehicle_history" || c.type === "mechanic_conversation").length > 0 && (
             <div className="mb-8">
               <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
                 <FileSearch className="w-5 h-5 text-primary" />
                 Rapports & Documents
               </h2>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {contributions
                   .filter(c => c.type === "inspection_report" || c.type === "vehicle_history" || c.type === "mechanic_conversation")
-                  .map((contribution) => {
-                    const Icon = getContributionIcon(contribution.type);
-                    return (
-                      <div key={contribution.id} className="p-5 rounded-xl glass border border-border/50">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 flex-wrap mb-2">
-                              <Badge variant="outline" className={`text-xs ${getContributionColor(contribution.type)}`}>
-                                <Icon className="w-3 h-3 mr-1" />
-                                {getContributionLabel(contribution.type)}
-                              </Badge>
-                              {contribution.isOwnerContribution && (
-                                <Badge variant="info" className="text-xs">
-                                  <User className="w-3 h-3 mr-1" />
-                                  Propriétaire
-                                </Badge>
-                              )}
-                              {contribution.authorVerified && (
-                                <Badge variant="verified" className="text-xs">
-                                  <CheckCircle className="w-3 h-3 mr-1" />
-                                  Vérifié
-                                </Badge>
-                              )}
-                            </div>
-                            {contribution.title && (
-                              <h3 className="text-sm font-semibold text-foreground mt-2">{contribution.title}</h3>
-                            )}
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                              <span>{contribution.author}</span>
-                              <span>•</span>
-                              <span className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                {contribution.interventionDate || contribution.date}
-                              </span>
-                              {contribution.mileageAtIntervention && (
-                                <>
-                                  <span>•</span>
-                                  <span>{contribution.mileageAtIntervention.toLocaleString()} km</span>
-                                </>
-                              )}
-                            </div>
-                            {contribution.summaryPublic && (
-                              <p className="text-sm text-foreground/90 mt-2">{contribution.summaryPublic}</p>
-                            )}
-                          </div>
-                        </div>
-                        {(contribution.hasDocuments || contribution.hasPhotos) && (
-                          <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/30">
-                            {contribution.hasDocuments && (
-                              <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <FileText className="w-4 h-4" />
-                                {contribution.documentCount} doc{contribution.documentCount > 1 ? "s" : ""}
-                              </span>
-                            )}
-                            {contribution.hasPhotos && (
-                              <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <Camera className="w-4 h-4" />
-                                {contribution.photoCount} photo{contribution.photoCount > 1 ? "s" : ""}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        <AdminActions contributionId={contribution.id} />
-                      </div>
-                    );
-                  })}
+                  .map((contribution) => (
+                    <ContributionCard
+                      key={contribution.id}
+                      contribution={contribution}
+                      adminActions={<AdminActions contributionId={contribution.id} />}
+                    />
+                  ))}
               </div>
             </div>
           )}
 
-          {/* ═══ OBSERVATIONS ═══ */}
-          {contributions.filter(c => c.type === "observation" || c.type === "owner_exchange" || c.type === "purchase_decision").length > 0 && (
+          {/* Preuves photo */}
+          {contributions.filter(c => c.type === "photo_evidence").length > 0 && (
             <div className="mb-8">
               <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
-                <Eye className="w-5 h-5 text-accent" />
-                Observations des acheteurs
-              </h2>
-              <div className="space-y-3">
-                {contributions
-                  .filter(c => c.type === "observation" || c.type === "owner_exchange" || c.type === "purchase_decision")
-                  .map((contribution) => {
-                    const Icon = getContributionIcon(contribution.type);
-                    return (
-                      <div key={contribution.id} className="p-5 rounded-xl glass border border-border/50">
-                        <div className="flex items-center gap-2 flex-wrap mb-2">
-                          <Badge variant="outline" className={`text-xs ${getContributionColor(contribution.type)}`}>
-                            <Icon className="w-3 h-3 mr-1" />
-                            {getContributionLabel(contribution.type)}
-                          </Badge>
-                          {contribution.isOwnerContribution && (
-                            <Badge variant="info" className="text-xs">
-                              <User className="w-3 h-3 mr-1" />
-                              Propriétaire
-                            </Badge>
-                          )}
-                        </div>
-                        {contribution.title && (
-                          <h3 className="text-sm font-semibold text-foreground mt-2">{contribution.title}</h3>
-                        )}
-                        {contribution.summaryPublic && (
-                          <blockquote className="text-sm text-foreground/90 border-l-2 border-primary/30 pl-3 my-2 italic">
-                            {contribution.summaryPublic}
-                          </blockquote>
-                        )}
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-2">
-                          <span>{contribution.author}</span>
-                          <span>•</span>
-                          <span>{contribution.date}</span>
-                          {contribution.authorVerified && (
-                            <>
-                              <span>•</span>
-                              <span className="text-success flex items-center gap-1">
-                                <CheckCircle className="w-3 h-3" />
-                                Contribution validée
-                              </span>
-                            </>
-                          )}
-                        </div>
-                        <AdminActions contributionId={contribution.id} />
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-          )}
-
-          {/* ═══ PHOTOS ═══ */}
-          {contributions.some(c => c.photos.length > 0) && (
-            <div className="mb-8">
-              <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
-                <Camera className="w-5 h-5 text-secondary" />
-                Photos
+                <Camera className="w-5 h-5 text-success" />
+                Preuves photo
               </h2>
               <div className="space-y-4">
                 {contributions
-                  .filter(c => c.photos.length > 0)
+                  .filter(c => c.type === "photo_evidence")
                   .map((contribution) => (
-                    <div key={contribution.id} className="p-4 rounded-xl glass border border-border/50">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-                        <span>{contribution.author}</span>
-                        <span>•</span>
-                        <span>{contribution.date}</span>
-                      </div>
-                      <PhotoGallery photos={contribution.photos} />
-                    </div>
+                    <ContributionCard
+                      key={contribution.id}
+                      contribution={contribution}
+                      adminActions={<AdminActions contributionId={contribution.id} />}
+                    />
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Observations & Échanges */}
+          {contributions.filter(c => c.type === "observation" || c.type === "owner_exchange").length > 0 && (
+            <div className="mb-8">
+              <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
+                <Eye className="w-5 h-5 text-accent" />
+                Observations & Échanges
+              </h2>
+              <div className="space-y-4">
+                {contributions
+                  .filter(c => c.type === "observation" || c.type === "owner_exchange")
+                  .map((contribution) => (
+                    <ContributionCard
+                      key={contribution.id}
+                      contribution={contribution}
+                      adminActions={<AdminActions contributionId={contribution.id} />}
+                    />
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Décisions d'achat */}
+          {contributions.filter(c => c.type === "purchase_decision").length > 0 && (
+            <div className="mb-8">
+              <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
+                <XCircle className="w-5 h-5 text-muted-foreground" />
+                Décisions d'achat
+              </h2>
+              <div className="space-y-4">
+                {contributions
+                  .filter(c => c.type === "purchase_decision")
+                  .map((contribution) => (
+                    <ContributionCard
+                      key={contribution.id}
+                      contribution={contribution}
+                      adminActions={<AdminActions contributionId={contribution.id} />}
+                    />
                   ))}
               </div>
             </div>
@@ -751,7 +638,7 @@ const VINDetail = () => {
           <div className="mb-8">
             <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
               <Clock className="w-5 h-5 text-muted-foreground" />
-              Historique des contributions
+              Historique chronologique
             </h2>
 
             {contributions.length > 0 ? (
@@ -780,6 +667,9 @@ const VINDetail = () => {
                               </span>
                             )}
                           </div>
+                          {contribution.title && (
+                            <p className="text-sm text-foreground mt-1">{contribution.title}</p>
+                          )}
                           <AdminActions contributionId={contribution.id} />
                         </div>
                       </div>

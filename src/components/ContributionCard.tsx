@@ -264,15 +264,48 @@ function renderTextContent(
 
   // For ownership_change: show structured ownership change info
   if (type === "ownership_change") {
+    const holderLabel = contribution.holderType === "concessionnaire" && contribution.dealerName
+      ? contribution.dealerName
+      : contribution.holderType === "concessionnaire" ? "Concessionnaire"
+      : contribution.holderType === "depot_vente" ? "Dépôt-vente"
+      : contribution.holderType === "particulier" ? "Particulier"
+      : null;
+
+    // Format intervention date as month/year
+    let dateDisplay: string | null = null;
+    if (contribution.interventionDate) {
+      const d = new Date(contribution.interventionDate + "T00:00:00");
+      const monthNames = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+      dateDisplay = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+    }
+
     return (
-      <div className="mt-3 space-y-1">
+      <div className="mt-3 space-y-1.5">
         {summaryText && (
           <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
             🔄 {summaryText}
           </p>
         )}
+        {dateDisplay && (
+          <p className="text-xs text-muted-foreground">{dateDisplay}</p>
+        )}
+        {holderLabel && (
+          <p className="text-xs text-muted-foreground">
+            Vendu par : <span className="text-foreground/80">{holderLabel}</span>
+          </p>
+        )}
+        {contribution.province && (
+          <p className="text-xs text-muted-foreground">
+            Province : <span className="text-foreground/80">{contribution.province}</span>
+          </p>
+        )}
+        {contribution.mileageAtIntervention && (
+          <p className="text-xs text-muted-foreground">
+            Kilométrage observé : <span className="text-foreground/80">{contribution.mileageAtIntervention.toLocaleString()} km</span>
+          </p>
+        )}
         {contribution.details && (
-          <p className="text-xs text-muted-foreground italic whitespace-pre-line">
+          <p className="text-xs text-muted-foreground italic whitespace-pre-line mt-1">
             {contribution.details}
           </p>
         )}

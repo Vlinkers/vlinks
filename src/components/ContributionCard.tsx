@@ -34,6 +34,7 @@ const getContributionLabel = (type: ContributionType) => {
     case "photo_evidence": return "Preuves photo";
     case "observation": return "Observation personnelle";
     case "purchase_decision": return "Décision d'achat";
+    case "ownership_change": return "Changement de propriétaire";
     default: return "Contribution";
   }
 };

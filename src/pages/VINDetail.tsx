@@ -68,6 +68,7 @@ const VINDetail = () => {
   const [ownerVerificationStatus, setOwnerVerificationStatus] = useState<'none' | 'pending' | 'verified' | 'rejected'>('none');
   const [isCheckingOwner, setIsCheckingOwner] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [observedSignals, setObservedSignals] = useState<{ text: string; count: number }[]>([]);
   const [userHasUsername, setUserHasUsername] = useState(true);
   const [showUsernameDialog, setShowUsernameDialog] = useState(false);
   const [isEndingOwnership, setIsEndingOwnership] = useState(false);

@@ -204,6 +204,7 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       dealerName: c.dealer_name || null,
       askingPrice: c.asking_price || null,
       listingUrl: c.listing_url || null,
+      oldPrice: c.old_price || null,
       hasDocuments: documents.length > 0,
       documentCount: documents.length,
       documents,

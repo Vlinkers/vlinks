@@ -38,6 +38,8 @@ export interface PublicContribution {
   province: string | null;
   holderType: string | null;
   dealerName: string | null;
+  askingPrice: number | null;
+  listingUrl: string | null;
   // Media
   hasDocuments: boolean;
   documentCount: number;

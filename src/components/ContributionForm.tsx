@@ -146,6 +146,7 @@ const contributionSchema = z.object({
     "observation",
     "purchase_decision",
     "ownership_change",
+    "for_sale",
   ]),
   observation: z
     .string()

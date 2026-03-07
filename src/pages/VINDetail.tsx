@@ -68,6 +68,7 @@ const VINDetail = () => {
   const [ownerVerificationStatus, setOwnerVerificationStatus] = useState<'none' | 'pending' | 'verified' | 'rejected'>('none');
   const [isCheckingOwner, setIsCheckingOwner] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [observedSignals, setObservedSignals] = useState<{ text: string; count: number }[]>([]);
   const [userHasUsername, setUserHasUsername] = useState(true);
   const [showUsernameDialog, setShowUsernameDialog] = useState(false);
   const [isEndingOwnership, setIsEndingOwnership] = useState(false);
@@ -113,6 +114,28 @@ const VINDetail = () => {
     };
 
     checkUserAndOwnerStatus();
+  }, [data?.id]);
+
+  // Fetch observed signals from database
+  useEffect(() => {
+    const fetchSignals = async () => {
+      if (!data?.id) return;
+      const { data: signalsData } = await supabase
+        .from("observed_signals" as any)
+        .select("signal_text")
+        .eq("vin_id", data.id);
+      if (signalsData && (signalsData as any[]).length > 0) {
+        const countMap = new Map<string, number>();
+        (signalsData as any[]).forEach((s: any) => {
+          const text = s.signal_text;
+          countMap.set(text, (countMap.get(text) || 0) + 1);
+        });
+        setObservedSignals(Array.from(countMap.entries()).map(([text, count]) => ({ text, count })));
+      } else {
+        setObservedSignals([]);
+      }
+    };
+    fetchSignals();
   }, [data?.id]);
 
   const handleEndOwnership = async () => {
@@ -421,13 +444,7 @@ const VINDetail = () => {
               c.type === "observation" || c.type === "owner_exchange" || 
               c.type === "mechanic_conversation" || c.type === "purchase_decision"
             );
-            // Extract factual signals from contributions
-            const signals: { text: string; type: string; contributionId: string }[] = [];
-            contributions.forEach(c => {
-              if (c.title && c.title.trim()) {
-                signals.push({ text: c.title, type: c.type, contributionId: c.id });
-              }
-            });
+            // Signals are now fetched from observed_signals table (see below)
 
             return (
               <>
@@ -500,7 +517,7 @@ const VINDetail = () => {
                 </div>
 
                 {/* ═══ SIGNAUX OBSERVÉS ═══ */}
-                {signals.length > 0 && (
+                {observedSignals.length > 0 && (
                   <div className="mb-8">
                     <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
                       <AlertTriangle className="w-5 h-5 text-warning" />
@@ -511,15 +528,17 @@ const VINDetail = () => {
                         Faits rapportés par les contributeurs. VLINKS ne porte aucun jugement sur l'état du véhicule.
                       </p>
                       <div className="space-y-2">
-                        {signals.map((signal, i) => {
-                          const SIcon = getContributionIcon(signal.type as ContributionType);
-                          return (
-                            <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/20 border border-border/20">
-                              <SIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                              <span className="text-sm text-foreground">{signal.text}</span>
-                            </div>
-                          );
-                        })}
+                        {observedSignals.map((signal, i) => (
+                          <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/20 border border-border/20">
+                            <AlertTriangle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
+                            <span className="text-sm text-foreground flex-1">{signal.text}</span>
+                            {signal.count > 1 && (
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                signalé par {signal.count} contributions
+                              </span>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>

@@ -25,6 +25,7 @@ import {
   FileText,
   Camera,
 } from "lucide-react";
+import { ObservedSignalsPanel } from "@/components/admin/ObservedSignalsPanel";
 
 interface ContributionRow {
   id: string;
@@ -490,6 +491,9 @@ export default function AdminContributions() {
                   </div>
                 </div>
               )}
+
+              {/* Observed Signals Panel */}
+              <ObservedSignalsPanel vinId={selected.vin_id} contributionId={selected.id} />
 
               {/* Action buttons */}
               <div className="flex flex-wrap gap-2 pt-3 border-t border-border">

@@ -188,10 +188,10 @@ function renderTextContent(
     return (
       <div className="mt-3">
         {summaryText && summaryText !== displayText && (
-          <p className="text-sm text-foreground/90 mb-2">{summaryText}</p>
+          <p className="text-sm text-foreground/90 mb-2 whitespace-pre-line">{summaryText}</p>
         )}
         {displayText && (
-          <blockquote className="text-sm text-foreground/80 border-l-2 border-primary/30 pl-3 italic leading-relaxed whitespace-pre-wrap">
+          <blockquote className="text-sm text-foreground/80 border-l-2 border-primary/30 pl-3 italic leading-relaxed whitespace-pre-line">
             {displayText}
           </blockquote>
         )}
@@ -204,7 +204,7 @@ function renderTextContent(
     return (
       <div className="mt-3">
         {summaryText && (
-          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
             {expanded ? (contribution.details || summaryText) : summaryText.slice(0, TEXT_TRUNCATE_LENGTH)}
           </p>
         )}
@@ -217,10 +217,10 @@ function renderTextContent(
     return (
       <div className="mt-3 space-y-2">
         {summaryText && (
-          <p className="text-sm text-foreground/90 leading-relaxed">{summaryText}</p>
+          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">{summaryText}</p>
         )}
         {contribution.details && contribution.details !== summaryText && expanded && (
-          <p className="text-sm text-foreground/70 leading-relaxed whitespace-pre-wrap">
+          <p className="text-sm text-foreground/70 leading-relaxed whitespace-pre-line">
             {contribution.details}
           </p>
         )}
@@ -238,7 +238,7 @@ function renderTextContent(
 
   // Fallback
   if (summaryText) {
-    return <p className="text-sm text-foreground/90 mt-3">{summaryText}</p>;
+    return <p className="text-sm text-foreground/90 mt-3 whitespace-pre-line">{summaryText}</p>;
   }
 
   return null;

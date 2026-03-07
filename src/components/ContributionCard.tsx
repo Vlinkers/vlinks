@@ -9,7 +9,7 @@ import {
   Calendar, User, CheckCircle, ChevronDown, ChevronUp, Download, File, ExternalLink
 } from "lucide-react";
 
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Tag } from "lucide-react";
 
 const getContributionIcon = (type: ContributionType) => {
   switch (type) {

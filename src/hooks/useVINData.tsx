@@ -70,6 +70,7 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
     .from("public_contributions")
     .select(`
       id,
+      user_id,
       contribution_type,
       is_anonymous,
       is_owner_contribution,

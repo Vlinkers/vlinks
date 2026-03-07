@@ -175,40 +175,36 @@ export type Database = {
       }
       observed_signals: {
         Row: {
-          contribution_id: string
           created_at: string
           created_by: string
+          first_observed_at: string | null
           id: string
+          last_observed_at: string | null
           signal_text: string
           updated_at: string
           vin_id: string
         }
         Insert: {
-          contribution_id: string
           created_at?: string
           created_by: string
+          first_observed_at?: string | null
           id?: string
+          last_observed_at?: string | null
           signal_text: string
           updated_at?: string
           vin_id: string
         }
         Update: {
-          contribution_id?: string
           created_at?: string
           created_by?: string
+          first_observed_at?: string | null
           id?: string
+          last_observed_at?: string | null
           signal_text?: string
           updated_at?: string
           vin_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "observed_signals_contribution_id_fkey"
-            columns: ["contribution_id"]
-            isOneToOne: false
-            referencedRelation: "public_contributions"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "observed_signals_vin_id_fkey"
             columns: ["vin_id"]
@@ -501,6 +497,42 @@ export type Database = {
             columns: ["vin_id"]
             isOneToOne: false
             referencedRelation: "vins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signal_contributions: {
+        Row: {
+          contribution_id: string
+          created_at: string | null
+          id: string
+          signal_id: string
+        }
+        Insert: {
+          contribution_id: string
+          created_at?: string | null
+          id?: string
+          signal_id: string
+        }
+        Update: {
+          contribution_id?: string
+          created_at?: string | null
+          id?: string
+          signal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signal_contributions_contribution_id_fkey"
+            columns: ["contribution_id"]
+            isOneToOne: false
+            referencedRelation: "public_contributions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signal_contributions_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "observed_signals"
             referencedColumns: ["id"]
           },
         ]

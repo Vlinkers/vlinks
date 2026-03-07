@@ -78,6 +78,12 @@ const contributionTypes = [
     icon: XCircle,
     description: "Pourquoi vous avez acheté ou renoncé",
   },
+  {
+    value: "ownership_change",
+    label: "Changement de propriétaire",
+    icon: XCircle, // placeholder, we use emoji in rendering
+    description: "Signaler que le véhicule a changé de propriétaire",
+  },
 ] as const;
 
 const documentTypes = [
@@ -96,6 +102,7 @@ const contributionSchema = z.object({
     "photo_evidence",
     "observation",
     "purchase_decision",
+    "ownership_change",
   ]),
   observation: z
     .string()
@@ -736,13 +743,19 @@ export function ContributionForm({
           {/* 2. Observation principale */}
           <div className="space-y-2">
             <Label htmlFor="observation" className="text-sm font-semibold">
-              Qu'avez-vous observé ou appris concernant ce véhicule ? *
+              {contributionType === "ownership_change"
+                ? "Date approximative et vendeur/ancien propriétaire *"
+                : "Qu'avez-vous observé ou appris concernant ce véhicule ? *"}
             </Label>
             <Textarea
               id="observation"
               {...register("observation")}
-              placeholder="Ex: Jantes avant abîmées côté passager, traces de rouille sous le châssis, le vendeur mentionne un changement de courroie..."
-              rows={4}
+              placeholder={
+                contributionType === "ownership_change"
+                  ? "Ex: Vendu par Uslynn Auto en février 2026, Changement de propriétaire mars 2025..."
+                  : "Ex: Jantes avant abîmées côté passager, traces de rouille sous le châssis, le vendeur mentionne un changement de courroie..."
+              }
+              rows={contributionType === "ownership_change" ? 3 : 4}
               className="bg-muted/30 resize-none"
             />
             {errors.observation && (
@@ -817,13 +830,19 @@ export function ContributionForm({
           {/* 5. Context (optional) */}
           <div className="space-y-2">
             <Label htmlFor="context" className="text-sm font-semibold">
-              Dans quel contexte avez-vous obtenu cette information ?
+              {contributionType === "ownership_change"
+                ? "Contexte ou information complémentaire"
+                : "Dans quel contexte avez-vous obtenu cette information ?"}
               <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
             </Label>
             <Input
               id="context"
               {...register("context")}
-              placeholder="Ex: visite du véhicule, inspection mécanique, discussion avec vendeur..."
+              placeholder={
+                contributionType === "ownership_change"
+                  ? "Ex: Le véhicule était en vente chez Uslynn Auto et a été vendu en février 2026."
+                  : "Ex: visite du véhicule, inspection mécanique, discussion avec vendeur..."
+              }
               className="bg-muted/30"
             />
           </div>

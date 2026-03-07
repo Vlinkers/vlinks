@@ -1,0 +1,1 @@
+ALTER TYPE public.contribution_type ADD VALUE IF NOT EXISTS 'ownership_change';

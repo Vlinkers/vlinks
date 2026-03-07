@@ -9,6 +9,8 @@ import {
   Calendar, User, CheckCircle, ChevronDown, ChevronUp, Download, File, ExternalLink
 } from "lucide-react";
 
+import { RefreshCw } from "lucide-react";
+
 const getContributionIcon = (type: ContributionType) => {
   switch (type) {
     case "inspection_report": return FileSearch;
@@ -18,6 +20,7 @@ const getContributionIcon = (type: ContributionType) => {
     case "photo_evidence": return Camera;
     case "observation": return Eye;
     case "purchase_decision": return XCircle;
+    case "ownership_change": return RefreshCw;
     default: return FileText;
   }
 };
@@ -31,6 +34,7 @@ const getContributionLabel = (type: ContributionType) => {
     case "photo_evidence": return "Preuves photo";
     case "observation": return "Observation personnelle";
     case "purchase_decision": return "Décision d'achat";
+    case "ownership_change": return "Changement de propriétaire";
     default: return "Contribution";
   }
 };
@@ -44,6 +48,7 @@ const getContributionColor = (type: ContributionType) => {
     case "photo_evidence": return "bg-success/20 text-success border-success/30";
     case "observation": return "bg-danger/20 text-danger border-danger/30";
     case "purchase_decision": return "bg-muted text-muted-foreground border-border";
+    case "ownership_change": return "bg-primary/20 text-primary border-primary/30";
     default: return "bg-muted text-muted-foreground border-border";
   }
 };
@@ -251,6 +256,24 @@ function renderTextContent(
         {summaryText && (
           <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
             {expanded ? (contribution.details || summaryText) : summaryText.slice(0, TEXT_TRUNCATE_LENGTH)}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // For ownership_change: show structured ownership change info
+  if (type === "ownership_change") {
+    return (
+      <div className="mt-3 space-y-1">
+        {summaryText && (
+          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
+            🔄 {summaryText}
+          </p>
+        )}
+        {contribution.details && (
+          <p className="text-xs text-muted-foreground italic whitespace-pre-line">
+            {contribution.details}
           </p>
         )}
       </div>

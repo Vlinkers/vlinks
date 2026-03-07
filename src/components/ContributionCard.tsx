@@ -22,6 +22,7 @@ const getContributionIcon = (type: ContributionType) => {
     case "purchase_decision": return XCircle;
     case "ownership_change": return RefreshCw;
     case "for_sale": return Tag;
+    case "price_change": return Tag;
     default: return FileText;
   }
 };

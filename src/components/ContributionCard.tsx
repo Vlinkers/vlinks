@@ -188,10 +188,10 @@ function renderTextContent(
     return (
       <div className="mt-3">
         {summaryText && summaryText !== displayText && (
-          <p className="text-sm text-foreground/90 mb-2">{summaryText}</p>
+          <p className="text-sm text-foreground/90 mb-2 whitespace-pre-line">{summaryText}</p>
         )}
         {displayText && (
-          <blockquote className="text-sm text-foreground/80 border-l-2 border-primary/30 pl-3 italic leading-relaxed whitespace-pre-wrap">
+          <blockquote className="text-sm text-foreground/80 border-l-2 border-primary/30 pl-3 italic leading-relaxed whitespace-pre-line">
             {displayText}
           </blockquote>
         )}

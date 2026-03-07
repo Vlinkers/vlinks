@@ -16,6 +16,13 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   FileSearch,
   FileText,
   MessageCircle,
@@ -81,7 +88,7 @@ const contributionTypes = [
   {
     value: "ownership_change",
     label: "Changement de propriétaire",
-    icon: XCircle, // placeholder, we use emoji in rendering
+    icon: XCircle,
     description: "Signaler que le véhicule a changé de propriétaire",
   },
 ] as const;
@@ -92,6 +99,34 @@ const documentTypes = [
   { value: "carte_grise", label: "Carte grise (masquée)", description: "Carte grise avec informations personnelles masquées" },
   { value: "autre", label: "Autre document", description: "Tout document prouvant la propriété" },
 ];
+
+const provinces = [
+  "Québec",
+  "Ontario",
+  "Alberta",
+  "Colombie-Britannique",
+  "Manitoba",
+  "Saskatchewan",
+  "Nouveau-Brunswick",
+  "Nouvelle-Écosse",
+  "Île-du-Prince-Édouard",
+  "Terre-Neuve-et-Labrador",
+];
+
+const months = [
+  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+];
+
+const holderTypes = [
+  { value: "concessionnaire", label: "Concessionnaire" },
+  { value: "depot_vente", label: "Dépôt-vente" },
+  { value: "particulier", label: "Particulier" },
+  { value: "inconnu", label: "Inconnu" },
+];
+
+// Types that show the holder field
+const typesWithHolder = ["ownership_change", "observation"];
 
 const contributionSchema = z.object({
   contribution_type: z.enum([
@@ -115,6 +150,12 @@ const contributionSchema = z.object({
     .max(500, "Le contexte ne peut pas dépasser 500 caractères")
     .optional(),
   is_anonymous: z.boolean().default(false),
+  mileage: z.string().optional(),
+  province: z.string().optional(),
+  holder_type: z.string().optional(),
+  dealer_name: z.string().max(200).optional(),
+  ownership_month: z.string().optional(),
+  ownership_year: z.string().optional(),
 });
 
 type ContributionFormData = z.infer<typeof contributionSchema>;
@@ -165,6 +206,7 @@ export function ContributionForm({
   });
 
   const contributionType = watch("contribution_type");
+  const holderType = watch("holder_type");
 
   // Check owner verification status on mount
   useEffect(() => {
@@ -282,6 +324,18 @@ export function ContributionForm({
     const summary = data.observation;
     const details = data.context || null;
 
+    // Parse mileage
+    const mileage = data.mileage ? parseInt(data.mileage.replace(/\s/g, ''), 10) : null;
+    const validMileage = mileage && !isNaN(mileage) ? mileage : null;
+
+    // Build intervention_date from ownership month/year if ownership_change
+    let interventionDate: string | null = null;
+    if (data.contribution_type === "ownership_change" && data.ownership_year) {
+      const monthIndex = data.ownership_month ? months.indexOf(data.ownership_month) + 1 : 1;
+      const monthStr = String(monthIndex).padStart(2, '0');
+      interventionDate = `${data.ownership_year}-${monthStr}-01`;
+    }
+
     // Create raw contribution for audit trail
     const { error: rawError } = await supabase
       .from("raw_contributions")
@@ -294,7 +348,12 @@ export function ContributionForm({
         details,
         is_anonymous: data.is_anonymous,
         is_owner_contribution: isOwnerClaim,
-      });
+        mileage_at_intervention: validMileage,
+        intervention_date: interventionDate,
+        province: data.province || null,
+        holder_type: data.holder_type || null,
+        dealer_name: data.holder_type === "concessionnaire" ? (data.dealer_name || null) : null,
+      } as any);
 
     if (rawError) throw rawError;
 
@@ -330,6 +389,11 @@ export function ContributionForm({
         title,
         summary,
         details,
+        mileage_at_intervention: validMileage,
+        intervention_date: interventionDate,
+        province: data.province || null,
+        holder_type: data.holder_type || null,
+        dealer_name: data.holder_type === "concessionnaire" ? (data.dealer_name || null) : null,
       } as any);
 
     if (pubError) {
@@ -547,6 +611,12 @@ export function ContributionForm({
     }
   };
 
+  // Generate year options (current year down to 1980)
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: currentYear - 1979 }, (_, i) => String(currentYear - i));
+
+  const showHolderField = typesWithHolder.includes(contributionType);
+
   // Verification step UI
   if (currentStep === 'verification') {
     return (
@@ -740,11 +810,40 @@ export function ContributionForm({
             )}
           </div>
 
+          {/* Ownership change: Month/Year selector */}
+          {contributionType === "ownership_change" && (
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">Date du changement de propriétaire</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <Select onValueChange={(v) => setValue("ownership_month", v)} value={watch("ownership_month") || ""}>
+                  <SelectTrigger className="bg-muted/30">
+                    <SelectValue placeholder="Mois" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {months.map((m) => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select onValueChange={(v) => setValue("ownership_year", v)} value={watch("ownership_year") || ""}>
+                  <SelectTrigger className="bg-muted/30">
+                    <SelectValue placeholder="Année" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {yearOptions.map((y) => (
+                      <SelectItem key={y} value={y}>{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
           {/* 2. Observation principale */}
           <div className="space-y-2">
             <Label htmlFor="observation" className="text-sm font-semibold">
               {contributionType === "ownership_change"
-                ? "Date approximative et vendeur/ancien propriétaire *"
+                ? "Vendeur ou ancien propriétaire *"
                 : "Qu'avez-vous observé ou appris concernant ce véhicule ? *"}
             </Label>
             <Textarea
@@ -752,7 +851,7 @@ export function ContributionForm({
               {...register("observation")}
               placeholder={
                 contributionType === "ownership_change"
-                  ? "Ex: Vendu par Uslynn Auto en février 2026, Changement de propriétaire mars 2025..."
+                  ? "Ex: Uslynn Auto, Concessionnaire Volvo Montréal, Particulier..."
                   : "Ex: Jantes avant abîmées côté passager, traces de rouille sous le châssis, le vendeur mentionne un changement de courroie..."
               }
               rows={contributionType === "ownership_change" ? 3 : 4}
@@ -761,6 +860,86 @@ export function ContributionForm({
             {errors.observation && (
               <p className="text-sm text-destructive">{errors.observation.message}</p>
             )}
+          </div>
+
+          {/* Holder type field (for ownership_change and observation) */}
+          {showHolderField && (
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">
+                Qui détient actuellement le véhicule ?
+                <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                {holderTypes.map((ht) => {
+                  const isSelected = holderType === ht.value;
+                  return (
+                    <button
+                      key={ht.value}
+                      type="button"
+                      onClick={() => setValue("holder_type", isSelected ? "" : ht.value)}
+                      className={`p-2.5 rounded-lg border text-sm text-center transition-all ${
+                        isSelected
+                          ? "border-primary bg-primary/10 text-primary font-medium"
+                          : "border-border hover:border-muted-foreground/50 bg-muted/20 text-foreground"
+                      }`}
+                    >
+                      {ht.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Dealer name (only if holder_type === concessionnaire) */}
+          {showHolderField && holderType === "concessionnaire" && (
+            <div className="space-y-2">
+              <Label htmlFor="dealer_name" className="text-sm font-semibold">
+                Nom du concessionnaire
+                <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
+              </Label>
+              <Input
+                id="dealer_name"
+                {...register("dealer_name")}
+                placeholder="Ex: Concessionnaire Volvo Montréal"
+                className="bg-muted/30"
+              />
+            </div>
+          )}
+
+          {/* Mileage */}
+          <div className="space-y-2">
+            <Label htmlFor="mileage" className="text-sm font-semibold">
+              Kilométrage du véhicule
+              <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
+            </Label>
+            <Input
+              id="mileage"
+              {...register("mileage")}
+              placeholder="Ex: 124500"
+              type="number"
+              min="0"
+              max="9999999"
+              className="bg-muted/30"
+            />
+          </div>
+
+          {/* Province */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold">
+              Province
+              <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
+            </Label>
+            <Select onValueChange={(v) => setValue("province", v)} value={watch("province") || ""}>
+              <SelectTrigger className="bg-muted/30">
+                <SelectValue placeholder="Sélectionner une province" />
+              </SelectTrigger>
+              <SelectContent>
+                {provinces.map((p) => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* 3. Photos (optional) */}

@@ -377,13 +377,16 @@ export type Database = {
           author_public_id: string | null
           contribution_type: Database["public"]["Enums"]["contribution_type"]
           created_at: string
+          dealer_name: string | null
           details: string | null
+          holder_type: string | null
           id: string
           intervention_date: string | null
           intervention_type: string | null
           is_anonymous: boolean | null
           is_owner_contribution: boolean | null
           mileage_at_intervention: number | null
+          province: string | null
           status: string
           summary: string | null
           title: string | null
@@ -396,13 +399,16 @@ export type Database = {
           author_public_id?: string | null
           contribution_type: Database["public"]["Enums"]["contribution_type"]
           created_at?: string
+          dealer_name?: string | null
           details?: string | null
+          holder_type?: string | null
           id?: string
           intervention_date?: string | null
           intervention_type?: string | null
           is_anonymous?: boolean | null
           is_owner_contribution?: boolean | null
           mileage_at_intervention?: number | null
+          province?: string | null
           status?: string
           summary?: string | null
           title?: string | null
@@ -415,13 +421,16 @@ export type Database = {
           author_public_id?: string | null
           contribution_type?: Database["public"]["Enums"]["contribution_type"]
           created_at?: string
+          dealer_name?: string | null
           details?: string | null
+          holder_type?: string | null
           id?: string
           intervention_date?: string | null
           intervention_type?: string | null
           is_anonymous?: boolean | null
           is_owner_contribution?: boolean | null
           mileage_at_intervention?: number | null
+          province?: string | null
           status?: string
           summary?: string | null
           title?: string | null
@@ -443,7 +452,9 @@ export type Database = {
         Row: {
           contribution_type: Database["public"]["Enums"]["contribution_type"]
           created_at: string
+          dealer_name: string | null
           details: string | null
+          holder_type: string | null
           id: string
           intervention_date: string | null
           intervention_type: string | null
@@ -451,6 +462,7 @@ export type Database = {
           is_former_owner: boolean | null
           is_owner_contribution: boolean | null
           mileage_at_intervention: number | null
+          province: string | null
           summary: string | null
           title: string
           updated_at: string
@@ -460,7 +472,9 @@ export type Database = {
         Insert: {
           contribution_type: Database["public"]["Enums"]["contribution_type"]
           created_at?: string
+          dealer_name?: string | null
           details?: string | null
+          holder_type?: string | null
           id?: string
           intervention_date?: string | null
           intervention_type?: string | null
@@ -468,6 +482,7 @@ export type Database = {
           is_former_owner?: boolean | null
           is_owner_contribution?: boolean | null
           mileage_at_intervention?: number | null
+          province?: string | null
           summary?: string | null
           title: string
           updated_at?: string
@@ -477,7 +492,9 @@ export type Database = {
         Update: {
           contribution_type?: Database["public"]["Enums"]["contribution_type"]
           created_at?: string
+          dealer_name?: string | null
           details?: string | null
+          holder_type?: string | null
           id?: string
           intervention_date?: string | null
           intervention_type?: string | null
@@ -485,6 +502,7 @@ export type Database = {
           is_former_owner?: boolean | null
           is_owner_contribution?: boolean | null
           mileage_at_intervention?: number | null
+          province?: string | null
           summary?: string | null
           title?: string
           updated_at?: string

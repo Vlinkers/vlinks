@@ -35,6 +35,9 @@ export interface PublicContribution {
   interventionDate: string | null;
   mileageAtIntervention: number | null;
   isAnonymous: boolean;
+  province: string | null;
+  holderType: string | null;
+  dealerName: string | null;
   // Media
   hasDocuments: boolean;
   documentCount: number;
@@ -83,7 +86,10 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       author_public_id,
       title,
       summary,
-      details
+      details,
+      province,
+      holder_type,
+      dealer_name
     `)
     .eq("vin_id", vinRecord.id) as any)
     .eq("status", "approved")
@@ -187,6 +193,9 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       interventionDate: c.intervention_date,
       mileageAtIntervention: c.mileage_at_intervention,
       isAnonymous: c.is_anonymous || false,
+      province: c.province || null,
+      holderType: c.holder_type || null,
+      dealerName: c.dealer_name || null,
       hasDocuments: documents.length > 0,
       documentCount: documents.length,
       documents,

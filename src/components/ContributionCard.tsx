@@ -215,7 +215,7 @@ function DocumentsList({ documents }: { documents: ContributionDocument[] }) {
   );
 }
 
-
+function renderTextContent(
   contribution: PublicContribution,
   displayText: string,
   summaryText: string,

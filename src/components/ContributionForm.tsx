@@ -380,6 +380,7 @@ export function ContributionForm({
         holder_type: data.holder_type || null,
         dealer_name: data.holder_type === "concessionnaire" ? (data.dealer_name || null) : null,
         asking_price: validAskingPrice,
+        old_price: validOldPrice,
         listing_url: listingUrl,
       } as any);
 

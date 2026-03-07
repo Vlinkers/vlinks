@@ -40,6 +40,7 @@ export interface PublicContribution {
   dealerName: string | null;
   askingPrice: number | null;
   listingUrl: string | null;
+  oldPrice: number | null;
   // Media
   hasDocuments: boolean;
   documentCount: number;

@@ -382,6 +382,46 @@ function renderTextContent(
     );
   }
 
+  // For price_change: show old price → new price
+  if (type === "price_change") {
+    let dateDisplay: string | null = null;
+    if (contribution.interventionDate) {
+      const d = new Date(contribution.interventionDate + "T00:00:00");
+      const monthNames = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+      dateDisplay = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+    }
+
+    const isPriceDrop = contribution.oldPrice && contribution.askingPrice && contribution.askingPrice < contribution.oldPrice;
+
+    return (
+      <div className="mt-3 space-y-1.5">
+        <p className="text-sm text-foreground/90 leading-relaxed">
+          💲 {isPriceDrop ? "Baisse de prix" : "Modification de prix"}
+        </p>
+        {dateDisplay && (
+          <p className="text-xs text-muted-foreground">{dateDisplay}</p>
+        )}
+        {(contribution.oldPrice || contribution.askingPrice) && (
+          <p className="text-sm font-medium text-foreground/90">
+            {contribution.oldPrice ? `${contribution.oldPrice.toLocaleString()} $` : "—"}
+            {" → "}
+            {contribution.askingPrice ? `${contribution.askingPrice.toLocaleString()} $` : "—"}
+          </p>
+        )}
+        {summaryText && (
+          <p className="text-xs text-muted-foreground italic whitespace-pre-line">
+            {summaryText}
+          </p>
+        )}
+        {contribution.details && contribution.details !== summaryText && (
+          <p className="text-xs text-muted-foreground italic whitespace-pre-line">
+            {contribution.details}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   // For inspection_report, vehicle_history: show summary, then details
   if (type === "inspection_report" || type === "vehicle_history") {
     return (

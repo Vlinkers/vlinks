@@ -262,6 +262,24 @@ function renderTextContent(
     );
   }
 
+  // For ownership_change: show structured ownership change info
+  if (type === "ownership_change") {
+    return (
+      <div className="mt-3 space-y-1">
+        {summaryText && (
+          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
+            🔄 {summaryText}
+          </p>
+        )}
+        {contribution.details && (
+          <p className="text-xs text-muted-foreground italic whitespace-pre-line">
+            {contribution.details}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   // For inspection_report, vehicle_history: show summary, then details
   if (type === "inspection_report" || type === "vehicle_history") {
     return (

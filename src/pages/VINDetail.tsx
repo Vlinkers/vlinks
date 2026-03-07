@@ -472,6 +472,7 @@ const VINDetail = () => {
     { type: "photo_evidence", label: "Photos", count: contributions.filter(c => c.type === "photo_evidence").length },
     { type: "observation", label: "Observations", count: contributions.filter(c => c.type === "observation").length },
     { type: "purchase_decision", label: "Décisions", count: contributions.filter(c => c.type === "purchase_decision").length },
+    { type: "ownership_change", label: "Propriétaires", count: contributions.filter(c => c.type === "ownership_change").length },
   ];
   
   const contributionTypesFiltered = allContributionTypes.filter(t => t.type === "all" || t.count > 0);

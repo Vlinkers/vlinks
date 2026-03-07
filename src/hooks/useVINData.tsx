@@ -14,6 +14,7 @@ export interface ContributionPhoto {
 export interface ContributionDocument {
   id: string;
   fileName: string;
+  filePath: string;
   fileType: string | null;
   fileSize: number | null;
   description: string | null;
@@ -114,7 +115,7 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
   if (contribIds.length > 0) {
     const { data: docs } = await supabase
       .from("contribution_documents")
-      .select("id, contribution_id, file_name, file_type, file_size, description")
+      .select("id, contribution_id, file_name, file_path, file_type, file_size, description")
       .in("contribution_id", contribIds);
     allDocuments = docs || [];
   }
@@ -160,6 +161,7 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       ? (docsByContrib.get(vcId) || []).map((d: any) => ({
           id: d.id,
           fileName: d.file_name,
+          filePath: d.file_path,
           fileType: d.file_type,
           fileSize: d.file_size,
           description: d.description,

@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ContributionForm } from "@/components/ContributionForm";
 import { OwnerClaimForm } from "@/components/OwnerClaimForm";
-import { PhotoGallery } from "@/components/PhotoGallery";
 import { UsernameRequiredDialog } from "@/components/UsernameRequiredDialog";
 import { PDFDownloadDialog } from "@/components/PDFDownloadDialog";
 import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { useVINDecode } from "@/hooks/useVINDecode";
 import { VehicleIdentificationCard } from "@/components/VehicleIdentificationCard";
+import { ContributionCard, getContributionIcon, getContributionLabel, getContributionColor } from "@/components/ContributionCard";
 import { useVINFollow } from "@/hooks/useVINFollow";
 import { useAdmin } from "@/hooks/useAdmin";
 import { 

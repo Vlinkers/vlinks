@@ -866,6 +866,8 @@ export function ContributionForm({
             <Label htmlFor="observation" className="text-sm font-semibold">
               {contributionType === "ownership_change"
                 ? "Vendeur ou ancien propriétaire *"
+                : contributionType === "for_sale"
+                ? "Description de la mise en vente *"
                 : "Qu'avez-vous observé ou appris concernant ce véhicule ? *"}
             </Label>
             <Textarea
@@ -874,9 +876,11 @@ export function ContributionForm({
               placeholder={
                 contributionType === "ownership_change"
                   ? "Ex: Uslynn Auto, Concessionnaire Volvo Montréal, Particulier..."
+                  : contributionType === "for_sale"
+                  ? "Ex: En vente chez Uslynn Auto, véhicule affiché sur AutoHebdo..."
                   : "Ex: Jantes avant abîmées côté passager, traces de rouille sous le châssis, le vendeur mentionne un changement de courroie..."
               }
-              rows={contributionType === "ownership_change" ? 3 : 4}
+              rows={contributionType === "ownership_change" || contributionType === "for_sale" ? 3 : 4}
               className="bg-muted/30 resize-none"
             />
             {errors.observation && (

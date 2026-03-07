@@ -48,44 +48,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const getContributionIcon = (type: ContributionType) => {
-  switch (type) {
-    case "inspection_report": return FileSearch;
-    case "vehicle_history": return FileText;
-    case "owner_exchange": return MessageCircle;
-    case "mechanic_conversation": return Wrench;
-    case "photo_evidence": return Camera;
-    case "observation": return Eye;
-    case "purchase_decision": return XCircle;
-    default: return FileText;
-  }
-};
-
-const getContributionLabel = (type: ContributionType) => {
-  switch (type) {
-    case "inspection_report": return "Rapport d'inspection";
-    case "vehicle_history": return "Historique véhicule";
-    case "owner_exchange": return "Échange avec vendeur";
-    case "mechanic_conversation": return "Avis mécanicien";
-    case "photo_evidence": return "Preuves photo";
-    case "observation": return "Observation personnelle";
-    case "purchase_decision": return "Décision d'achat";
-    default: return "Contribution";
-  }
-};
-
-const getContributionColor = (type: ContributionType) => {
-  switch (type) {
-    case "inspection_report": return "bg-primary/20 text-primary border-primary/30";
-    case "vehicle_history": return "bg-secondary/20 text-secondary border-secondary/30";
-    case "owner_exchange": return "bg-accent/20 text-accent border-accent/30";
-    case "mechanic_conversation": return "bg-warning/20 text-warning border-warning/30";
-    case "photo_evidence": return "bg-success/20 text-success border-success/30";
-    case "observation": return "bg-danger/20 text-danger border-danger/30";
-    case "purchase_decision": return "bg-muted text-muted-foreground border-border";
-    default: return "bg-muted text-muted-foreground border-border";
-  }
-};
 
 
 

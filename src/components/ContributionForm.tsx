@@ -339,13 +339,18 @@ export function ContributionForm({
     const mileage = data.mileage ? parseInt(data.mileage.replace(/\s/g, ''), 10) : null;
     const validMileage = mileage && !isNaN(mileage) ? mileage : null;
 
-    // Build intervention_date from ownership month/year if ownership_change
+    // Build intervention_date from month/year if ownership_change or for_sale
     let interventionDate: string | null = null;
-    if (data.contribution_type === "ownership_change" && data.ownership_year) {
+    if (typesWithDate.includes(data.contribution_type) && data.ownership_year) {
       const monthIndex = data.ownership_month ? months.indexOf(data.ownership_month) + 1 : 1;
       const monthStr = String(monthIndex).padStart(2, '0');
       interventionDate = `${data.ownership_year}-${monthStr}-01`;
     }
+
+    // Parse asking price
+    const askingPrice = data.asking_price ? parseInt(data.asking_price.replace(/\s/g, ''), 10) : null;
+    const validAskingPrice = askingPrice && !isNaN(askingPrice) ? askingPrice : null;
+    const listingUrl = data.listing_url && data.listing_url.trim() ? data.listing_url.trim() : null;
 
     // Create raw contribution for audit trail
     const { error: rawError } = await supabase

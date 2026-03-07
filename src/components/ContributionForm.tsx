@@ -882,6 +882,8 @@ export function ContributionForm({
                 ? "Vendeur ou ancien propriétaire *"
                 : contributionType === "for_sale"
                 ? "Description de la mise en vente *"
+                : contributionType === "price_change"
+                ? "Contexte de la modification de prix *"
                 : "Qu'avez-vous observé ou appris concernant ce véhicule ? *"}
             </Label>
             <Textarea
@@ -892,6 +894,8 @@ export function ContributionForm({
                   ? "Ex: Uslynn Auto, Concessionnaire Volvo Montréal, Particulier..."
                   : contributionType === "for_sale"
                   ? "Ex: En vente chez Uslynn Auto, véhicule affiché sur AutoHebdo..."
+                  : contributionType === "price_change"
+                  ? "Ex: Annonce AutoTrader mise à jour avec baisse de prix..."
                   : "Ex: Jantes avant abîmées côté passager, traces de rouille sous le châssis, le vendeur mentionne un changement de courroie..."
               }
               rows={contributionType === "ownership_change" || contributionType === "for_sale" ? 3 : 4}

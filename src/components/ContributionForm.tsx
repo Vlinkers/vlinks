@@ -140,7 +140,7 @@ const holderTypes = [
 
 // Types that show the holder field
 const typesWithHolder = ["ownership_change", "observation", "for_sale"];
-const typesWithDate = ["ownership_change", "for_sale"];
+const typesWithDate = ["ownership_change", "for_sale", "price_change"];
 
 const contributionSchema = z.object({
   contribution_type: z.enum([

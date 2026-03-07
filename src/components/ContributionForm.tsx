@@ -165,6 +165,8 @@ const contributionSchema = z.object({
   dealer_name: z.string().max(200).optional(),
   ownership_month: z.string().optional(),
   ownership_year: z.string().optional(),
+  asking_price: z.string().optional(),
+  listing_url: z.string().url("URL invalide").or(z.literal("")).optional(),
 });
 
 type ContributionFormData = z.infer<typeof contributionSchema>;

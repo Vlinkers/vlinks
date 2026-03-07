@@ -217,10 +217,10 @@ function renderTextContent(
     return (
       <div className="mt-3 space-y-2">
         {summaryText && (
-          <p className="text-sm text-foreground/90 leading-relaxed">{summaryText}</p>
+          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">{summaryText}</p>
         )}
         {contribution.details && contribution.details !== summaryText && expanded && (
-          <p className="text-sm text-foreground/70 leading-relaxed whitespace-pre-wrap">
+          <p className="text-sm text-foreground/70 leading-relaxed whitespace-pre-line">
             {contribution.details}
           </p>
         )}

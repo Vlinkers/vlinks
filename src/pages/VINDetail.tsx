@@ -68,7 +68,15 @@ const VINDetail = () => {
   const [ownerVerificationStatus, setOwnerVerificationStatus] = useState<'none' | 'pending' | 'verified' | 'rejected'>('none');
   const [isCheckingOwner, setIsCheckingOwner] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [observedSignals, setObservedSignals] = useState<{ text: string; count: number }[]>([]);
+  const [observedSignals, setObservedSignals] = useState<{
+    id: string;
+    text: string;
+    count: number;
+    firstObserved: string | null;
+    lastObserved: string | null;
+    contributionIds: string[];
+  }[]>([]);
+  const [expandedSignalId, setExpandedSignalId] = useState<string | null>(null);
   const [userHasUsername, setUserHasUsername] = useState(true);
   const [showUsernameDialog, setShowUsernameDialog] = useState(false);
   const [isEndingOwnership, setIsEndingOwnership] = useState(false);

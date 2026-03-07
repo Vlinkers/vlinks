@@ -101,10 +101,16 @@ export function ContributionCard({ contribution, adminActions }: ContributionCar
               <Calendar className="w-3 h-3" />
               {contribution.interventionDate || contribution.date}
             </span>
-            {contribution.mileageAtIntervention && (
+            {contribution.mileageAtIntervention && contribution.type !== "ownership_change" && (
               <>
                 <span>•</span>
                 <span>{contribution.mileageAtIntervention.toLocaleString()} km</span>
+              </>
+            )}
+            {contribution.province && contribution.type !== "ownership_change" && (
+              <>
+                <span>•</span>
+                <span>{contribution.province}</span>
               </>
             )}
           </div>

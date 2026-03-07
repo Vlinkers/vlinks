@@ -369,6 +369,8 @@ export function ContributionForm({
         province: data.province || null,
         holder_type: data.holder_type || null,
         dealer_name: data.holder_type === "concessionnaire" ? (data.dealer_name || null) : null,
+        asking_price: validAskingPrice,
+        listing_url: listingUrl,
       } as any);
 
     if (rawError) throw rawError;

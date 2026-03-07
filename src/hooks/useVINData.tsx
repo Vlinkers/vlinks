@@ -161,6 +161,7 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       ? (docsByContrib.get(vcId) || []).map((d: any) => ({
           id: d.id,
           fileName: d.file_name,
+          filePath: d.file_path,
           fileType: d.file_type,
           fileSize: d.file_size,
           description: d.description,

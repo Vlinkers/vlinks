@@ -388,6 +388,7 @@ export type Database = {
           is_owner_contribution: boolean | null
           listing_url: string | null
           mileage_at_intervention: number | null
+          old_price: number | null
           province: string | null
           status: string
           summary: string | null
@@ -412,6 +413,7 @@ export type Database = {
           is_owner_contribution?: boolean | null
           listing_url?: string | null
           mileage_at_intervention?: number | null
+          old_price?: number | null
           province?: string | null
           status?: string
           summary?: string | null
@@ -436,6 +438,7 @@ export type Database = {
           is_owner_contribution?: boolean | null
           listing_url?: string | null
           mileage_at_intervention?: number | null
+          old_price?: number | null
           province?: string | null
           status?: string
           summary?: string | null
@@ -470,6 +473,7 @@ export type Database = {
           is_owner_contribution: boolean | null
           listing_url: string | null
           mileage_at_intervention: number | null
+          old_price: number | null
           province: string | null
           summary: string | null
           title: string
@@ -492,6 +496,7 @@ export type Database = {
           is_owner_contribution?: boolean | null
           listing_url?: string | null
           mileage_at_intervention?: number | null
+          old_price?: number | null
           province?: string | null
           summary?: string | null
           title: string
@@ -514,6 +519,7 @@ export type Database = {
           is_owner_contribution?: boolean | null
           listing_url?: string | null
           mileage_at_intervention?: number | null
+          old_price?: number | null
           province?: string | null
           summary?: string | null
           title?: string
@@ -804,6 +810,7 @@ export type Database = {
         | "purchase_decision"
         | "ownership_change"
         | "for_sale"
+        | "price_change"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -952,6 +959,7 @@ export const Constants = {
         "purchase_decision",
         "ownership_change",
         "for_sale",
+        "price_change",
       ],
     },
   },

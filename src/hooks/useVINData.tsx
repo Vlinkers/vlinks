@@ -40,6 +40,7 @@ export interface PublicContribution {
   dealerName: string | null;
   askingPrice: number | null;
   listingUrl: string | null;
+  oldPrice: number | null;
   // Media
   hasDocuments: boolean;
   documentCount: number;
@@ -93,7 +94,8 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       holder_type,
       dealer_name,
       asking_price,
-      listing_url
+      listing_url,
+      old_price
     `)
     .eq("vin_id", vinRecord.id) as any)
     .eq("status", "approved")
@@ -202,6 +204,7 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       dealerName: c.dealer_name || null,
       askingPrice: c.asking_price || null,
       listingUrl: c.listing_url || null,
+      oldPrice: c.old_price || null,
       hasDocuments: documents.length > 0,
       documentCount: documents.length,
       documents,

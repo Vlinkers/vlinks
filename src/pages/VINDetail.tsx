@@ -474,6 +474,7 @@ const VINDetail = () => {
     { type: "purchase_decision", label: "Décisions", count: contributions.filter(c => c.type === "purchase_decision").length },
     { type: "ownership_change", label: "Propriétaires", count: contributions.filter(c => c.type === "ownership_change").length },
     { type: "for_sale", label: "Mises en vente", count: contributions.filter(c => c.type === "for_sale").length },
+    { type: "price_change", label: "Prix", count: contributions.filter(c => c.type === "price_change").length },
   ];
   
   const contributionTypesFiltered = allContributionTypes.filter(t => t.type === "all" || t.count > 0);

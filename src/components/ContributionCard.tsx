@@ -22,6 +22,7 @@ const getContributionIcon = (type: ContributionType) => {
     case "purchase_decision": return XCircle;
     case "ownership_change": return RefreshCw;
     case "for_sale": return Tag;
+    case "price_change": return Tag;
     default: return FileText;
   }
 };
@@ -37,6 +38,7 @@ const getContributionLabel = (type: ContributionType) => {
     case "purchase_decision": return "Décision d'achat";
     case "ownership_change": return "Changement de propriétaire";
     case "for_sale": return "Mise en vente";
+    case "price_change": return "Modification de prix";
     default: return "Contribution";
   }
 };
@@ -52,6 +54,7 @@ const getContributionColor = (type: ContributionType) => {
     case "purchase_decision": return "bg-muted text-muted-foreground border-border";
     case "ownership_change": return "bg-primary/20 text-primary border-primary/30";
     case "for_sale": return "bg-warning/20 text-warning border-warning/30";
+    case "price_change": return "bg-accent/20 text-accent border-accent/30";
     default: return "bg-muted text-muted-foreground border-border";
   }
 };
@@ -372,6 +375,46 @@ function renderTextContent(
         )}
         {contribution.details && (
           <p className="text-xs text-muted-foreground italic whitespace-pre-line mt-1">
+            {contribution.details}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // For price_change: show old price → new price
+  if (type === "price_change") {
+    let dateDisplay: string | null = null;
+    if (contribution.interventionDate) {
+      const d = new Date(contribution.interventionDate + "T00:00:00");
+      const monthNames = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+      dateDisplay = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+    }
+
+    const isPriceDrop = contribution.oldPrice && contribution.askingPrice && contribution.askingPrice < contribution.oldPrice;
+
+    return (
+      <div className="mt-3 space-y-1.5">
+        <p className="text-sm text-foreground/90 leading-relaxed">
+          💲 {isPriceDrop ? "Baisse de prix" : "Modification de prix"}
+        </p>
+        {dateDisplay && (
+          <p className="text-xs text-muted-foreground">{dateDisplay}</p>
+        )}
+        {(contribution.oldPrice || contribution.askingPrice) && (
+          <p className="text-sm font-medium text-foreground/90">
+            {contribution.oldPrice ? `${contribution.oldPrice.toLocaleString()} $` : "—"}
+            {" → "}
+            {contribution.askingPrice ? `${contribution.askingPrice.toLocaleString()} $` : "—"}
+          </p>
+        )}
+        {summaryText && (
+          <p className="text-xs text-muted-foreground italic whitespace-pre-line">
+            {summaryText}
+          </p>
+        )}
+        {contribution.details && contribution.details !== summaryText && (
+          <p className="text-xs text-muted-foreground italic whitespace-pre-line">
             {contribution.details}
           </p>
         )}

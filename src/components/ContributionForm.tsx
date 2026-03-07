@@ -98,6 +98,12 @@ const contributionTypes = [
     icon: Tag,
     description: "Signaler qu'un véhicule est actuellement ou récemment en vente",
   },
+  {
+    value: "price_change",
+    label: "Modification du prix de vente",
+    icon: Tag,
+    description: "Signaler une modification du prix demandé pour un véhicule en vente",
+  },
 ] as const;
 
 const documentTypes = [
@@ -134,7 +140,7 @@ const holderTypes = [
 
 // Types that show the holder field
 const typesWithHolder = ["ownership_change", "observation", "for_sale"];
-const typesWithDate = ["ownership_change", "for_sale"];
+const typesWithDate = ["ownership_change", "for_sale", "price_change"];
 
 const contributionSchema = z.object({
   contribution_type: z.enum([
@@ -147,6 +153,7 @@ const contributionSchema = z.object({
     "purchase_decision",
     "ownership_change",
     "for_sale",
+    "price_change",
   ]),
   observation: z
     .string()
@@ -166,6 +173,7 @@ const contributionSchema = z.object({
   ownership_month: z.string().optional(),
   ownership_year: z.string().optional(),
   asking_price: z.string().optional(),
+  old_price: z.string().optional(),
   listing_url: z.string().url("URL invalide").or(z.literal("")).optional(),
 });
 
@@ -350,6 +358,8 @@ export function ContributionForm({
     // Parse asking price
     const askingPrice = data.asking_price ? parseInt(data.asking_price.replace(/\s/g, ''), 10) : null;
     const validAskingPrice = askingPrice && !isNaN(askingPrice) ? askingPrice : null;
+    const oldPriceVal = data.old_price ? parseInt(data.old_price.replace(/\s/g, ''), 10) : null;
+    const validOldPrice = oldPriceVal && !isNaN(oldPriceVal) ? oldPriceVal : null;
     const listingUrl = data.listing_url && data.listing_url.trim() ? data.listing_url.trim() : null;
 
     // Create raw contribution for audit trail
@@ -370,6 +380,7 @@ export function ContributionForm({
         holder_type: data.holder_type || null,
         dealer_name: data.holder_type === "concessionnaire" ? (data.dealer_name || null) : null,
         asking_price: validAskingPrice,
+        old_price: validOldPrice,
         listing_url: listingUrl,
       } as any);
 
@@ -413,6 +424,7 @@ export function ContributionForm({
         holder_type: data.holder_type || null,
         dealer_name: data.holder_type === "concessionnaire" ? (data.dealer_name || null) : null,
         asking_price: validAskingPrice,
+        old_price: validOldPrice,
         listing_url: listingUrl,
       } as any);
 
@@ -834,7 +846,9 @@ export function ContributionForm({
           {typesWithDate.includes(contributionType) && (
             <div className="space-y-2">
               <Label className="text-sm font-semibold">
-                {contributionType === "ownership_change" ? "Date du changement de propriétaire" : "Date de mise en vente"}
+                {contributionType === "ownership_change" ? "Date du changement de propriétaire"
+                  : contributionType === "price_change" ? "Date de modification du prix"
+                  : "Date de mise en vente"}
               </Label>
               <div className="grid grid-cols-2 gap-3">
                 <Select onValueChange={(v) => setValue("ownership_month", v)} value={watch("ownership_month") || ""}>
@@ -868,6 +882,8 @@ export function ContributionForm({
                 ? "Vendeur ou ancien propriétaire *"
                 : contributionType === "for_sale"
                 ? "Description de la mise en vente *"
+                : contributionType === "price_change"
+                ? "Contexte de la modification de prix *"
                 : "Qu'avez-vous observé ou appris concernant ce véhicule ? *"}
             </Label>
             <Textarea
@@ -878,9 +894,11 @@ export function ContributionForm({
                   ? "Ex: Uslynn Auto, Concessionnaire Volvo Montréal, Particulier..."
                   : contributionType === "for_sale"
                   ? "Ex: En vente chez Uslynn Auto, véhicule affiché sur AutoHebdo..."
+                  : contributionType === "price_change"
+                  ? "Ex: Annonce AutoTrader mise à jour avec baisse de prix..."
                   : "Ex: Jantes avant abîmées côté passager, traces de rouille sous le châssis, le vendeur mentionne un changement de courroie..."
               }
-              rows={contributionType === "ownership_change" || contributionType === "for_sale" ? 3 : 4}
+              rows={contributionType === "ownership_change" || contributionType === "for_sale" || contributionType === "price_change" ? 3 : 4}
               className="bg-muted/30 resize-none"
             />
             {errors.observation && (
@@ -1005,6 +1023,42 @@ export function ContributionForm({
             </>
           )}
 
+          {/* Price change specific: Old price and New price */}
+          {contributionType === "price_change" && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="old_price" className="text-sm font-semibold">
+                    Ancien prix ($)
+                  </Label>
+                  <Input
+                    id="old_price"
+                    {...register("old_price")}
+                    placeholder="Ex: 39900"
+                    type="number"
+                    min="0"
+                    max="99999999"
+                    className="bg-muted/30"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="asking_price" className="text-sm font-semibold">
+                    Nouveau prix ($)
+                  </Label>
+                  <Input
+                    id="asking_price"
+                    {...register("asking_price")}
+                    placeholder="Ex: 36900"
+                    type="number"
+                    min="0"
+                    max="99999999"
+                    className="bg-muted/30"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
           <div className="space-y-2">
             <Label className="flex items-center gap-2 text-sm font-semibold">
               <Camera className="w-4 h-4" />
@@ -1071,7 +1125,7 @@ export function ContributionForm({
           {/* 5. Context (optional) */}
           <div className="space-y-2">
             <Label htmlFor="context" className="text-sm font-semibold">
-              {contributionType === "ownership_change" || contributionType === "for_sale"
+              {contributionType === "ownership_change" || contributionType === "for_sale" || contributionType === "price_change"
                 ? "Contexte ou information complémentaire"
                 : "Dans quel contexte avez-vous obtenu cette information ?"}
               <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
@@ -1084,6 +1138,8 @@ export function ContributionForm({
                   ? "Ex: Le véhicule était en vente chez Uslynn Auto et a été vendu en février 2026."
                   : contributionType === "for_sale"
                   ? "Ex: Véhicule affiché depuis janvier 2026 chez le concessionnaire."
+                  : contributionType === "price_change"
+                  ? "Ex: Annonce AutoTrader mise à jour avec baisse de prix."
                   : "Ex: visite du véhicule, inspection mécanique, discussion avec vendeur..."
               }
               className="bg-muted/30"

@@ -9,6 +9,8 @@ import {
   Calendar, User, CheckCircle, ChevronDown, ChevronUp, Download, File, ExternalLink
 } from "lucide-react";
 
+import { RefreshCw } from "lucide-react";
+
 const getContributionIcon = (type: ContributionType) => {
   switch (type) {
     case "inspection_report": return FileSearch;
@@ -18,6 +20,7 @@ const getContributionIcon = (type: ContributionType) => {
     case "photo_evidence": return Camera;
     case "observation": return Eye;
     case "purchase_decision": return XCircle;
+    case "ownership_change": return RefreshCw;
     default: return FileText;
   }
 };

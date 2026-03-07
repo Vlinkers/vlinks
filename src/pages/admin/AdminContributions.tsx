@@ -25,6 +25,7 @@ import {
   FileText,
   Camera,
 } from "lucide-react";
+import { ObservedSignalsPanel } from "@/components/admin/ObservedSignalsPanel";
 
 interface ContributionRow {
   id: string;

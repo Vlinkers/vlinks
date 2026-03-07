@@ -147,8 +147,75 @@ export function ContributionCard({ contribution, adminActions }: ContributionCar
     </div>
   );
 }
+import type { ContributionDocument } from "@/hooks/useVINData";
 
-function renderTextContent(
+function DocumentsList({ documents }: { documents: ContributionDocument[] }) {
+  const handleOpenDocument = useCallback(async (doc: ContributionDocument) => {
+    if (!doc.filePath) return;
+
+    // For vin-documents bucket, create a signed URL
+    const { data, error } = await supabase.storage
+      .from("vin-documents")
+      .createSignedUrl(doc.filePath, 3600); // 1 hour
+
+    if (error || !data?.signedUrl) {
+      // Fallback: try as public URL
+      const { data: publicData } = supabase.storage
+        .from("vin-documents")
+        .getPublicUrl(doc.filePath);
+      if (publicData?.publicUrl) {
+        window.open(publicData.publicUrl, "_blank", "noopener,noreferrer");
+      }
+      return;
+    }
+
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }, []);
+
+  return (
+    <div className="mt-4 space-y-2">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        Documents joints
+      </p>
+      {documents.map(doc => {
+        const hasUrl = !!doc.filePath;
+        return (
+          <button
+            key={doc.id}
+            onClick={() => hasUrl && handleOpenDocument(doc)}
+            disabled={!hasUrl}
+            className={`w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${
+              hasUrl
+                ? "bg-muted/30 border-border/30 hover:bg-muted/60 hover:border-primary/40 cursor-pointer group"
+                : "bg-muted/10 border-border/20 opacity-50 cursor-not-allowed"
+            }`}
+          >
+            <File className={`w-5 h-5 flex-shrink-0 ${hasUrl ? "text-primary" : "text-muted-foreground"}`} />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">{doc.fileName}</p>
+              {doc.description && (
+                <p className="text-xs text-muted-foreground">{doc.description}</p>
+              )}
+              {doc.fileSize && (
+                <p className="text-xs text-muted-foreground">
+                  {(doc.fileSize / 1024).toFixed(0)} Ko
+                </p>
+              )}
+            </div>
+            <Badge variant="outline" className="text-[10px] flex-shrink-0">
+              {doc.fileType?.split("/").pop()?.toUpperCase() || "DOC"}
+            </Badge>
+            {hasUrl && (
+              <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+
   contribution: PublicContribution,
   displayText: string,
   summaryText: string,

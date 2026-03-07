@@ -14,6 +14,7 @@ export interface ContributionPhoto {
 export interface ContributionDocument {
   id: string;
   fileName: string;
+  filePath: string;
   fileType: string | null;
   fileSize: number | null;
   description: string | null;

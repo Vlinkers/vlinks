@@ -139,30 +139,7 @@ export function ContributionCard({ contribution, adminActions }: ContributionCar
 
       {/* Documents */}
       {contribution.hasDocuments && contribution.documents.length > 0 && (
-        <div className="mt-4 space-y-2">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Documents joints
-          </p>
-          {contribution.documents.map(doc => (
-            <div key={doc.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border/30">
-              <File className="w-5 h-5 text-primary flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{doc.fileName}</p>
-                {doc.description && (
-                  <p className="text-xs text-muted-foreground">{doc.description}</p>
-                )}
-                {doc.fileSize && (
-                  <p className="text-xs text-muted-foreground">
-                    {(doc.fileSize / 1024).toFixed(0)} Ko
-                  </p>
-                )}
-              </div>
-              <Badge variant="outline" className="text-[10px] flex-shrink-0">
-                {doc.fileType?.split("/").pop()?.toUpperCase() || "DOC"}
-              </Badge>
-            </div>
-          ))}
-        </div>
+        <DocumentsList documents={contribution.documents} />
       )}
 
       {/* Admin actions */}

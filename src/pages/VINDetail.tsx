@@ -549,103 +549,37 @@ const VINDetail = () => {
           )}
 
 
-          {/* ═══ CONTRIBUTIONS BY TYPE ═══ */}
-          {/* Rapports & Documents */}
-          {contributions.filter(c => c.type === "inspection_report" || c.type === "vehicle_history" || c.type === "mechanic_conversation").length > 0 && (
-            <div className="mb-8">
-              <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
-                <FileSearch className="w-5 h-5 text-primary" />
-                Rapports & Documents
-              </h2>
-              <div className="space-y-4">
-                {contributions
-                  .filter(c => c.type === "inspection_report" || c.type === "vehicle_history" || c.type === "mechanic_conversation")
-                  .map((contribution) => (
-                    <ContributionCard
-                      key={contribution.id}
-                      contribution={contribution}
-                      adminActions={<AdminActions contributionId={contribution.id} />}
-                    />
-                  ))}
-              </div>
-            </div>
-          )}
-
-          {/* Preuves photo */}
-          {contributions.filter(c => c.type === "photo_evidence").length > 0 && (
-            <div className="mb-8">
-              <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
-                <Camera className="w-5 h-5 text-success" />
-                Preuves photo
-              </h2>
-              <div className="space-y-4">
-                {contributions
-                  .filter(c => c.type === "photo_evidence")
-                  .map((contribution) => (
-                    <ContributionCard
-                      key={contribution.id}
-                      contribution={contribution}
-                      adminActions={<AdminActions contributionId={contribution.id} />}
-                    />
-                  ))}
-              </div>
-            </div>
-          )}
-
-          {/* Observations & Échanges */}
-          {contributions.filter(c => c.type === "observation" || c.type === "owner_exchange").length > 0 && (
-            <div className="mb-8">
-              <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
-                <Eye className="w-5 h-5 text-accent" />
-                Observations & Échanges
-              </h2>
-              <div className="space-y-4">
-                {contributions
-                  .filter(c => c.type === "observation" || c.type === "owner_exchange")
-                  .map((contribution) => (
-                    <ContributionCard
-                      key={contribution.id}
-                      contribution={contribution}
-                      adminActions={<AdminActions contributionId={contribution.id} />}
-                    />
-                  ))}
-              </div>
-            </div>
-          )}
-
-          {/* Décisions d'achat */}
-          {contributions.filter(c => c.type === "purchase_decision").length > 0 && (
-            <div className="mb-8">
-              <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
-                <XCircle className="w-5 h-5 text-muted-foreground" />
-                Décisions d'achat
-              </h2>
-              <div className="space-y-4">
-                {contributions
-                  .filter(c => c.type === "purchase_decision")
-                  .map((contribution) => (
-                    <ContributionCard
-                      key={contribution.id}
-                      contribution={contribution}
-                      adminActions={<AdminActions contributionId={contribution.id} />}
-                    />
-                  ))}
-              </div>
-            </div>
-          )}
-
-          {/* ═══ TIMELINE CHRONOLOGIQUE ═══ */}
+          {/* ═══ HISTORIQUE CHRONOLOGIQUE ═══ */}
           <div className="mb-8">
             <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
               <Clock className="w-5 h-5 text-muted-foreground" />
               Historique chronologique
             </h2>
 
-            {contributions.length > 0 ? (
+            {/* Filtres par type */}
+            {contributionTypesFiltered.length > 2 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {contributionTypesFiltered.map((t) => (
+                  <button
+                    key={t.type}
+                    onClick={() => setFilterType(t.type)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                      filterType === t.type
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-muted/30 text-muted-foreground border-border/50 hover:border-border"
+                    }`}
+                  >
+                    {t.label} ({t.count})
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {filteredContributions.length > 0 ? (
               <div className="relative">
                 <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-secondary to-accent opacity-30" />
-                <div className="space-y-3">
-                  {contributions.map((contribution, index) => {
+                <div className="space-y-4">
+                  {filteredContributions.map((contribution, index) => {
                     const Icon = getContributionIcon(contribution.type);
                     return (
                       <div key={contribution.id} className="relative pl-16 animate-fade-in-up"
@@ -653,25 +587,10 @@ const VINDetail = () => {
                         <div className={`absolute left-3 w-6 h-6 rounded-full flex items-center justify-center border-2 ${getContributionColor(contribution.type)}`}>
                           <Icon className="w-3 h-3" />
                         </div>
-                        <div className="p-4 rounded-xl glass border border-border/50">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Badge variant="outline" className={`text-xs ${getContributionColor(contribution.type)}`}>
-                              {getContributionLabel(contribution.type)}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">{contribution.author}</span>
-                            <span className="text-xs text-muted-foreground">•</span>
-                            <span className="text-xs text-muted-foreground">{contribution.date}</span>
-                            {contribution.mileageAtIntervention && (
-                              <span className="text-xs text-muted-foreground">
-                                • {contribution.mileageAtIntervention.toLocaleString()} km
-                              </span>
-                            )}
-                          </div>
-                          {contribution.title && (
-                            <p className="text-sm text-foreground mt-1">{contribution.title}</p>
-                          )}
-                          <AdminActions contributionId={contribution.id} />
-                        </div>
+                        <ContributionCard
+                          contribution={contribution}
+                          adminActions={<AdminActions contributionId={contribution.id} />}
+                        />
                       </div>
                     );
                   })}

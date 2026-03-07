@@ -830,10 +830,12 @@ export function ContributionForm({
             )}
           </div>
 
-          {/* Ownership change: Month/Year selector */}
-          {contributionType === "ownership_change" && (
+          {/* Date selector for ownership_change and for_sale */}
+          {typesWithDate.includes(contributionType) && (
             <div className="space-y-2">
-              <Label className="text-sm font-semibold">Date du changement de propriétaire</Label>
+              <Label className="text-sm font-semibold">
+                {contributionType === "ownership_change" ? "Date du changement de propriétaire" : "Date de mise en vente"}
+              </Label>
               <div className="grid grid-cols-2 gap-3">
                 <Select onValueChange={(v) => setValue("ownership_month", v)} value={watch("ownership_month") || ""}>
                   <SelectTrigger className="bg-muted/30">

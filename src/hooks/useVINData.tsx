@@ -35,6 +35,9 @@ export interface PublicContribution {
   interventionDate: string | null;
   mileageAtIntervention: number | null;
   isAnonymous: boolean;
+  province: string | null;
+  holderType: string | null;
+  dealerName: string | null;
   // Media
   hasDocuments: boolean;
   documentCount: number;

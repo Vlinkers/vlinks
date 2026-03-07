@@ -492,6 +492,9 @@ export default function AdminContributions() {
                 </div>
               )}
 
+              {/* Observed Signals Panel */}
+              <ObservedSignalsPanel vinId={selected.vin_id} contributionId={selected.id} />
+
               {/* Action buttons */}
               <div className="flex flex-wrap gap-2 pt-3 border-t border-border">
                 <Button

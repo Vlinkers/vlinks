@@ -421,13 +421,7 @@ const VINDetail = () => {
               c.type === "observation" || c.type === "owner_exchange" || 
               c.type === "mechanic_conversation" || c.type === "purchase_decision"
             );
-            // Extract factual signals from contributions
-            const signals: { text: string; type: string; contributionId: string }[] = [];
-            contributions.forEach(c => {
-              if (c.title && c.title.trim()) {
-                signals.push({ text: c.title, type: c.type, contributionId: c.id });
-              }
-            });
+            // Signals are now fetched from observed_signals table (see below)
 
             return (
               <>

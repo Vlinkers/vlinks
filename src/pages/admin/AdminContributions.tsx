@@ -156,7 +156,7 @@ export default function AdminContributions() {
       .select("id")
       .eq("vin_id", c.vin_id)
       .eq("user_id", c.user_id)
-      .eq("contribution_type", c.contribution_type)
+      .eq("contribution_type", c.contribution_type as any)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();

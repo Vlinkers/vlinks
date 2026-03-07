@@ -21,6 +21,7 @@ const getContributionIcon = (type: ContributionType) => {
     case "observation": return Eye;
     case "purchase_decision": return XCircle;
     case "ownership_change": return RefreshCw;
+    case "for_sale": return Tag;
     default: return FileText;
   }
 };

@@ -743,13 +743,19 @@ export function ContributionForm({
           {/* 2. Observation principale */}
           <div className="space-y-2">
             <Label htmlFor="observation" className="text-sm font-semibold">
-              Qu'avez-vous observé ou appris concernant ce véhicule ? *
+              {contributionType === "ownership_change"
+                ? "Date approximative et vendeur/ancien propriétaire *"
+                : "Qu'avez-vous observé ou appris concernant ce véhicule ? *"}
             </Label>
             <Textarea
               id="observation"
               {...register("observation")}
-              placeholder="Ex: Jantes avant abîmées côté passager, traces de rouille sous le châssis, le vendeur mentionne un changement de courroie..."
-              rows={4}
+              placeholder={
+                contributionType === "ownership_change"
+                  ? "Ex: Vendu par Uslynn Auto en février 2026, Changement de propriétaire mars 2025..."
+                  : "Ex: Jantes avant abîmées côté passager, traces de rouille sous le châssis, le vendeur mentionne un changement de courroie..."
+              }
+              rows={contributionType === "ownership_change" ? 3 : 4}
               className="bg-muted/30 resize-none"
             />
             {errors.observation && (

@@ -219,17 +219,6 @@ const VINDetail = () => {
   };
 
 
-  const getTrustColor = (score: number) => {
-    if (score >= 80) return "text-success";
-    if (score >= 60) return "text-warning";
-    return "text-danger";
-  };
-
-  const getTrustLabel = (score: number) => {
-    if (score >= 80) return "Haute confiance";
-    if (score >= 60) return "Confiance modérée";
-    return "Confiance faible";
-  };
 
   const vehicleName = vinDecode?.is_valid 
     ? [vinDecode.model_year, vinDecode.make, vinDecode.model, vinDecode.trim].filter(Boolean).join(' ')

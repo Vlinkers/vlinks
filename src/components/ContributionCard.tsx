@@ -238,7 +238,7 @@ function renderTextContent(
 
   // Fallback
   if (summaryText) {
-    return <p className="text-sm text-foreground/90 mt-3">{summaryText}</p>;
+    return <p className="text-sm text-foreground/90 mt-3 whitespace-pre-line">{summaryText}</p>;
   }
 
   return null;

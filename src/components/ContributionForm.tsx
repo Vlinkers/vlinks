@@ -37,6 +37,7 @@ import {
   CheckCircle,
   Shield,
   User,
+  Tag,
   Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,6 +92,12 @@ const contributionTypes = [
     icon: XCircle,
     description: "Signaler que le véhicule a changé de propriétaire",
   },
+  {
+    value: "for_sale",
+    label: "Mise en vente du véhicule",
+    icon: Tag,
+    description: "Signaler qu'un véhicule est actuellement ou récemment en vente",
+  },
 ] as const;
 
 const documentTypes = [
@@ -126,7 +133,8 @@ const holderTypes = [
 ];
 
 // Types that show the holder field
-const typesWithHolder = ["ownership_change", "observation"];
+const typesWithHolder = ["ownership_change", "observation", "for_sale"];
+const typesWithDate = ["ownership_change", "for_sale"];
 
 const contributionSchema = z.object({
   contribution_type: z.enum([
@@ -138,6 +146,7 @@ const contributionSchema = z.object({
     "observation",
     "purchase_decision",
     "ownership_change",
+    "for_sale",
   ]),
   observation: z
     .string()
@@ -156,6 +165,8 @@ const contributionSchema = z.object({
   dealer_name: z.string().max(200).optional(),
   ownership_month: z.string().optional(),
   ownership_year: z.string().optional(),
+  asking_price: z.string().optional(),
+  listing_url: z.string().url("URL invalide").or(z.literal("")).optional(),
 });
 
 type ContributionFormData = z.infer<typeof contributionSchema>;
@@ -328,13 +339,18 @@ export function ContributionForm({
     const mileage = data.mileage ? parseInt(data.mileage.replace(/\s/g, ''), 10) : null;
     const validMileage = mileage && !isNaN(mileage) ? mileage : null;
 
-    // Build intervention_date from ownership month/year if ownership_change
+    // Build intervention_date from month/year if ownership_change or for_sale
     let interventionDate: string | null = null;
-    if (data.contribution_type === "ownership_change" && data.ownership_year) {
+    if (typesWithDate.includes(data.contribution_type) && data.ownership_year) {
       const monthIndex = data.ownership_month ? months.indexOf(data.ownership_month) + 1 : 1;
       const monthStr = String(monthIndex).padStart(2, '0');
       interventionDate = `${data.ownership_year}-${monthStr}-01`;
     }
+
+    // Parse asking price
+    const askingPrice = data.asking_price ? parseInt(data.asking_price.replace(/\s/g, ''), 10) : null;
+    const validAskingPrice = askingPrice && !isNaN(askingPrice) ? askingPrice : null;
+    const listingUrl = data.listing_url && data.listing_url.trim() ? data.listing_url.trim() : null;
 
     // Create raw contribution for audit trail
     const { error: rawError } = await supabase
@@ -353,6 +369,8 @@ export function ContributionForm({
         province: data.province || null,
         holder_type: data.holder_type || null,
         dealer_name: data.holder_type === "concessionnaire" ? (data.dealer_name || null) : null,
+        asking_price: validAskingPrice,
+        listing_url: listingUrl,
       } as any);
 
     if (rawError) throw rawError;
@@ -394,6 +412,8 @@ export function ContributionForm({
         province: data.province || null,
         holder_type: data.holder_type || null,
         dealer_name: data.holder_type === "concessionnaire" ? (data.dealer_name || null) : null,
+        asking_price: validAskingPrice,
+        listing_url: listingUrl,
       } as any);
 
     if (pubError) {
@@ -810,10 +830,12 @@ export function ContributionForm({
             )}
           </div>
 
-          {/* Ownership change: Month/Year selector */}
-          {contributionType === "ownership_change" && (
+          {/* Date selector for ownership_change and for_sale */}
+          {typesWithDate.includes(contributionType) && (
             <div className="space-y-2">
-              <Label className="text-sm font-semibold">Date du changement de propriétaire</Label>
+              <Label className="text-sm font-semibold">
+                {contributionType === "ownership_change" ? "Date du changement de propriétaire" : "Date de mise en vente"}
+              </Label>
               <div className="grid grid-cols-2 gap-3">
                 <Select onValueChange={(v) => setValue("ownership_month", v)} value={watch("ownership_month") || ""}>
                   <SelectTrigger className="bg-muted/30">
@@ -844,6 +866,8 @@ export function ContributionForm({
             <Label htmlFor="observation" className="text-sm font-semibold">
               {contributionType === "ownership_change"
                 ? "Vendeur ou ancien propriétaire *"
+                : contributionType === "for_sale"
+                ? "Description de la mise en vente *"
                 : "Qu'avez-vous observé ou appris concernant ce véhicule ? *"}
             </Label>
             <Textarea
@@ -852,9 +876,11 @@ export function ContributionForm({
               placeholder={
                 contributionType === "ownership_change"
                   ? "Ex: Uslynn Auto, Concessionnaire Volvo Montréal, Particulier..."
+                  : contributionType === "for_sale"
+                  ? "Ex: En vente chez Uslynn Auto, véhicule affiché sur AutoHebdo..."
                   : "Ex: Jantes avant abîmées côté passager, traces de rouille sous le châssis, le vendeur mentionne un changement de courroie..."
               }
-              rows={contributionType === "ownership_change" ? 3 : 4}
+              rows={contributionType === "ownership_change" || contributionType === "for_sale" ? 3 : 4}
               className="bg-muted/30 resize-none"
             />
             {errors.observation && (
@@ -942,7 +968,43 @@ export function ContributionForm({
             </Select>
           </div>
 
-          {/* 3. Photos (optional) */}
+          {/* For sale specific: Price and listing URL */}
+          {contributionType === "for_sale" && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="asking_price" className="text-sm font-semibold">
+                  Prix demandé ($)
+                  <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
+                </Label>
+                <Input
+                  id="asking_price"
+                  {...register("asking_price")}
+                  placeholder="Ex: 36900"
+                  type="number"
+                  min="0"
+                  max="99999999"
+                  className="bg-muted/30"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="listing_url" className="text-sm font-semibold">
+                  Lien vers l'annonce
+                  <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
+                </Label>
+                <Input
+                  id="listing_url"
+                  {...register("listing_url")}
+                  placeholder="Ex: https://www.autohebdo.net/..."
+                  type="url"
+                  className="bg-muted/30"
+                />
+                {errors.listing_url && (
+                  <p className="text-sm text-destructive">{errors.listing_url.message}</p>
+                )}
+              </div>
+            </>
+          )}
+
           <div className="space-y-2">
             <Label className="flex items-center gap-2 text-sm font-semibold">
               <Camera className="w-4 h-4" />
@@ -1009,7 +1071,7 @@ export function ContributionForm({
           {/* 5. Context (optional) */}
           <div className="space-y-2">
             <Label htmlFor="context" className="text-sm font-semibold">
-              {contributionType === "ownership_change"
+              {contributionType === "ownership_change" || contributionType === "for_sale"
                 ? "Contexte ou information complémentaire"
                 : "Dans quel contexte avez-vous obtenu cette information ?"}
               <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
@@ -1020,6 +1082,8 @@ export function ContributionForm({
               placeholder={
                 contributionType === "ownership_change"
                   ? "Ex: Le véhicule était en vente chez Uslynn Auto et a été vendu en février 2026."
+                  : contributionType === "for_sale"
+                  ? "Ex: Véhicule affiché depuis janvier 2026 chez le concessionnaire."
                   : "Ex: visite du véhicule, inspection mécanique, discussion avec vendeur..."
               }
               className="bg-muted/30"

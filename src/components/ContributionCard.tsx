@@ -9,7 +9,7 @@ import {
   Calendar, User, CheckCircle, ChevronDown, ChevronUp, Download, File, ExternalLink
 } from "lucide-react";
 
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Tag } from "lucide-react";
 
 const getContributionIcon = (type: ContributionType) => {
   switch (type) {
@@ -21,6 +21,7 @@ const getContributionIcon = (type: ContributionType) => {
     case "observation": return Eye;
     case "purchase_decision": return XCircle;
     case "ownership_change": return RefreshCw;
+    case "for_sale": return Tag;
     default: return FileText;
   }
 };
@@ -35,6 +36,7 @@ const getContributionLabel = (type: ContributionType) => {
     case "observation": return "Observation personnelle";
     case "purchase_decision": return "Décision d'achat";
     case "ownership_change": return "Changement de propriétaire";
+    case "for_sale": return "Mise en vente";
     default: return "Contribution";
   }
 };
@@ -49,6 +51,7 @@ const getContributionColor = (type: ContributionType) => {
     case "observation": return "bg-danger/20 text-danger border-danger/30";
     case "purchase_decision": return "bg-muted text-muted-foreground border-border";
     case "ownership_change": return "bg-primary/20 text-primary border-primary/30";
+    case "for_sale": return "bg-warning/20 text-warning border-warning/30";
     default: return "bg-muted text-muted-foreground border-border";
   }
 };
@@ -308,6 +311,63 @@ function renderTextContent(
         {contribution.mileageAtIntervention && (
           <p className="text-xs text-muted-foreground">
             Kilométrage observé : <span className="text-foreground/80">{contribution.mileageAtIntervention.toLocaleString()} km</span>
+          </p>
+        )}
+        {contribution.details && (
+          <p className="text-xs text-muted-foreground italic whitespace-pre-line mt-1">
+            {contribution.details}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // For for_sale: show structured listing info
+  if (type === "for_sale") {
+    const holderLabel = contribution.holderType === "concessionnaire" && contribution.dealerName
+      ? contribution.dealerName
+      : contribution.holderType === "concessionnaire" ? "Concessionnaire"
+      : contribution.holderType === "depot_vente" ? "Dépôt-vente"
+      : contribution.holderType === "particulier" ? "Particulier"
+      : null;
+
+    let dateDisplay: string | null = null;
+    if (contribution.interventionDate) {
+      const d = new Date(contribution.interventionDate + "T00:00:00");
+      const monthNames = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+      dateDisplay = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+    }
+
+    return (
+      <div className="mt-3 space-y-1.5">
+        {summaryText && (
+          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
+            🏷️ {summaryText}
+          </p>
+        )}
+        {dateDisplay && (
+          <p className="text-xs text-muted-foreground">{dateDisplay}</p>
+        )}
+        {holderLabel && (
+          <p className="text-xs text-muted-foreground">
+            Vendeur : <span className="text-foreground/80">{holderLabel}</span>
+          </p>
+        )}
+        {contribution.province && (
+          <p className="text-xs text-muted-foreground">
+            Province : <span className="text-foreground/80">{contribution.province}</span>
+          </p>
+        )}
+        {contribution.askingPrice && (
+          <p className="text-xs text-muted-foreground">
+            Prix demandé : <span className="text-foreground/80 font-medium">{contribution.askingPrice.toLocaleString()} $</span>
+          </p>
+        )}
+        {contribution.listingUrl && (
+          <p className="text-xs">
+            <a href={contribution.listingUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 underline">
+              Voir l'annonce ↗
+            </a>
           </p>
         )}
         {contribution.details && (

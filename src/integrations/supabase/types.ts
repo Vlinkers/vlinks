@@ -373,6 +373,7 @@ export type Database = {
       }
       public_contributions: {
         Row: {
+          asking_price: number | null
           author_label: string
           author_public_id: string | null
           contribution_type: Database["public"]["Enums"]["contribution_type"]
@@ -385,6 +386,7 @@ export type Database = {
           intervention_type: string | null
           is_anonymous: boolean | null
           is_owner_contribution: boolean | null
+          listing_url: string | null
           mileage_at_intervention: number | null
           province: string | null
           status: string
@@ -395,6 +397,7 @@ export type Database = {
           vin_id: string
         }
         Insert: {
+          asking_price?: number | null
           author_label?: string
           author_public_id?: string | null
           contribution_type: Database["public"]["Enums"]["contribution_type"]
@@ -407,6 +410,7 @@ export type Database = {
           intervention_type?: string | null
           is_anonymous?: boolean | null
           is_owner_contribution?: boolean | null
+          listing_url?: string | null
           mileage_at_intervention?: number | null
           province?: string | null
           status?: string
@@ -417,6 +421,7 @@ export type Database = {
           vin_id: string
         }
         Update: {
+          asking_price?: number | null
           author_label?: string
           author_public_id?: string | null
           contribution_type?: Database["public"]["Enums"]["contribution_type"]
@@ -429,6 +434,7 @@ export type Database = {
           intervention_type?: string | null
           is_anonymous?: boolean | null
           is_owner_contribution?: boolean | null
+          listing_url?: string | null
           mileage_at_intervention?: number | null
           province?: string | null
           status?: string
@@ -450,6 +456,7 @@ export type Database = {
       }
       raw_contributions: {
         Row: {
+          asking_price: number | null
           contribution_type: Database["public"]["Enums"]["contribution_type"]
           created_at: string
           dealer_name: string | null
@@ -461,6 +468,7 @@ export type Database = {
           is_anonymous: boolean | null
           is_former_owner: boolean | null
           is_owner_contribution: boolean | null
+          listing_url: string | null
           mileage_at_intervention: number | null
           province: string | null
           summary: string | null
@@ -470,6 +478,7 @@ export type Database = {
           vin_id: string
         }
         Insert: {
+          asking_price?: number | null
           contribution_type: Database["public"]["Enums"]["contribution_type"]
           created_at?: string
           dealer_name?: string | null
@@ -481,6 +490,7 @@ export type Database = {
           is_anonymous?: boolean | null
           is_former_owner?: boolean | null
           is_owner_contribution?: boolean | null
+          listing_url?: string | null
           mileage_at_intervention?: number | null
           province?: string | null
           summary?: string | null
@@ -490,6 +500,7 @@ export type Database = {
           vin_id: string
         }
         Update: {
+          asking_price?: number | null
           contribution_type?: Database["public"]["Enums"]["contribution_type"]
           created_at?: string
           dealer_name?: string | null
@@ -501,6 +512,7 @@ export type Database = {
           is_anonymous?: boolean | null
           is_former_owner?: boolean | null
           is_owner_contribution?: boolean | null
+          listing_url?: string | null
           mileage_at_intervention?: number | null
           province?: string | null
           summary?: string | null
@@ -791,6 +803,7 @@ export type Database = {
         | "observation"
         | "purchase_decision"
         | "ownership_change"
+        | "for_sale"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -938,6 +951,7 @@ export const Constants = {
         "observation",
         "purchase_decision",
         "ownership_change",
+        "for_sale",
       ],
     },
   },

@@ -98,6 +98,12 @@ const contributionTypes = [
     icon: Tag,
     description: "Signaler qu'un véhicule est actuellement ou récemment en vente",
   },
+  {
+    value: "price_change",
+    label: "Modification du prix de vente",
+    icon: Tag,
+    description: "Signaler une modification du prix demandé pour un véhicule en vente",
+  },
 ] as const;
 
 const documentTypes = [

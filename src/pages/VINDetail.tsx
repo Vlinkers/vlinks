@@ -116,6 +116,28 @@ const VINDetail = () => {
     checkUserAndOwnerStatus();
   }, [data?.id]);
 
+  // Fetch observed signals from database
+  useEffect(() => {
+    const fetchSignals = async () => {
+      if (!data?.id) return;
+      const { data: signalsData } = await supabase
+        .from("observed_signals" as any)
+        .select("signal_text")
+        .eq("vin_id", data.id);
+      if (signalsData && (signalsData as any[]).length > 0) {
+        const countMap = new Map<string, number>();
+        (signalsData as any[]).forEach((s: any) => {
+          const text = s.signal_text;
+          countMap.set(text, (countMap.get(text) || 0) + 1);
+        });
+        setObservedSignals(Array.from(countMap.entries()).map(([text, count]) => ({ text, count })));
+      } else {
+        setObservedSignals([]);
+      }
+    };
+    fetchSignals();
+  }, [data?.id]);
+
   const handleEndOwnership = async () => {
     if (!currentUserId || !data?.id) return;
     

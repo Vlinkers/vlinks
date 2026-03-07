@@ -92,6 +92,12 @@ const contributionTypes = [
     icon: XCircle,
     description: "Signaler que le véhicule a changé de propriétaire",
   },
+  {
+    value: "for_sale",
+    label: "Mise en vente du véhicule",
+    icon: Tag,
+    description: "Signaler qu'un véhicule est actuellement ou récemment en vente",
+  },
 ] as const;
 
 const documentTypes = [

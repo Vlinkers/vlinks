@@ -11,6 +11,14 @@ export interface ContributionPhoto {
   fileName: string;
 }
 
+export interface ContributionDocument {
+  id: string;
+  fileName: string;
+  fileType: string | null;
+  fileSize: number | null;
+  description: string | null;
+}
+
 export interface PublicContribution {
   id: string;
   type: ContributionType;
@@ -20,6 +28,7 @@ export interface PublicContribution {
   authorVerified: boolean;
   summaryPublic: string;
   title: string | null;
+  details: string | null;
   isOwnerContribution: boolean;
   interventionType: string | null;
   interventionDate: string | null;
@@ -28,6 +37,7 @@ export interface PublicContribution {
   // Media
   hasDocuments: boolean;
   documentCount: number;
+  documents: ContributionDocument[];
   hasPhotos: boolean;
   photoCount: number;
   photos: ContributionPhoto[];
@@ -79,35 +89,121 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
 
   if (contribError) throw contribError;
 
-  const transformedContributions: PublicContribution[] = (contributions || []).map(c => ({
-    id: c.id,
-    type: c.contribution_type,
-    date: new Date(c.created_at).toLocaleDateString("fr-CA", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }),
-    author: c.author_label || "Anonyme",
-    authorPublicId: c.author_public_id,
-    authorVerified: c.is_owner_contribution || false,
-    summaryPublic: c.summary || c.title || "",
-    title: c.title || null,
-    isOwnerContribution: c.is_owner_contribution || false,
-    interventionType: c.intervention_type,
-    interventionDate: c.intervention_date,
-    mileageAtIntervention: c.mileage_at_intervention,
-    isAnonymous: c.is_anonymous || false,
-    hasDocuments: false,
-    documentCount: 0,
-    hasPhotos: false,
-    photoCount: 0,
-    photos: [],
-  }));
+  // Fetch all vin_contributions for this VIN to map photos/documents
+  const { data: vinContribs } = await supabase
+    .from("vin_contributions")
+    .select("id, user_id, contribution_type, created_at")
+    .eq("vin_id", vinRecord.id);
+
+  // Build a mapping from public_contribution to vin_contribution by matching user_id + type + approximate time
+  const contribIds = (vinContribs || []).map(vc => vc.id);
+
+  // Fetch all photos for these contributions (public bucket, anyone can view)
+  let allPhotos: any[] = [];
+  if (contribIds.length > 0) {
+    const { data: photos } = await supabase
+      .from("contribution_photos")
+      .select("id, contribution_id, file_name, file_path, caption")
+      .in("contribution_id", contribIds);
+    allPhotos = photos || [];
+  }
+
+  // Fetch document metadata (RLS allows owner/admin only, so this may return empty for public users)
+  let allDocuments: any[] = [];
+  if (contribIds.length > 0) {
+    const { data: docs } = await supabase
+      .from("contribution_documents")
+      .select("id, contribution_id, file_name, file_type, file_size, description")
+      .in("contribution_id", contribIds);
+    allDocuments = docs || [];
+  }
+
+  // Map vin_contributions by user_id+type+time for matching
+  const vinContribMap = new Map<string, string>(); // key -> vin_contribution id
+  for (const vc of (vinContribs || [])) {
+    // Create a key from user_id + contribution_type + created_at (truncated to minute)
+    const key = `${vc.user_id}|${vc.contribution_type}|${new Date(vc.created_at).toISOString().slice(0, 16)}`;
+    vinContribMap.set(key, vc.id);
+  }
+
+  // Group photos and documents by contribution_id
+  const photosByContrib = new Map<string, any[]>();
+  for (const p of allPhotos) {
+    const arr = photosByContrib.get(p.contribution_id) || [];
+    arr.push(p);
+    photosByContrib.set(p.contribution_id, arr);
+  }
+
+  const docsByContrib = new Map<string, any[]>();
+  for (const d of allDocuments) {
+    const arr = docsByContrib.get(d.contribution_id) || [];
+    arr.push(d);
+    docsByContrib.set(d.contribution_id, arr);
+  }
+
+  const transformedContributions: PublicContribution[] = (contributions || []).map((c: any) => {
+    // Try to find matching vin_contribution
+    const key = `${c.user_id}|${c.contribution_type}|${new Date(c.created_at).toISOString().slice(0, 16)}`;
+    const vcId = vinContribMap.get(key);
+
+    const photos: ContributionPhoto[] = vcId
+      ? (photosByContrib.get(vcId) || []).map((p: any) => ({
+          id: p.id,
+          url: p.file_path,
+          caption: p.caption,
+          fileName: p.file_name,
+        }))
+      : [];
+
+    const documents: ContributionDocument[] = vcId
+      ? (docsByContrib.get(vcId) || []).map((d: any) => ({
+          id: d.id,
+          fileName: d.file_name,
+          fileType: d.file_type,
+          fileSize: d.file_size,
+          description: d.description,
+        }))
+      : [];
+
+    return {
+      id: c.id,
+      type: c.contribution_type,
+      date: new Date(c.created_at).toLocaleDateString("fr-CA", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }),
+      author: c.author_label || "Anonyme",
+      authorPublicId: c.author_public_id,
+      authorVerified: c.is_owner_contribution || false,
+      summaryPublic: c.summary || c.title || "",
+      title: c.title || null,
+      details: c.details || null,
+      isOwnerContribution: c.is_owner_contribution || false,
+      interventionType: c.intervention_type,
+      interventionDate: c.intervention_date,
+      mileageAtIntervention: c.mileage_at_intervention,
+      isAnonymous: c.is_anonymous || false,
+      hasDocuments: documents.length > 0,
+      documentCount: documents.length,
+      documents,
+      hasPhotos: photos.length > 0,
+      photoCount: photos.length,
+      photos,
+    };
+  });
+
+  // Filter out empty contributions (photo type with no photos, etc.)
+  const validContributions = transformedContributions.filter(c => {
+    const hasText = !!(c.title || c.summaryPublic || c.details);
+    const hasMedia = c.hasPhotos || c.hasDocuments;
+    return hasText || hasMedia;
+  });
 
   const uniqueContributors = new Set(
     (contributions || [])
-      .filter(c => !c.is_anonymous && c.author_public_id)
-      .map(c => c.author_public_id)
+      .filter((c: any) => !c.is_anonymous && c.author_public_id)
+      .map((c: any) => c.author_public_id)
   ).size;
 
   const lastUpdated = vinRecord.updated_at
@@ -121,10 +217,10 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
     model: vinRecord.model,
     year: vinRecord.year,
     trustScore: vinRecord.trust_score || 0,
-    totalContributions: contributions?.length || 0,
+    totalContributions: validContributions.length,
     uniqueContributors,
     lastUpdated,
-    contributions: transformedContributions,
+    contributions: validContributions,
   };
 }
 

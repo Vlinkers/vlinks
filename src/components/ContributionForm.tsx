@@ -968,7 +968,43 @@ export function ContributionForm({
             </Select>
           </div>
 
-          {/* 3. Photos (optional) */}
+          {/* For sale specific: Price and listing URL */}
+          {contributionType === "for_sale" && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="asking_price" className="text-sm font-semibold">
+                  Prix demandé ($)
+                  <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
+                </Label>
+                <Input
+                  id="asking_price"
+                  {...register("asking_price")}
+                  placeholder="Ex: 36900"
+                  type="number"
+                  min="0"
+                  max="99999999"
+                  className="bg-muted/30"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="listing_url" className="text-sm font-semibold">
+                  Lien vers l'annonce
+                  <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
+                </Label>
+                <Input
+                  id="listing_url"
+                  {...register("listing_url")}
+                  placeholder="Ex: https://www.autohebdo.net/..."
+                  type="url"
+                  className="bg-muted/30"
+                />
+                {errors.listing_url && (
+                  <p className="text-sm text-destructive">{errors.listing_url.message}</p>
+                )}
+              </div>
+            </>
+          )}
+
           <div className="space-y-2">
             <Label className="flex items-center gap-2 text-sm font-semibold">
               <Camera className="w-4 h-4" />

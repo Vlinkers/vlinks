@@ -48,8 +48,48 @@ import {
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { PublicContribution } from "@/hooks/useVINData";
 
-
+function SignalProofs({ contributionIds, allContributions }: { contributionIds: string[]; allContributions: PublicContribution[] }) {
+  const matched = allContributions.filter((c) => contributionIds.includes(c.id));
+  if (matched.length === 0) {
+    return (
+      <div className="px-3 pb-3">
+        <p className="text-xs text-muted-foreground">Aucune preuve accessible pour ce signal.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="border-t border-border/20 px-3 pb-3 pt-2 space-y-2">
+      {matched.map((c) => (
+        <div key={c.id} className="p-2 rounded-lg bg-muted/10 border border-border/10 text-xs space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="font-medium text-foreground">{c.author}</span>
+            <span className="text-muted-foreground">{c.date}</span>
+          </div>
+          {c.title && <p className="text-foreground/80">{c.title}</p>}
+          {c.summaryPublic && !c.title && <p className="text-foreground/80">{c.summaryPublic}</p>}
+          {c.hasPhotos && (
+            <div className="flex gap-1 mt-1">
+              {c.photos.slice(0, 3).map((p) => (
+                <img key={p.id} src={p.url} alt={p.caption || p.fileName} className="w-12 h-12 object-cover rounded" />
+              ))}
+              {c.photos.length > 3 && (
+                <span className="text-muted-foreground self-end">+{c.photos.length - 3}</span>
+              )}
+            </div>
+          )}
+          {c.hasDocuments && (
+            <div className="flex items-center gap-1 text-muted-foreground mt-1">
+              <FileText className="w-3 h-3" />
+              <span>{c.documentCount} document{c.documentCount > 1 ? "s" : ""}</span>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 
 const VINDetail = () => {
@@ -68,7 +108,15 @@ const VINDetail = () => {
   const [ownerVerificationStatus, setOwnerVerificationStatus] = useState<'none' | 'pending' | 'verified' | 'rejected'>('none');
   const [isCheckingOwner, setIsCheckingOwner] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [observedSignals, setObservedSignals] = useState<{ text: string; count: number }[]>([]);
+  const [observedSignals, setObservedSignals] = useState<{
+    id: string;
+    text: string;
+    count: number;
+    firstObserved: string | null;
+    lastObserved: string | null;
+    contributionIds: string[];
+  }[]>([]);
+  const [expandedSignalId, setExpandedSignalId] = useState<string | null>(null);
   const [userHasUsername, setUserHasUsername] = useState(true);
   const [showUsernameDialog, setShowUsernameDialog] = useState(false);
   const [isEndingOwnership, setIsEndingOwnership] = useState(false);
@@ -116,24 +164,47 @@ const VINDetail = () => {
     checkUserAndOwnerStatus();
   }, [data?.id]);
 
-  // Fetch observed signals from database
+  // Fetch observed signals with junction table data
   useEffect(() => {
     const fetchSignals = async () => {
       if (!data?.id) return;
       const { data: signalsData } = await supabase
-        .from("observed_signals" as any)
-        .select("signal_text")
+        .from("observed_signals")
+        .select("id, signal_text, first_observed_at, last_observed_at")
         .eq("vin_id", data.id);
-      if (signalsData && (signalsData as any[]).length > 0) {
-        const countMap = new Map<string, number>();
-        (signalsData as any[]).forEach((s: any) => {
-          const text = s.signal_text;
-          countMap.set(text, (countMap.get(text) || 0) + 1);
-        });
-        setObservedSignals(Array.from(countMap.entries()).map(([text, count]) => ({ text, count })));
-      } else {
+
+      if (!signalsData || signalsData.length === 0) {
         setObservedSignals([]);
+        return;
       }
+
+      // Fetch all signal_contributions for these signals
+      const signalIds = signalsData.map((s) => s.id);
+      const { data: links } = await (supabase
+        .from("signal_contributions" as any)
+        .select("signal_id, contribution_id")
+        .in("signal_id", signalIds) as any);
+
+      const linksBySignal = new Map<string, string[]>();
+      ((links as any[]) || []).forEach((l: any) => {
+        const arr = linksBySignal.get(l.signal_id) || [];
+        arr.push(l.contribution_id);
+        linksBySignal.set(l.signal_id, arr);
+      });
+
+      const result = signalsData
+        .map((s: any) => ({
+          id: s.id,
+          text: s.signal_text,
+          count: (linksBySignal.get(s.id) || []).length,
+          firstObserved: s.first_observed_at,
+          lastObserved: s.last_observed_at,
+          contributionIds: linksBySignal.get(s.id) || [],
+        }))
+        .filter((s) => s.count > 0)
+        .sort((a, b) => b.count - a.count || new Date(b.lastObserved || 0).getTime() - new Date(a.lastObserved || 0).getTime());
+
+      setObservedSignals(result);
     };
     fetchSignals();
   }, [data?.id]);
@@ -517,32 +588,69 @@ const VINDetail = () => {
                 </div>
 
                 {/* ═══ SIGNAUX OBSERVÉS ═══ */}
-                {observedSignals.length > 0 && (
-                  <div className="mb-8">
-                    <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
-                      <AlertTriangle className="w-5 h-5 text-warning" />
-                      Signaux observés
-                    </h2>
-                    <div className="rounded-2xl glass border border-border/50 p-5">
-                      <p className="text-xs text-muted-foreground mb-4">
-                        Faits rapportés par les contributeurs. VLINKS ne porte aucun jugement sur l'état du véhicule.
-                      </p>
-                      <div className="space-y-2">
-                        {observedSignals.map((signal, i) => (
-                          <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/20 border border-border/20">
-                            <AlertTriangle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
-                            <span className="text-sm text-foreground flex-1">{signal.text}</span>
-                            {signal.count > 1 && (
-                              <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                signalé par {signal.count} contributions
-                              </span>
-                            )}
-                          </div>
-                        ))}
+                <div className="mb-8">
+                  <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
+                    <AlertTriangle className="w-5 h-5 text-warning" />
+                    Signaux observés
+                  </h2>
+                  <div className="rounded-2xl glass border border-border/50 p-5">
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Faits rapportés par les contributeurs. VLINKS ne porte aucun jugement sur l'état du véhicule.
+                    </p>
+                    {observedSignals.length > 0 ? (
+                      <div className="space-y-3">
+                        {observedSignals.map((signal) => {
+                          const firstYear = signal.firstObserved ? new Date(signal.firstObserved).getFullYear() : null;
+                          const lastYear = signal.lastObserved ? new Date(signal.lastObserved).getFullYear() : null;
+                          const lastMonth = signal.lastObserved
+                            ? new Date(signal.lastObserved).toLocaleDateString("fr-CA", { month: "short", year: "numeric" })
+                            : null;
+                          const dateRange = firstYear && lastYear && firstYear !== lastYear
+                            ? `${firstYear} → ${lastYear}`
+                            : lastMonth || "";
+                          const isExpanded = expandedSignalId === signal.id;
+
+                          return (
+                            <div key={signal.id} className="rounded-lg bg-muted/20 border border-border/20 overflow-hidden">
+                              <button
+                                onClick={() => setExpandedSignalId(isExpanded ? null : signal.id)}
+                                className="w-full flex items-start gap-3 p-3 text-left hover:bg-muted/30 transition-colors"
+                              >
+                                <AlertTriangle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-sm font-medium text-foreground">{signal.text}</span>
+                                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                                    {signal.count > 0 && (
+                                      <span className="text-xs text-muted-foreground">
+                                        signalé par {signal.count} contribution{signal.count > 1 ? "s" : ""}
+                                      </span>
+                                    )}
+                                    {dateRange && (
+                                      <span className="text-xs text-muted-foreground/70">• {dateRange}</span>
+                                    )}
+                                  </div>
+                                </div>
+                                <span className="text-xs text-primary flex items-center gap-1 flex-shrink-0 mt-0.5">
+                                  {isExpanded ? "Masquer" : "Voir les preuves"}
+                                  <ChevronRight className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                                </span>
+                              </button>
+
+                              {isExpanded && (
+                                <SignalProofs contributionIds={signal.contributionIds} allContributions={contributions} />
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-                    </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        Aucun signal observé pour ce véhicule pour le moment.<br />
+                        Les contributions disponibles sont consultables dans l'historique.
+                      </p>
+                    )}
                   </div>
-                )}
+                </div>
 
                 {/* ═══ PHOTOS DU VÉHICULE ═══ */}
                 {allPhotos.length > 0 && (

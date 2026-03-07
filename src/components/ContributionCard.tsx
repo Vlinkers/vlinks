@@ -36,6 +36,7 @@ const getContributionLabel = (type: ContributionType) => {
     case "observation": return "Observation personnelle";
     case "purchase_decision": return "Décision d'achat";
     case "ownership_change": return "Changement de propriétaire";
+    case "for_sale": return "Mise en vente";
     default: return "Contribution";
   }
 };

@@ -548,32 +548,69 @@ const VINDetail = () => {
                 </div>
 
                 {/* ═══ SIGNAUX OBSERVÉS ═══ */}
-                {observedSignals.length > 0 && (
-                  <div className="mb-8">
-                    <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
-                      <AlertTriangle className="w-5 h-5 text-warning" />
-                      Signaux observés
-                    </h2>
-                    <div className="rounded-2xl glass border border-border/50 p-5">
-                      <p className="text-xs text-muted-foreground mb-4">
-                        Faits rapportés par les contributeurs. VLINKS ne porte aucun jugement sur l'état du véhicule.
-                      </p>
-                      <div className="space-y-2">
-                        {observedSignals.map((signal, i) => (
-                          <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/20 border border-border/20">
-                            <AlertTriangle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
-                            <span className="text-sm text-foreground flex-1">{signal.text}</span>
-                            {signal.count > 1 && (
-                              <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                signalé par {signal.count} contributions
-                              </span>
-                            )}
-                          </div>
-                        ))}
+                <div className="mb-8">
+                  <h2 className="font-display text-lg font-semibold flex items-center gap-2 mb-4">
+                    <AlertTriangle className="w-5 h-5 text-warning" />
+                    Signaux observés
+                  </h2>
+                  <div className="rounded-2xl glass border border-border/50 p-5">
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Faits rapportés par les contributeurs. VLINKS ne porte aucun jugement sur l'état du véhicule.
+                    </p>
+                    {observedSignals.length > 0 ? (
+                      <div className="space-y-3">
+                        {observedSignals.map((signal) => {
+                          const firstYear = signal.firstObserved ? new Date(signal.firstObserved).getFullYear() : null;
+                          const lastYear = signal.lastObserved ? new Date(signal.lastObserved).getFullYear() : null;
+                          const lastMonth = signal.lastObserved
+                            ? new Date(signal.lastObserved).toLocaleDateString("fr-CA", { month: "short", year: "numeric" })
+                            : null;
+                          const dateRange = firstYear && lastYear && firstYear !== lastYear
+                            ? `${firstYear} → ${lastYear}`
+                            : lastMonth || "";
+                          const isExpanded = expandedSignalId === signal.id;
+
+                          return (
+                            <div key={signal.id} className="rounded-lg bg-muted/20 border border-border/20 overflow-hidden">
+                              <button
+                                onClick={() => setExpandedSignalId(isExpanded ? null : signal.id)}
+                                className="w-full flex items-start gap-3 p-3 text-left hover:bg-muted/30 transition-colors"
+                              >
+                                <AlertTriangle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-sm font-medium text-foreground">{signal.text}</span>
+                                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                                    {signal.count > 0 && (
+                                      <span className="text-xs text-muted-foreground">
+                                        signalé par {signal.count} contribution{signal.count > 1 ? "s" : ""}
+                                      </span>
+                                    )}
+                                    {dateRange && (
+                                      <span className="text-xs text-muted-foreground/70">• {dateRange}</span>
+                                    )}
+                                  </div>
+                                </div>
+                                <span className="text-xs text-primary flex items-center gap-1 flex-shrink-0 mt-0.5">
+                                  {isExpanded ? "Masquer" : "Voir les preuves"}
+                                  <ChevronRight className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                                </span>
+                              </button>
+
+                              {isExpanded && (
+                                <SignalProofs contributionIds={signal.contributionIds} allContributions={contributions} />
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-                    </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        Aucun signal observé pour ce véhicule pour le moment.<br />
+                        Les contributions disponibles sont consultables dans l'historique.
+                      </p>
+                    )}
                   </div>
-                )}
+                </div>
 
                 {/* ═══ PHOTOS DU VÉHICULE ═══ */}
                 {allPhotos.length > 0 && (

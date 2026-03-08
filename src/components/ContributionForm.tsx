@@ -305,7 +305,7 @@ export function ContributionForm({
     const { data: contribution, error: contributionError } = await supabase
       .from("vin_contributions")
       .insert({
-        vin_id: actualVinId, user_id: userId, contribution_type: contributionType,
+        vin_id: actualVinId, user_id: userId, contribution_type: contributionType as any,
         title, summary, details, is_anonymous: w.isAnonymous,
       })
       .select()

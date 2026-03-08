@@ -1,7 +1,4 @@
 import { useState, useCallback, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,14 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 import {
-  FileSearch,
   FileText,
-  MessageCircle,
-  Wrench,
-  Camera,
-  Eye,
-  XCircle,
   Upload,
   X,
   Image as ImageIcon,
@@ -37,74 +29,35 @@ import {
   CheckCircle,
   Shield,
   User,
-  Tag,
   Loader2,
+  Camera,
+  ArrowLeft,
+  ArrowRight,
+  Eye,
+  FileSearch,
+  MessageCircle,
+  CalendarDays,
+  ShoppingCart,
+  Wrench,
+  Building2,
+  UserCheck,
+  HelpCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const contributionTypes = [
-  {
-    value: "photo_evidence",
-    label: "Photos du véhicule",
-    icon: Camera,
-    description: "Photos détaillées du véhicule",
-  },
-  {
-    value: "inspection_report",
-    label: "Inspection mécanique",
-    icon: FileSearch,
-    description: "Résultat d'une inspection professionnelle",
-  },
-  {
-    value: "vehicle_history",
-    label: "Document / historique",
-    icon: FileText,
-    description: "Carfax, facture, rapport d'historique",
-  },
-  {
-    value: "observation",
-    label: "Observation lors d'une visite",
-    icon: Eye,
-    description: "Ce que vous avez constaté sur place",
-  },
-  {
-    value: "mechanic_conversation",
-    label: "Avis mécanicien",
-    icon: Wrench,
-    description: "Opinion d'un professionnel",
-  },
-  {
-    value: "owner_exchange",
-    label: "Échange avec vendeur",
-    icon: MessageCircle,
-    description: "Informations obtenues du vendeur",
-  },
-  {
-    value: "purchase_decision",
-    label: "Décision d'achat",
-    icon: XCircle,
-    description: "Pourquoi vous avez acheté ou renoncé",
-  },
-  {
-    value: "ownership_change",
-    label: "Changement de propriétaire",
-    icon: XCircle,
-    description: "Signaler que le véhicule a changé de propriétaire",
-  },
-  {
-    value: "for_sale",
-    label: "Mise en vente du véhicule",
-    icon: Tag,
-    description: "Signaler qu'un véhicule est actuellement ou récemment en vente",
-  },
-  {
-    value: "price_change",
-    label: "Modification du prix de vente",
-    icon: Tag,
-    description: "Signaler une modification du prix demandé pour un véhicule en vente",
-  },
-] as const;
+// ─── Constants ───────────────────────────────────────────────────────
+
+const provinces = [
+  "Québec", "Ontario", "Alberta", "Colombie-Britannique", "Manitoba",
+  "Saskatchewan", "Nouveau-Brunswick", "Nouvelle-Écosse",
+  "Île-du-Prince-Édouard", "Terre-Neuve-et-Labrador",
+];
+
+const months = [
+  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+];
 
 const documentTypes = [
   { value: "facture", label: "Facture récente", description: "Facture d'entretien ou de réparation" },
@@ -113,71 +66,88 @@ const documentTypes = [
   { value: "autre", label: "Autre document", description: "Tout document prouvant la propriété" },
 ];
 
-const provinces = [
-  "Québec",
-  "Ontario",
-  "Alberta",
-  "Colombie-Britannique",
-  "Manitoba",
-  "Saskatchewan",
-  "Nouveau-Brunswick",
-  "Nouvelle-Écosse",
-  "Île-du-Prince-Édouard",
-  "Terre-Neuve-et-Labrador",
-];
+// ─── Types ───────────────────────────────────────────────────────────
 
-const months = [
-  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
-];
+type ContributorProfile = "buyer" | "current_owner" | "former_owner" | "professional" | "other";
+type InfoCategory = "observation" | "document" | "exchange" | "event";
+type DocumentSubType = "inspection_report" | "invoice" | "vehicle_history" | "other_document";
+type ExchangeSubType = "seller" | "mechanic" | "dealer" | "other_person";
+type EventSubType = "ownership_change" | "for_sale" | "price_change" | "current_status";
+type HolderType = "concessionnaire" | "depot_vente" | "particulier" | "inconnu";
+type WizardStep = 1 | 2 | 3 | 4;
 
-const holderTypes = [
-  { value: "concessionnaire", label: "Concessionnaire" },
-  { value: "depot_vente", label: "Dépôt-vente" },
-  { value: "particulier", label: "Particulier" },
-  { value: "inconnu", label: "Inconnu" },
-];
+interface WizardState {
+  // Step 1
+  profile: ContributorProfile | null;
+  // Step 2
+  category: InfoCategory | null;
+  // Step 3 sub-selections
+  documentSubType: DocumentSubType | null;
+  exchangeSubType: ExchangeSubType | null;
+  eventSubType: EventSubType | null;
+  // Step 3 fields
+  dateMonth: string;
+  dateYear: string;
+  mileage: string;
+  description: string;
+  holderType: HolderType | "";
+  dealerName: string;
+  province: string;
+  askingPrice: string;
+  oldPrice: string;
+  listingUrl: string;
+  // Step 4
+  evidenceType: "photo" | "document" | "none" | null;
+  // General
+  isAnonymous: boolean;
+}
 
-// Types that show the holder field
-const typesWithHolder = ["ownership_change", "observation", "for_sale"];
-const typesWithDate = ["ownership_change", "for_sale", "price_change"];
+const initialWizardState: WizardState = {
+  profile: null,
+  category: null,
+  documentSubType: null,
+  exchangeSubType: null,
+  eventSubType: null,
+  dateMonth: "",
+  dateYear: "",
+  mileage: "",
+  description: "",
+  holderType: "",
+  dealerName: "",
+  province: "",
+  askingPrice: "",
+  oldPrice: "",
+  listingUrl: "",
+  evidenceType: null,
+  isAnonymous: false,
+};
 
-const contributionSchema = z.object({
-  contribution_type: z.enum([
-    "inspection_report",
-    "vehicle_history",
-    "owner_exchange",
-    "mechanic_conversation",
-    "photo_evidence",
-    "observation",
-    "purchase_decision",
-    "ownership_change",
-    "for_sale",
-    "price_change",
-  ]),
-  observation: z
-    .string()
-    .trim()
-    .min(10, "Veuillez décrire votre observation (minimum 10 caractères)")
-    .max(3000, "L'observation ne peut pas dépasser 3000 caractères"),
-  context: z
-    .string()
-    .trim()
-    .max(500, "Le contexte ne peut pas dépasser 500 caractères")
-    .optional(),
-  is_anonymous: z.boolean().default(false),
-  mileage: z.string().optional(),
-  province: z.string().optional(),
-  holder_type: z.string().optional(),
-  dealer_name: z.string().max(200).optional(),
-  ownership_month: z.string().optional(),
-  ownership_year: z.string().optional(),
-  asking_price: z.string().optional(),
-  old_price: z.string().optional(),
-  listing_url: z.string().url("URL invalide").or(z.literal("")).optional(),
-});
+// ─── Mapping wizard to DB contribution_type ──────────────────────────
 
-type ContributionFormData = z.infer<typeof contributionSchema>;
+function resolveContributionType(state: WizardState): string {
+  const { category, documentSubType, exchangeSubType, eventSubType } = state;
+  if (category === "observation") return "observation";
+  if (category === "document") {
+    if (documentSubType === "inspection_report") return "inspection_report";
+    if (documentSubType === "invoice") return "vehicle_history";
+    if (documentSubType === "vehicle_history") return "vehicle_history";
+    return "vehicle_history";
+  }
+  if (category === "exchange") {
+    if (exchangeSubType === "mechanic") return "mechanic_conversation";
+    return "owner_exchange";
+  }
+  if (category === "event") {
+    if (eventSubType === "ownership_change") return "ownership_change";
+    if (eventSubType === "for_sale") return "for_sale";
+    if (eventSubType === "price_change") return "price_change";
+    if (eventSubType === "current_status") return "observation";
+    return "observation";
+  }
+  return "observation";
+}
+
+// ─── Props ──────────────────────────────────────────────────────────
 
 interface ContributionFormProps {
   vinId: string | null;
@@ -188,7 +158,7 @@ interface ContributionFormProps {
   isOwnerClaim?: boolean;
 }
 
-type FormStep = 'contribution' | 'verification';
+// ─── Component ──────────────────────────────────────────────────────
 
 export function ContributionForm({
   vinId,
@@ -202,250 +172,164 @@ export function ContributionForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [documents, setDocuments] = useState<File[]>([]);
   const [photos, setPhotos] = useState<File[]>([]);
+  const [step, setStep] = useState<WizardStep>(1);
+  const [w, setW] = useState<WizardState>({ ...initialWizardState });
 
   // Owner verification state
-  const [currentStep, setCurrentStep] = useState<FormStep>('contribution');
-  const [ownerVerificationStatus, setOwnerVerificationStatus] = useState<'none' | 'pending' | 'verified'>('none');
+  const [showVerification, setShowVerification] = useState(false);
+  const [ownerVerificationStatus, setOwnerVerificationStatus] = useState<"none" | "pending" | "verified">("none");
   const [verificationDocument, setVerificationDocument] = useState<File | null>(null);
-  const [verificationDocumentType, setVerificationDocumentType] = useState<string>("");
-  const [pendingContributionData, setPendingContributionData] = useState<ContributionFormData | null>(null);
+  const [verificationDocumentType, setVerificationDocumentType] = useState("");
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    reset,
-    formState: { errors },
-  } = useForm<ContributionFormData>({
-    resolver: zodResolver(contributionSchema),
-    defaultValues: {
-      is_anonymous: false,
-    },
-  });
-
-  const contributionType = watch("contribution_type");
-  const holderType = watch("holder_type");
-
-  // Check owner verification status on mount
+  // Check owner verification status
   useEffect(() => {
     const checkOwnerStatus = async () => {
       if (!isOwnerClaim || !open) return;
-
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
       let checkVinId = vinId;
       if (!checkVinId) {
-        const { data: existingVin } = await supabase
-          .from("vins")
-          .select("id")
-          .eq("vin", vin)
-          .maybeSingle();
+        const { data: existingVin } = await supabase.from("vins").select("id").eq("vin", vin).maybeSingle();
         if (existingVin) checkVinId = existingVin.id;
       }
-
       if (checkVinId) {
         const { data: verification } = await supabase
-          .from('owner_verifications')
-          .select('verification_status')
-          .eq('user_id', user.id)
-          .eq('vin_id', checkVinId)
+          .from("owner_verifications")
+          .select("verification_status")
+          .eq("user_id", user.id)
+          .eq("vin_id", checkVinId)
           .maybeSingle();
-
         if (verification) {
-          if (verification.verification_status === 'verified') {
-            setOwnerVerificationStatus('verified');
-          } else if (verification.verification_status === 'pending') {
-            setOwnerVerificationStatus('pending');
-          }
+          setOwnerVerificationStatus(
+            verification.verification_status === "verified" ? "verified" : verification.verification_status === "pending" ? "pending" : "none"
+          );
         }
       }
     };
-
     checkOwnerStatus();
   }, [isOwnerClaim, open, vinId, vin]);
 
-  // Reset step when dialog closes
+  // Reset on close
   useEffect(() => {
     if (!open) {
-      setCurrentStep('contribution');
+      setStep(1);
+      setW({ ...initialWizardState });
+      setDocuments([]);
+      setPhotos([]);
+      setShowVerification(false);
       setVerificationDocument(null);
       setVerificationDocumentType("");
-      setPendingContributionData(null);
     }
   }, [open]);
 
-  const handleDocumentUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (files) {
-        const newFiles = Array.from(files).slice(0, 5 - documents.length);
-        setDocuments((prev) => [...prev, ...newFiles]);
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: currentYear - 1979 }, (_, i) => String(currentYear - i));
+
+  // ─── Helpers ─────────────────────────────────────────────────────
+
+  const updateW = (partial: Partial<WizardState>) => setW((prev) => ({ ...prev, ...partial }));
+
+  const handlePhotoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+      setPhotos((prev) => [...prev, ...newFiles].slice(0, 10));
+    }
+  }, []);
+
+  const handleDocumentUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newFiles = Array.from(files).slice(0, 5 - documents.length);
+      setDocuments((prev) => [...prev, ...newFiles]);
+    }
+  }, [documents.length]);
+
+  const handleVerificationDocumentUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files?.[0]) {
+      if (files[0].size > 10 * 1024 * 1024) {
+        toast({ title: "Fichier trop volumineux", description: "Max 10 Mo", variant: "destructive" });
+        return;
       }
-    },
-    [documents.length]
-  );
+      setVerificationDocument(files[0]);
+    }
+  }, [toast]);
 
-  const handlePhotoUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (files) {
-        const newFiles = Array.from(files).filter((f) =>
-          f.type.startsWith("image/")
-        );
-        setPhotos((prev) => [...prev, ...newFiles].slice(0, 10));
-      }
-    },
-    []
-  );
+  // ─── Submission ──────────────────────────────────────────────────
 
-  const handleVerificationDocumentUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (files && files[0]) {
-        const file = files[0];
-        if (file.size > 10 * 1024 * 1024) {
-          toast({
-            title: "Fichier trop volumineux",
-            description: "Le fichier ne doit pas dépasser 10 Mo",
-            variant: "destructive",
-          });
-          return;
-        }
-        setVerificationDocument(file);
-      }
-    },
-    [toast]
-  );
-
-  const removeDocument = (index: number) => {
-    setDocuments((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const removePhoto = (index: number) => {
-    setPhotos((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const submitContribution = async (data: ContributionFormData, actualVinId: string, userId: string) => {
-    // Get user profile for author label
+  const submitContribution = async (actualVinId: string, userId: string) => {
     const { data: profile } = await supabase
       .from("profiles")
       .select("username, public_id")
       .eq("user_id", userId)
       .maybeSingle();
 
-    const authorLabel = data.is_anonymous ? "Anonyme" : (profile?.username || "Anonyme");
-    const authorPublicId = data.is_anonymous ? null : (profile?.public_id || null);
+    const authorLabel = w.isAnonymous ? "Anonyme" : (profile?.username || "Anonyme");
+    const authorPublicId = w.isAnonymous ? null : (profile?.public_id || null);
+    const contributionType = resolveContributionType(w);
 
-    // Map new fields to DB columns: observation → title+summary, context → details
-    const title = data.observation.substring(0, 200);
-    const summary = data.observation;
-    const details = data.context || null;
+    const title = w.description.substring(0, 200);
+    const summary = w.description;
+    const details = null;
 
-    // Parse mileage
-    const mileage = data.mileage ? parseInt(data.mileage.replace(/\s/g, ''), 10) : null;
+    const mileage = w.mileage ? parseInt(w.mileage.replace(/\s/g, ""), 10) : null;
     const validMileage = mileage && !isNaN(mileage) ? mileage : null;
 
-    // Build intervention_date from month/year if ownership_change or for_sale
     let interventionDate: string | null = null;
-    if (typesWithDate.includes(data.contribution_type) && data.ownership_year) {
-      const monthIndex = data.ownership_month ? months.indexOf(data.ownership_month) + 1 : 1;
-      const monthStr = String(monthIndex).padStart(2, '0');
-      interventionDate = `${data.ownership_year}-${monthStr}-01`;
+    if (w.dateYear) {
+      const monthIndex = w.dateMonth ? months.indexOf(w.dateMonth) + 1 : 1;
+      const monthStr = String(monthIndex).padStart(2, "0");
+      interventionDate = `${w.dateYear}-${monthStr}-01`;
     }
 
-    // Parse asking price
-    const askingPrice = data.asking_price ? parseInt(data.asking_price.replace(/\s/g, ''), 10) : null;
+    const askingPrice = w.askingPrice ? parseInt(w.askingPrice.replace(/\s/g, ""), 10) : null;
     const validAskingPrice = askingPrice && !isNaN(askingPrice) ? askingPrice : null;
-    const oldPriceVal = data.old_price ? parseInt(data.old_price.replace(/\s/g, ''), 10) : null;
+    const oldPriceVal = w.oldPrice ? parseInt(w.oldPrice.replace(/\s/g, ""), 10) : null;
     const validOldPrice = oldPriceVal && !isNaN(oldPriceVal) ? oldPriceVal : null;
-    const listingUrl = data.listing_url && data.listing_url.trim() ? data.listing_url.trim() : null;
+    const listingUrl = w.listingUrl?.trim() || null;
 
-    // Create raw contribution for audit trail
-    const { error: rawError } = await supabase
-      .from("raw_contributions")
-      .insert({
-        vin_id: actualVinId,
-        user_id: userId,
-        contribution_type: data.contribution_type,
-        title,
-        summary,
-        details,
-        is_anonymous: data.is_anonymous,
-        is_owner_contribution: isOwnerClaim,
-        mileage_at_intervention: validMileage,
-        intervention_date: interventionDate,
-        province: data.province || null,
-        holder_type: data.holder_type || null,
-        dealer_name: data.holder_type === "concessionnaire" ? (data.dealer_name || null) : null,
-        asking_price: validAskingPrice,
-        old_price: validOldPrice,
-        listing_url: listingUrl,
-      } as any);
+    const holderType = w.holderType || null;
+    const dealerName = w.holderType === "concessionnaire" ? (w.dealerName || null) : null;
+    const province = w.province || null;
 
+    const { error: rawError } = await supabase.from("raw_contributions").insert({
+      vin_id: actualVinId, user_id: userId, contribution_type: contributionType,
+      title, summary, details, is_anonymous: w.isAnonymous, is_owner_contribution: isOwnerClaim,
+      mileage_at_intervention: validMileage, intervention_date: interventionDate,
+      province, holder_type: holderType, dealer_name: dealerName,
+      asking_price: validAskingPrice, old_price: validOldPrice, listing_url: listingUrl,
+    } as any);
     if (rawError) throw rawError;
 
-    // Also create legacy contribution
     const { data: contribution, error: contributionError } = await supabase
       .from("vin_contributions")
       .insert({
-        vin_id: actualVinId,
-        user_id: userId,
-        contribution_type: data.contribution_type,
-        title,
-        summary,
-        details,
-        is_anonymous: data.is_anonymous,
+        vin_id: actualVinId, user_id: userId, contribution_type: contributionType,
+        title, summary, details, is_anonymous: w.isAnonymous,
       })
       .select()
       .single();
-
     if (contributionError) throw contributionError;
 
-    // Insert to public_contributions with status pending
-    const { error: pubError } = await supabase
-      .from("public_contributions")
-      .insert({
-        user_id: userId,
-        vin_id: actualVinId,
-        contribution_type: data.contribution_type,
-        is_anonymous: data.is_anonymous,
-        is_owner_contribution: isOwnerClaim,
-        author_label: authorLabel,
-        author_public_id: authorPublicId,
-        status: "pending",
-        title,
-        summary,
-        details,
-        mileage_at_intervention: validMileage,
-        intervention_date: interventionDate,
-        province: data.province || null,
-        holder_type: data.holder_type || null,
-        dealer_name: data.holder_type === "concessionnaire" ? (data.dealer_name || null) : null,
-        asking_price: validAskingPrice,
-        old_price: validOldPrice,
-        listing_url: listingUrl,
-      } as any);
-
-    if (pubError) {
-      console.error("Error publishing contribution:", pubError);
-    }
+    await supabase.from("public_contributions").insert({
+      user_id: userId, vin_id: actualVinId, contribution_type: contributionType,
+      is_anonymous: w.isAnonymous, is_owner_contribution: isOwnerClaim,
+      author_label: authorLabel, author_public_id: authorPublicId, status: "pending",
+      title, summary, details,
+      mileage_at_intervention: validMileage, intervention_date: interventionDate,
+      province, holder_type: holderType, dealer_name: dealerName,
+      asking_price: validAskingPrice, old_price: validOldPrice, listing_url: listingUrl,
+    } as any);
 
     // Upload documents
     for (const doc of documents) {
       const filePath = `${userId}/${contribution.id}/${doc.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from("vin-documents")
-        .upload(filePath, doc);
-
+      const { error: uploadError } = await supabase.storage.from("vin-documents").upload(filePath, doc);
       if (!uploadError) {
         await supabase.from("contribution_documents").insert({
-          contribution_id: contribution.id,
-          file_name: doc.name,
-          file_path: filePath,
-          file_type: doc.type,
-          file_size: doc.size,
+          contribution_id: contribution.id, file_name: doc.name, file_path: filePath,
+          file_type: doc.type, file_size: doc.size,
         });
       }
     }
@@ -453,112 +337,32 @@ export function ContributionForm({
     // Upload photos
     for (const photo of photos) {
       const filePath = `${userId}/${contribution.id}/${photo.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from("vin-photos")
-        .upload(filePath, photo);
-
+      const { error: uploadError } = await supabase.storage.from("vin-photos").upload(filePath, photo);
       if (!uploadError) {
-        const { data: urlData } = supabase.storage
-          .from("vin-photos")
-          .getPublicUrl(filePath);
-
+        const { data: urlData } = supabase.storage.from("vin-photos").getPublicUrl(filePath);
         await supabase.from("contribution_photos").insert({
-          contribution_id: contribution.id,
-          file_name: photo.name,
-          file_path: urlData.publicUrl,
+          contribution_id: contribution.id, file_name: photo.name, file_path: urlData.publicUrl,
         });
       }
     }
 
-    toast({
-      title: "Contribution soumise",
-      description: "Votre contribution sera examinée et publiée après validation par VLINKS.",
-    });
+    toast({ title: "Contribution soumise", description: "Votre contribution sera examinée et publiée après validation par VLINKS." });
+    supabase.functions.invoke("notify-vin-followers", { body: { vin, contribution_type: contributionType } }).catch(console.error);
 
-    // Notify VIN followers (fire and forget)
-    supabase.functions.invoke('notify-vin-followers', {
-      body: { vin, contribution_type: data.contribution_type },
-    }).catch(err => console.error('Notification error:', err));
-
-    // Reset form
-    reset();
+    setW({ ...initialWizardState });
     setDocuments([]);
     setPhotos([]);
     onOpenChange(false);
     onSuccess?.();
   };
 
-  const onSubmit = async (data: ContributionFormData) => {
-    setIsSubmitting(true);
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Erreur",
-          description: "Vous devez être connecté pour contribuer",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Get or create VIN record
-      let actualVinId = vinId;
-      if (!actualVinId) {
-        const { data: existingVin } = await supabase
-          .from("vins")
-          .select("id")
-          .eq("vin", vin)
-          .maybeSingle();
-
-        if (existingVin) {
-          actualVinId = existingVin.id;
-        } else {
-          const { data: newVin, error: vinError } = await supabase
-            .from("vins")
-            .insert({ vin })
-            .select("id")
-            .single();
-
-          if (vinError) throw vinError;
-          actualVinId = newVin.id;
-        }
-      }
-
-      // If owner claim and not yet verified, show verification step
-      if (isOwnerClaim && ownerVerificationStatus === 'none') {
-        setPendingContributionData(data);
-        setCurrentStep('verification');
-        setIsSubmitting(false);
-        return;
-      }
-
-      await submitContribution(data, actualVinId, user.id);
-
-    } catch (error) {
-      console.error("Error submitting contribution:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de l'envoi",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleVerificationSubmit = async () => {
-    if (!verificationDocument || !verificationDocumentType) {
-      toast({
-        title: "Formulaire incomplet",
-        description: "Veuillez sélectionner un type et téléverser un document",
-        variant: "destructive",
-      });
+  const handleSubmit = async () => {
+    if (!w.description || w.description.trim().length < 10) {
+      toast({ title: "Description requise", description: "Minimum 10 caractères", variant: "destructive" });
       return;
     }
 
     setIsSubmitting(true);
-
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -578,63 +382,55 @@ export function ContributionForm({
         }
       }
 
-      const filePath = `${user.id}/${actualVinId}/${Date.now()}_${verificationDocument.name}`;
-      const { error: uploadError } = await supabase.storage.from("owner-verification-docs").upload(filePath, verificationDocument);
-      if (uploadError) throw uploadError;
-
-      const { error: insertError } = await supabase.from("owner_verifications").insert({
-        user_id: user.id,
-        vin_id: actualVinId,
-        document_path: filePath,
-        document_type: verificationDocumentType,
-        verification_status: "pending",
-      });
-
-      if (insertError) {
-        if (insertError.code === "23505") {
-          toast({ title: "Demande existante", description: "Une demande de vérification existe déjà pour ce véhicule", variant: "destructive" });
-          return;
-        }
-        throw insertError;
+      if (isOwnerClaim && ownerVerificationStatus === "none") {
+        setShowVerification(true);
+        setIsSubmitting(false);
+        return;
       }
 
-      setOwnerVerificationStatus('pending');
-
-      if (pendingContributionData) {
-        await submitContribution(pendingContributionData, actualVinId, user.id);
-      }
-
-      toast({ title: "Contribution et vérification envoyées", description: "Votre statut de propriétaire sera vérifié sous peu." });
-
+      await submitContribution(actualVinId, user.id);
     } catch (error) {
-      console.error("Error submitting verification:", error);
+      console.error("Error submitting contribution:", error);
       toast({ title: "Erreur", description: "Une erreur est survenue lors de l'envoi", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const skipVerification = async () => {
-    if (!pendingContributionData) return;
+  const handleVerificationSubmit = async () => {
+    if (!verificationDocument || !verificationDocumentType) {
+      toast({ title: "Formulaire incomplet", description: "Veuillez sélectionner un type et téléverser un document", variant: "destructive" });
+      return;
+    }
     setIsSubmitting(true);
-
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
       let actualVinId = vinId;
       if (!actualVinId) {
         const { data: existingVin } = await supabase.from("vins").select("id").eq("vin", vin).maybeSingle();
-        if (existingVin) {
-          actualVinId = existingVin.id;
-        } else {
+        if (existingVin) { actualVinId = existingVin.id; }
+        else {
           const { data: newVin, error: vinError } = await supabase.from("vins").insert({ vin }).select("id").single();
           if (vinError) throw vinError;
           actualVinId = newVin.id;
         }
       }
-
-      await submitContribution(pendingContributionData, actualVinId, user.id);
+      const filePath = `${user.id}/${actualVinId}/${Date.now()}_${verificationDocument.name}`;
+      await supabase.storage.from("owner-verification-docs").upload(filePath, verificationDocument);
+      const { error: insertError } = await supabase.from("owner_verifications").insert({
+        user_id: user.id, vin_id: actualVinId, document_path: filePath,
+        document_type: verificationDocumentType, verification_status: "pending",
+      });
+      if (insertError) {
+        if (insertError.code === "23505") {
+          toast({ title: "Demande existante", description: "Une demande existe déjà", variant: "destructive" });
+          return;
+        }
+        throw insertError;
+      }
+      setOwnerVerificationStatus("pending");
+      await submitContribution(actualVinId!, user.id);
     } catch (error) {
       console.error("Error:", error);
       toast({ title: "Erreur", description: "Une erreur est survenue", variant: "destructive" });
@@ -643,14 +439,160 @@ export function ContributionForm({
     }
   };
 
-  // Generate year options (current year down to 1980)
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: currentYear - 1979 }, (_, i) => String(currentYear - i));
+  const skipVerification = async () => {
+    setIsSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      let actualVinId = vinId;
+      if (!actualVinId) {
+        const { data: existingVin } = await supabase.from("vins").select("id").eq("vin", vin).maybeSingle();
+        if (existingVin) { actualVinId = existingVin.id; }
+        else {
+          const { data: newVin, error: vinError } = await supabase.from("vins").insert({ vin }).select("id").single();
+          if (vinError) throw vinError;
+          actualVinId = newVin.id;
+        }
+      }
+      await submitContribution(actualVinId!, user.id);
+    } catch (error) {
+      console.error("Error:", error);
+      toast({ title: "Erreur", description: "Une erreur est survenue", variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-  const showHolderField = typesWithHolder.includes(contributionType);
+  // ─── Step navigation ─────────────────────────────────────────────
 
-  // Verification step UI
-  if (currentStep === 'verification') {
+  const canProceedStep1 = !!w.profile;
+  const canProceedStep2 = !!w.category;
+  const canProceedStep3 = w.description.trim().length >= 10;
+
+  const goNext = () => {
+    if (step < 4) setStep((s) => (s + 1) as WizardStep);
+  };
+  const goBack = () => {
+    if (step > 1) setStep((s) => (s - 1) as WizardStep);
+  };
+
+  // ─── Render helpers ──────────────────────────────────────────────
+
+  const OptionButton = ({ selected, onClick, icon: Icon, label, description }: {
+    selected: boolean; onClick: () => void; icon?: any; label: string; description?: string;
+  }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${
+        selected
+          ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+          : "border-border hover:border-muted-foreground/50 bg-muted/20"
+      }`}
+    >
+      {Icon && <Icon className={`w-5 h-5 shrink-0 ${selected ? "text-primary" : "text-muted-foreground"}`} />}
+      <div className="min-w-0">
+        <p className={`font-medium text-sm ${selected ? "text-primary" : "text-foreground"}`}>{label}</p>
+        {description && <p className="text-xs text-muted-foreground">{description}</p>}
+      </div>
+      {selected && <CheckCircle className="w-4 h-4 text-primary ml-auto shrink-0" />}
+    </button>
+  );
+
+  const DateSelector = ({ label }: { label: string }) => (
+    <div className="space-y-2">
+      <Label className="text-sm font-semibold">{label}</Label>
+      <div className="grid grid-cols-2 gap-3">
+        <Select onValueChange={(v) => updateW({ dateMonth: v })} value={w.dateMonth}>
+          <SelectTrigger className="bg-muted/30"><SelectValue placeholder="Mois" /></SelectTrigger>
+          <SelectContent>
+            {months.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select onValueChange={(v) => updateW({ dateYear: v })} value={w.dateYear}>
+          <SelectTrigger className="bg-muted/30"><SelectValue placeholder="Année" /></SelectTrigger>
+          <SelectContent>
+            {yearOptions.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+
+  const MileageField = () => (
+    <div className="space-y-2">
+      <Label className="text-sm font-semibold">
+        Kilométrage <span className="text-muted-foreground font-normal">— optionnel</span>
+      </Label>
+      <Input
+        value={w.mileage}
+        onChange={(e) => updateW({ mileage: e.target.value })}
+        placeholder="Ex: 124500"
+        type="number"
+        min="0"
+        max="9999999"
+        className="bg-muted/30"
+      />
+    </div>
+  );
+
+  const HolderSelector = () => (
+    <div className="space-y-2">
+      <Label className="text-sm font-semibold">Qui détient actuellement le véhicule ?</Label>
+      <div className="grid grid-cols-2 gap-2">
+        {(["concessionnaire", "depot_vente", "particulier", "inconnu"] as const).map((ht) => {
+          const labels: Record<string, string> = { concessionnaire: "Concessionnaire", depot_vente: "Dépôt-vente", particulier: "Particulier", inconnu: "Inconnu" };
+          return (
+            <button
+              key={ht}
+              type="button"
+              onClick={() => updateW({ holderType: w.holderType === ht ? "" : ht })}
+              className={`p-2.5 rounded-lg border text-sm text-center transition-all ${
+                w.holderType === ht
+                  ? "border-primary bg-primary/10 text-primary font-medium"
+                  : "border-border hover:border-muted-foreground/50 bg-muted/20 text-foreground"
+              }`}
+            >
+              {labels[ht]}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const DealerNameField = () => {
+    if (w.holderType !== "concessionnaire") return null;
+    return (
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold">Nom du concessionnaire</Label>
+        <Input
+          value={w.dealerName}
+          onChange={(e) => updateW({ dealerName: e.target.value })}
+          placeholder="Ex: Concessionnaire Volvo Montréal"
+          className="bg-muted/30"
+        />
+      </div>
+    );
+  };
+
+  const ProvinceField = () => (
+    <div className="space-y-2">
+      <Label className="text-sm font-semibold">
+        Province <span className="text-muted-foreground font-normal">— optionnel</span>
+      </Label>
+      <Select onValueChange={(v) => updateW({ province: v })} value={w.province}>
+        <SelectTrigger className="bg-muted/30"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+        <SelectContent>
+          {provinces.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
+  // ─── Verification step ───────────────────────────────────────────
+
+  if (showVerification) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto glass-strong">
@@ -659,31 +601,12 @@ export function ContributionForm({
               <Shield className="w-6 h-6 text-success" />
               Vérification de propriété
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              VIN: <span className="font-mono">{vin}</span>
-            </DialogDescription>
+            <DialogDescription>VIN: <span className="font-mono">{vin}</span></DialogDescription>
           </DialogHeader>
 
           <div className="bg-success/10 border border-success/30 rounded-xl p-4 space-y-2">
-            <p className="text-sm text-foreground font-medium">
-              Vous avez indiqué être propriétaire de ce véhicule.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Pour valider votre statut, téléversez un document prouvant votre propriété.
-              Cette vérification n'est demandée qu'une seule fois.
-            </p>
-          </div>
-
-          <div className="bg-muted/30 border border-border rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <FileText className="w-5 h-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Document confidentiel</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  🔒 Ce document n'est jamais publié. Il sert uniquement à valider votre statut de propriétaire.
-                </p>
-              </div>
-            </div>
+            <p className="text-sm font-medium">Vous avez indiqué être propriétaire de ce véhicule.</p>
+            <p className="text-sm text-muted-foreground">Téléversez un document prouvant votre propriété.</p>
           </div>
 
           <div className="space-y-4">
@@ -696,14 +619,10 @@ export function ContributionForm({
                     type="button"
                     onClick={() => setVerificationDocumentType(type.value)}
                     className={`p-3 rounded-xl border text-left transition-all ${
-                      verificationDocumentType === type.value
-                        ? "border-success bg-success/10"
-                        : "border-border hover:border-muted-foreground/50 bg-muted/30"
+                      verificationDocumentType === type.value ? "border-success bg-success/10" : "border-border hover:border-muted-foreground/50 bg-muted/30"
                     }`}
                   >
-                    <p className={`font-medium text-sm ${verificationDocumentType === type.value ? "text-success" : "text-foreground"}`}>
-                      {type.label}
-                    </p>
+                    <p className={`font-medium text-sm ${verificationDocumentType === type.value ? "text-success" : "text-foreground"}`}>{type.label}</p>
                     <p className="text-xs text-muted-foreground">{type.description}</p>
                   </button>
                 ))}
@@ -728,39 +647,26 @@ export function ContributionForm({
                       <p className="text-xs text-muted-foreground">{(verificationDocument.size / 1024).toFixed(1)} Ko</p>
                     </div>
                   </div>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setVerificationDocument(null)}>
-                    <X className="w-4 h-4" />
-                  </Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setVerificationDocument(null)}><X className="w-4 h-4" /></Button>
                 </div>
               )}
             </div>
           </div>
 
           <div className="flex flex-col gap-3 pt-4">
-            <Button
-              onClick={handleVerificationSubmit}
-              variant="hero"
-              className="w-full bg-success hover:bg-success/90"
-              disabled={isSubmitting || !verificationDocument || !verificationDocumentType}
-            >
-              {isSubmitting ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Envoi en cours...</>
-              ) : (
-                <><Shield className="w-4 h-4 mr-2" />Valider mon statut de propriétaire</>
-              )}
+            <Button onClick={handleVerificationSubmit} variant="hero" className="w-full bg-success hover:bg-success/90" disabled={isSubmitting || !verificationDocument || !verificationDocumentType}>
+              {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Envoi...</> : <><Shield className="w-4 h-4 mr-2" />Valider mon statut</>}
             </Button>
             <Button type="button" variant="ghost" onClick={skipVerification} disabled={isSubmitting} className="text-muted-foreground">
               Continuer sans vérification
             </Button>
           </div>
-
-          <p className="text-xs text-center text-muted-foreground">
-            La vérification vous identifie comme propriétaire et renforce la crédibilité de vos contributions.
-          </p>
         </DialogContent>
       </Dialog>
     );
   }
+
+  // ─── Main wizard ─────────────────────────────────────────────────
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -770,414 +676,361 @@ export function ContributionForm({
             {isOwnerClaim && <User className="w-6 h-6 text-success" />}
             Contribuer
           </DialogTitle>
-          <DialogDescription className="text-muted-foreground">
-            VIN: <span className="font-mono">{vin}</span>
-          </DialogDescription>
+          <DialogDescription>VIN: <span className="font-mono">{vin}</span></DialogDescription>
         </DialogHeader>
 
-        {/* Explanatory message */}
-        <div className="bg-muted/30 border border-border rounded-xl p-4">
-          <p className="text-sm text-foreground">
-            Décrivez simplement ce que vous avez observé.
-          </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            VLINKS vérifiera et publiera l'information si elle est pertinente.
-          </p>
-          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
-            <span>⏱️</span>
-            <span>Moins d'1 minute · Contribution anonyme possible</span>
-          </p>
+        {/* Progress */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>Étape {step} / 4</span>
+            <span>{step === 1 ? "Votre profil" : step === 2 ? "Type d'information" : step === 3 ? "Détails" : "Preuves"}</span>
+          </div>
+          <Progress value={(step / 4) * 100} className="h-1.5" />
         </div>
 
         {/* Owner claim badge */}
         {isOwnerClaim && (
           <div className="bg-success/10 border border-success/30 rounded-xl p-3 flex items-center gap-2">
             <User className="w-4 h-4 text-success" />
-            <p className="text-sm text-foreground font-medium">Vous contribuez en tant que propriétaire</p>
-            {ownerVerificationStatus === 'verified' && (
-              <Badge variant="verified" className="ml-auto">
-                <CheckCircle className="w-3 h-3 mr-1" />Vérifié
-              </Badge>
+            <p className="text-sm font-medium">Propriétaire</p>
+            {ownerVerificationStatus === "verified" && <Badge variant="verified" className="ml-auto"><CheckCircle className="w-3 h-3 mr-1" />Vérifié</Badge>}
+            {ownerVerificationStatus === "pending" && <Badge variant="info" className="ml-auto"><Shield className="w-3 h-3 mr-1" />En cours</Badge>}
+          </div>
+        )}
+
+        {/* ─── STEP 1: Profile ─── */}
+        {step === 1 && (
+          <div className="space-y-3">
+            <p className="text-sm font-semibold">Qui êtes-vous ?</p>
+            <div className="space-y-2">
+              <OptionButton selected={w.profile === "buyer"} onClick={() => updateW({ profile: "buyer" })} icon={ShoppingCart} label="Acheteur / prospect" description="Vous envisagez d'acheter ce véhicule" />
+              <OptionButton selected={w.profile === "current_owner"} onClick={() => updateW({ profile: "current_owner" })} icon={UserCheck} label="Propriétaire actuel" description="Vous possédez actuellement ce véhicule" />
+              <OptionButton selected={w.profile === "former_owner"} onClick={() => updateW({ profile: "former_owner" })} icon={User} label="Ancien propriétaire" description="Vous avez possédé ce véhicule" />
+              <OptionButton selected={w.profile === "professional"} onClick={() => updateW({ profile: "professional" })} icon={Wrench} label="Professionnel automobile" description="Mécanicien, concessionnaire, inspecteur..." />
+              <OptionButton selected={w.profile === "other"} onClick={() => updateW({ profile: "other" })} icon={HelpCircle} label="Autre" description="Voisin, ami, passant..." />
+            </div>
+          </div>
+        )}
+
+        {/* ─── STEP 2: Category ─── */}
+        {step === 2 && (
+          <div className="space-y-3">
+            <p className="text-sm font-semibold">Que souhaitez-vous partager ?</p>
+            <div className="space-y-2">
+              <OptionButton selected={w.category === "observation"} onClick={() => updateW({ category: "observation" })} icon={Eye} label="Observation sur le véhicule" description="Ce que vous avez constaté sur place" />
+              <OptionButton selected={w.category === "document"} onClick={() => updateW({ category: "document" })} icon={FileSearch} label="Document ou rapport" description="Inspection, facture, historique..." />
+              <OptionButton selected={w.category === "exchange"} onClick={() => updateW({ category: "exchange" })} icon={MessageCircle} label="Échange avec une personne" description="Vendeur, mécanicien, concessionnaire..." />
+              <OptionButton selected={w.category === "event"} onClick={() => updateW({ category: "event" })} icon={CalendarDays} label="Événement du véhicule" description="Vente, changement de prix, propriétaire..." />
+            </div>
+          </div>
+        )}
+
+        {/* ─── STEP 3: Specific questions ─── */}
+        {step === 3 && (
+          <div className="space-y-4">
+            {/* ── Observation ── */}
+            {w.category === "observation" && (
+              <>
+                <DateSelector label="Date de l'observation" />
+                <MileageField />
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Description de ce que vous avez observé *</Label>
+                  <Textarea
+                    value={w.description}
+                    onChange={(e) => updateW({ description: e.target.value })}
+                    placeholder="Ex: Jantes avant abîmées côté passager, traces de rouille sous le châssis..."
+                    rows={4}
+                    className="bg-muted/30 resize-none"
+                  />
+                </div>
+              </>
             )}
-            {ownerVerificationStatus === 'pending' && (
-              <Badge variant="info" className="ml-auto">
-                <Shield className="w-3 h-3 mr-1" />En cours
-              </Badge>
+
+            {/* ── Document ── */}
+            {w.category === "document" && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Type de document</Label>
+                  <div className="space-y-2">
+                    <OptionButton selected={w.documentSubType === "inspection_report"} onClick={() => updateW({ documentSubType: "inspection_report" })} label="Rapport d'inspection" />
+                    <OptionButton selected={w.documentSubType === "invoice"} onClick={() => updateW({ documentSubType: "invoice" })} label="Facture d'entretien" />
+                    <OptionButton selected={w.documentSubType === "vehicle_history"} onClick={() => updateW({ documentSubType: "vehicle_history" })} label="Historique véhicule" />
+                    <OptionButton selected={w.documentSubType === "other_document"} onClick={() => updateW({ documentSubType: "other_document" })} label="Autre document" />
+                  </div>
+                </div>
+                <DateSelector label="Date du document" />
+                <MileageField />
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Description *</Label>
+                  <Textarea
+                    value={w.description}
+                    onChange={(e) => updateW({ description: e.target.value })}
+                    placeholder="Ex: Rapport d'inspection complet réalisé par CAA Québec..."
+                    rows={3}
+                    className="bg-muted/30 resize-none"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* ── Exchange ── */}
+            {w.category === "exchange" && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Avec qui ?</Label>
+                  <div className="space-y-2">
+                    <OptionButton selected={w.exchangeSubType === "seller"} onClick={() => updateW({ exchangeSubType: "seller" })} label="Vendeur" />
+                    <OptionButton selected={w.exchangeSubType === "mechanic"} onClick={() => updateW({ exchangeSubType: "mechanic" })} label="Mécanicien" />
+                    <OptionButton selected={w.exchangeSubType === "dealer"} onClick={() => updateW({ exchangeSubType: "dealer" })} label="Concessionnaire" />
+                    <OptionButton selected={w.exchangeSubType === "other_person"} onClick={() => updateW({ exchangeSubType: "other_person" })} label="Autre" />
+                  </div>
+                </div>
+                <DateSelector label="Date de l'échange" />
+                <MileageField />
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Sujet discuté *</Label>
+                  <Textarea
+                    value={w.description}
+                    onChange={(e) => updateW({ description: e.target.value })}
+                    placeholder="Ex: Le vendeur mentionne un changement de courroie récent..."
+                    rows={3}
+                    className="bg-muted/30 resize-none"
+                  />
+                </div>
+                {/* Seller type (if exchange with seller) */}
+                {w.exchangeSubType === "seller" && (
+                  <>
+                    <HolderSelector />
+                    <DealerNameField />
+                    {w.holderType === "concessionnaire" && <ProvinceField />}
+                  </>
+                )}
+              </>
+            )}
+
+            {/* ── Event ── */}
+            {w.category === "event" && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Type d'événement</Label>
+                  <div className="space-y-2">
+                    <OptionButton selected={w.eventSubType === "ownership_change"} onClick={() => updateW({ eventSubType: "ownership_change" })} label="Changement de propriétaire" />
+                    <OptionButton selected={w.eventSubType === "for_sale"} onClick={() => updateW({ eventSubType: "for_sale" })} label="Mise en vente" />
+                    <OptionButton selected={w.eventSubType === "price_change"} onClick={() => updateW({ eventSubType: "price_change" })} label="Modification du prix" />
+                    <OptionButton selected={w.eventSubType === "current_status"} onClick={() => updateW({ eventSubType: "current_status" })} label="Statut actuel du véhicule" />
+                  </div>
+                </div>
+
+                {/* Ownership change */}
+                {w.eventSubType === "ownership_change" && (
+                  <>
+                    <DateSelector label="Date de la transaction" />
+                    <MileageField />
+                    <HolderSelector />
+                    <DealerNameField />
+                    <ProvinceField />
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Description *</Label>
+                      <Textarea
+                        value={w.description}
+                        onChange={(e) => updateW({ description: e.target.value })}
+                        placeholder="Ex: Véhicule vendu par Uslynn Auto..."
+                        rows={3}
+                        className="bg-muted/30 resize-none"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* For sale */}
+                {w.eventSubType === "for_sale" && (
+                  <>
+                    <DateSelector label="Date de mise en vente" />
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Prix demandé ($) <span className="text-muted-foreground font-normal">— optionnel</span></Label>
+                      <Input value={w.askingPrice} onChange={(e) => updateW({ askingPrice: e.target.value })} placeholder="Ex: 36900" type="number" min="0" className="bg-muted/30" />
+                    </div>
+                    <ProvinceField />
+                    <HolderSelector />
+                    <DealerNameField />
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Lien vers l'annonce <span className="text-muted-foreground font-normal">— optionnel</span></Label>
+                      <Input value={w.listingUrl} onChange={(e) => updateW({ listingUrl: e.target.value })} placeholder="Ex: https://www.autohebdo.net/..." type="url" className="bg-muted/30" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Description *</Label>
+                      <Textarea
+                        value={w.description}
+                        onChange={(e) => updateW({ description: e.target.value })}
+                        placeholder="Ex: En vente chez Uslynn Auto, véhicule affiché sur AutoHebdo..."
+                        rows={3}
+                        className="bg-muted/30 resize-none"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Price change */}
+                {w.eventSubType === "price_change" && (
+                  <>
+                    <DateSelector label="Date de modification du prix" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold">Ancien prix ($)</Label>
+                        <Input value={w.oldPrice} onChange={(e) => updateW({ oldPrice: e.target.value })} placeholder="Ex: 39900" type="number" min="0" className="bg-muted/30" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold">Nouveau prix ($)</Label>
+                        <Input value={w.askingPrice} onChange={(e) => updateW({ askingPrice: e.target.value })} placeholder="Ex: 36900" type="number" min="0" className="bg-muted/30" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Contexte *</Label>
+                      <Textarea
+                        value={w.description}
+                        onChange={(e) => updateW({ description: e.target.value })}
+                        placeholder="Ex: Annonce AutoTrader mise à jour avec baisse de prix..."
+                        rows={3}
+                        className="bg-muted/30 resize-none"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Current status */}
+                {w.eventSubType === "current_status" && (
+                  <>
+                    <HolderSelector />
+                    <DealerNameField />
+                    {w.holderType === "concessionnaire" && <ProvinceField />}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Description *</Label>
+                      <Textarea
+                        value={w.description}
+                        onChange={(e) => updateW({ description: e.target.value })}
+                        placeholder="Ex: Le véhicule est actuellement chez un concessionnaire..."
+                        rows={3}
+                        className="bg-muted/30 resize-none"
+                      />
+                    </div>
+                  </>
+                )}
+              </>
             )}
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          {/* 1. Contribution Type */}
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold">Type de contribution *</Label>
-            <div className="grid grid-cols-1 gap-2">
-              {contributionTypes.map((type) => {
-                const Icon = type.icon;
-                const isSelected = contributionType === type.value;
-                return (
-                  <button
-                    key={type.value}
-                    type="button"
-                    onClick={() => setValue("contribution_type", type.value)}
-                    className={`p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${
-                      isSelected
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-muted-foreground/50 bg-muted/20"
-                    }`}
-                  >
-                    <Icon className={`w-4 h-4 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
-                    <div>
-                      <p className={`font-medium text-sm ${isSelected ? "text-primary" : "text-foreground"}`}>
-                        {type.label}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{type.description}</p>
+        {/* ─── STEP 4: Evidence ─── */}
+        {step === 4 && (
+          <div className="space-y-4">
+            <p className="text-sm font-semibold">Preuve disponible ?</p>
+            <div className="space-y-2">
+              <OptionButton selected={w.evidenceType === "photo"} onClick={() => updateW({ evidenceType: "photo" })} icon={Camera} label="Photo" description="Ajouter des photos du véhicule" />
+              <OptionButton selected={w.evidenceType === "document"} onClick={() => updateW({ evidenceType: "document" })} icon={FileText} label="Document" description="PDF, facture, rapport..." />
+              <OptionButton selected={w.evidenceType === "none"} onClick={() => updateW({ evidenceType: "none" })} label="Aucune preuve" description="Continuer sans pièce jointe" />
+            </div>
+
+            {w.evidenceType === "photo" && (
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold flex items-center gap-2">
+                  <Camera className="w-4 h-4" /> Photos ({photos.length}/10)
+                </Label>
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                  {photos.map((photo, index) => (
+                    <div key={index} className="relative group aspect-square">
+                      <img src={URL.createObjectURL(photo)} alt={`Photo ${index + 1}`} className="w-full h-full object-cover rounded-lg border border-border" />
+                      <button type="button" onClick={() => setPhotos((prev) => prev.filter((_, i) => i !== index))} className="absolute -top-2 -right-2 p-1 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                        <X className="w-3 h-3" />
+                      </button>
                     </div>
-                  </button>
-                );
-              })}
-            </div>
-            {errors.contribution_type && (
-              <p className="text-sm text-destructive">Veuillez sélectionner un type</p>
+                  ))}
+                  {photos.length < 10 && (
+                    <label className="aspect-square flex flex-col items-center justify-center rounded-lg border border-dashed border-border hover:border-primary cursor-pointer transition-colors">
+                      <ImageIcon className="w-6 h-6 text-muted-foreground mb-1" />
+                      <span className="text-xs text-muted-foreground">Ajouter</span>
+                      <input type="file" className="hidden" onChange={handlePhotoUpload} accept="image/*" multiple />
+                    </label>
+                  )}
+                </div>
+              </div>
             )}
-          </div>
 
-          {/* Date selector for ownership_change and for_sale */}
-          {typesWithDate.includes(contributionType) && (
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold">
-                {contributionType === "ownership_change" ? "Date du changement de propriétaire"
-                  : contributionType === "price_change" ? "Date de modification du prix"
-                  : "Date de mise en vente"}
-              </Label>
-              <div className="grid grid-cols-2 gap-3">
-                <Select onValueChange={(v) => setValue("ownership_month", v)} value={watch("ownership_month") || ""}>
-                  <SelectTrigger className="bg-muted/30">
-                    <SelectValue placeholder="Mois" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {months.map((m) => (
-                      <SelectItem key={m} value={m}>{m}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select onValueChange={(v) => setValue("ownership_year", v)} value={watch("ownership_year") || ""}>
-                  <SelectTrigger className="bg-muted/30">
-                    <SelectValue placeholder="Année" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {yearOptions.map((y) => (
-                      <SelectItem key={y} value={y}>{y}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {w.evidenceType === "document" && (
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold flex items-center gap-2">
+                  <File className="w-4 h-4" /> Documents ({documents.length}/5)
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  {documents.map((doc, index) => (
+                    <div key={index} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
+                      <FileText className="w-4 h-4 text-primary" />
+                      <span className="text-sm truncate max-w-[150px]">{doc.name}</span>
+                      <button type="button" onClick={() => setDocuments((prev) => prev.filter((_, i) => i !== index))} className="text-muted-foreground hover:text-destructive">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  {documents.length < 5 && (
+                    <label className="flex items-center gap-2 px-4 py-2 rounded-lg border border-dashed border-border hover:border-primary cursor-pointer transition-colors">
+                      <Upload className="w-4 h-4" />
+                      <span className="text-sm">Ajouter</span>
+                      <input type="file" className="hidden" onChange={handleDocumentUpload} accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png" multiple />
+                    </label>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">🔒 Les documents servent uniquement de preuves internes.</p>
               </div>
-            </div>
-          )}
-
-          {/* 2. Observation principale */}
-          <div className="space-y-2">
-            <Label htmlFor="observation" className="text-sm font-semibold">
-              {contributionType === "ownership_change"
-                ? "Vendeur ou ancien propriétaire *"
-                : contributionType === "for_sale"
-                ? "Description de la mise en vente *"
-                : contributionType === "price_change"
-                ? "Contexte de la modification de prix *"
-                : "Qu'avez-vous observé ou appris concernant ce véhicule ? *"}
-            </Label>
-            <Textarea
-              id="observation"
-              {...register("observation")}
-              placeholder={
-                contributionType === "ownership_change"
-                  ? "Ex: Uslynn Auto, Concessionnaire Volvo Montréal, Particulier..."
-                  : contributionType === "for_sale"
-                  ? "Ex: En vente chez Uslynn Auto, véhicule affiché sur AutoHebdo..."
-                  : contributionType === "price_change"
-                  ? "Ex: Annonce AutoTrader mise à jour avec baisse de prix..."
-                  : "Ex: Jantes avant abîmées côté passager, traces de rouille sous le châssis, le vendeur mentionne un changement de courroie..."
-              }
-              rows={contributionType === "ownership_change" || contributionType === "for_sale" || contributionType === "price_change" ? 3 : 4}
-              className="bg-muted/30 resize-none"
-            />
-            {errors.observation && (
-              <p className="text-sm text-destructive">{errors.observation.message}</p>
             )}
-          </div>
 
-          {/* Holder type field (for ownership_change and observation) */}
-          {showHolderField && (
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold">
-                Qui détient actuellement le véhicule ?
-                <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
-              </Label>
-              <div className="grid grid-cols-2 gap-2">
-                {holderTypes.map((ht) => {
-                  const isSelected = holderType === ht.value;
-                  return (
-                    <button
-                      key={ht.value}
-                      type="button"
-                      onClick={() => setValue("holder_type", isSelected ? "" : ht.value)}
-                      className={`p-2.5 rounded-lg border text-sm text-center transition-all ${
-                        isSelected
-                          ? "border-primary bg-primary/10 text-primary font-medium"
-                          : "border-border hover:border-muted-foreground/50 bg-muted/20 text-foreground"
-                      }`}
-                    >
-                      {ht.label}
-                    </button>
-                  );
-                })}
+            {/* Anonymous toggle */}
+            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border">
+              <div>
+                <Label className="font-medium text-sm">Contribution anonyme</Label>
+                <p className="text-xs text-muted-foreground">Votre nom ne sera pas affiché</p>
               </div>
-            </div>
-          )}
-
-          {/* Dealer name (only if holder_type === concessionnaire) */}
-          {showHolderField && holderType === "concessionnaire" && (
-            <div className="space-y-2">
-              <Label htmlFor="dealer_name" className="text-sm font-semibold">
-                Nom du concessionnaire
-                <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
-              </Label>
-              <Input
-                id="dealer_name"
-                {...register("dealer_name")}
-                placeholder="Ex: Concessionnaire Volvo Montréal"
-                className="bg-muted/30"
-              />
-            </div>
-          )}
-
-          {/* Mileage */}
-          <div className="space-y-2">
-            <Label htmlFor="mileage" className="text-sm font-semibold">
-              Kilométrage du véhicule
-              <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
-            </Label>
-            <Input
-              id="mileage"
-              {...register("mileage")}
-              placeholder="Ex: 124500"
-              type="number"
-              min="0"
-              max="9999999"
-              className="bg-muted/30"
-            />
-          </div>
-
-          {/* Province */}
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold">
-              Province
-              <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
-            </Label>
-            <Select onValueChange={(v) => setValue("province", v)} value={watch("province") || ""}>
-              <SelectTrigger className="bg-muted/30">
-                <SelectValue placeholder="Sélectionner une province" />
-              </SelectTrigger>
-              <SelectContent>
-                {provinces.map((p) => (
-                  <SelectItem key={p} value={p}>{p}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* For sale specific: Price and listing URL */}
-          {contributionType === "for_sale" && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="asking_price" className="text-sm font-semibold">
-                  Prix demandé ($)
-                  <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
-                </Label>
-                <Input
-                  id="asking_price"
-                  {...register("asking_price")}
-                  placeholder="Ex: 36900"
-                  type="number"
-                  min="0"
-                  max="99999999"
-                  className="bg-muted/30"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="listing_url" className="text-sm font-semibold">
-                  Lien vers l'annonce
-                  <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
-                </Label>
-                <Input
-                  id="listing_url"
-                  {...register("listing_url")}
-                  placeholder="Ex: https://www.autohebdo.net/..."
-                  type="url"
-                  className="bg-muted/30"
-                />
-                {errors.listing_url && (
-                  <p className="text-sm text-destructive">{errors.listing_url.message}</p>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* Price change specific: Old price and New price */}
-          {contributionType === "price_change" && (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="old_price" className="text-sm font-semibold">
-                    Ancien prix ($)
-                  </Label>
-                  <Input
-                    id="old_price"
-                    {...register("old_price")}
-                    placeholder="Ex: 39900"
-                    type="number"
-                    min="0"
-                    max="99999999"
-                    className="bg-muted/30"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="asking_price" className="text-sm font-semibold">
-                    Nouveau prix ($)
-                  </Label>
-                  <Input
-                    id="asking_price"
-                    {...register("asking_price")}
-                    placeholder="Ex: 36900"
-                    type="number"
-                    min="0"
-                    max="99999999"
-                    className="bg-muted/30"
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2 text-sm font-semibold">
-              <Camera className="w-4 h-4" />
-              Photos ({photos.length}/10)
-              <span className="text-muted-foreground font-normal">— optionnel</span>
-            </Label>
-            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-              {photos.map((photo, index) => (
-                <div key={index} className="relative group aspect-square">
-                  <img
-                    src={URL.createObjectURL(photo)}
-                    alt={`Photo ${index + 1}`}
-                    className="w-full h-full object-cover rounded-lg border border-border"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removePhoto(index)}
-                    className="absolute -top-2 -right-2 p-1 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-              {photos.length < 10 && (
-                <label className="aspect-square flex flex-col items-center justify-center rounded-lg border border-dashed border-border hover:border-primary cursor-pointer transition-colors">
-                  <ImageIcon className="w-6 h-6 text-muted-foreground mb-1" />
-                  <span className="text-xs text-muted-foreground">Ajouter</span>
-                  <input type="file" className="hidden" onChange={handlePhotoUpload} accept="image/*" multiple />
-                </label>
-              )}
+              <Switch checked={w.isAnonymous} onCheckedChange={(checked) => updateW({ isAnonymous: checked })} />
             </div>
           </div>
+        )}
 
-          {/* 4. Documents (optional) */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2 text-sm font-semibold">
-              <File className="w-4 h-4" />
-              Documents ({documents.length}/5)
-              <span className="text-muted-foreground font-normal">— optionnel</span>
-            </Label>
-            <div className="flex flex-wrap gap-2">
-              {documents.map((doc, index) => (
-                <div key={index} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
-                  <FileText className="w-4 h-4 text-primary" />
-                  <span className="text-sm truncate max-w-[150px]">{doc.name}</span>
-                  <button type="button" onClick={() => removeDocument(index)} className="text-muted-foreground hover:text-destructive">
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-              {documents.length < 5 && (
-                <label className="flex items-center gap-2 px-4 py-2 rounded-lg border border-dashed border-border hover:border-primary cursor-pointer transition-colors">
-                  <Upload className="w-4 h-4" />
-                  <span className="text-sm">Ajouter</span>
-                  <input type="file" className="hidden" onChange={handleDocumentUpload} accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png" multiple />
-                </label>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              🔒 Les documents ne sont jamais publiés. Ils servent uniquement de preuves internes.
-            </p>
-          </div>
-
-          {/* 5. Context (optional) */}
-          <div className="space-y-2">
-            <Label htmlFor="context" className="text-sm font-semibold">
-              {contributionType === "ownership_change" || contributionType === "for_sale" || contributionType === "price_change"
-                ? "Contexte ou information complémentaire"
-                : "Dans quel contexte avez-vous obtenu cette information ?"}
-              <span className="text-muted-foreground font-normal ml-1">— optionnel</span>
-            </Label>
-            <Input
-              id="context"
-              {...register("context")}
-              placeholder={
-                contributionType === "ownership_change"
-                  ? "Ex: Le véhicule était en vente chez Uslynn Auto et a été vendu en février 2026."
-                  : contributionType === "for_sale"
-                  ? "Ex: Véhicule affiché depuis janvier 2026 chez le concessionnaire."
-                  : contributionType === "price_change"
-                  ? "Ex: Annonce AutoTrader mise à jour avec baisse de prix."
-                  : "Ex: visite du véhicule, inspection mécanique, discussion avec vendeur..."
-              }
-              className="bg-muted/30"
-            />
-          </div>
-
-          {/* Anonymous Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border">
-            <div>
-              <Label htmlFor="anonymous" className="font-medium text-sm">Contribution anonyme</Label>
-              <p className="text-xs text-muted-foreground">Votre nom ne sera pas affiché</p>
-            </div>
-            <Switch
-              id="anonymous"
-              checked={watch("is_anonymous")}
-              onCheckedChange={(checked) => setValue("is_anonymous", checked)}
-            />
-          </div>
-
-          {/* Submit */}
-          <div className="flex gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1" disabled={isSubmitting}>
+        {/* ─── Navigation ─── */}
+        <div className="flex gap-3 pt-2">
+          {step > 1 ? (
+            <Button type="button" variant="outline" onClick={goBack} className="flex-1">
+              <ArrowLeft className="w-4 h-4 mr-2" /> Retour
+            </Button>
+          ) : (
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
               Annuler
             </Button>
+          )}
+
+          {step < 4 ? (
             <Button
-              type="submit"
+              type="button"
               variant="hero"
-              disabled={isSubmitting}
-              className={`flex-1 ${isOwnerClaim ? 'bg-success hover:bg-success/90' : ''}`}
+              onClick={goNext}
+              disabled={
+                (step === 1 && !canProceedStep1) ||
+                (step === 2 && !canProceedStep2) ||
+                (step === 3 && !canProceedStep3)
+              }
+              className="flex-1"
             >
-              {isSubmitting ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Envoi...</>
-              ) : (
-                "Envoyer"
-              )}
+              Suivant <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-          </div>
-        </form>
+          ) : (
+            <Button
+              type="button"
+              variant="hero"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className={`flex-1 ${isOwnerClaim ? "bg-success hover:bg-success/90" : ""}`}
+            >
+              {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Envoi...</> : "Envoyer"}
+            </Button>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -2,12 +2,9 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, X, LogOut, User, Search, Shield } from "lucide-react";
+import { Menu, X, LogOut, User, Search, Shield, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
-import { useLanguage } from "@/hooks/useLanguage";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
-import vlinksLogo from "@/assets/vlinks-logo.svg";
 import vlinksIcon from "@/assets/vlinks-icon.svg";
 import {
   DropdownMenu,
@@ -20,18 +17,9 @@ import {
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [vinSearch, setVinSearch] = useState("");
-  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
-  const { t } = useLanguage();
   const navigate = useNavigate();
-
-  const navLinks = [
-    { label: t("nav.home"), href: "/" },
-    { label: t("nav.howItWorks"), href: "/how-it-works" },
-    { label: t("nav.why"), href: "/why" },
-    { label: t("nav.pricing"), href: "/pricing" },
-  ];
 
   const handleSignOut = async () => {
     await signOut();
@@ -43,202 +31,135 @@ const Header = () => {
     if (vinSearch.trim()) {
       navigate(`/vin/${vinSearch.trim().toUpperCase()}`);
       setVinSearch("");
-      setIsSearchExpanded(false);
+      setIsMenuOpen(false);
     }
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 glass-strong">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center group">
-            <img 
-              src={vlinksLogo} 
-              alt="VLINKS Logo" 
-              className="h-10 md:h-12 w-auto transition-transform group-hover:scale-105"
+    <header className="fixed top-0 left-0 right-0 z-50 bg-card border-b border-border h-14">
+      <div className="h-full max-w-7xl mx-auto px-4 flex items-center gap-3">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2 shrink-0">
+          <img src={vlinksIcon} alt="VLINKS" className="h-7 w-auto" />
+          <span className="font-display font-bold text-lg text-foreground hidden sm:block">VLINKS</span>
+        </Link>
+
+        {/* VIN Search — always visible on desktop */}
+        <form onSubmit={handleVinSearch} className="hidden md:flex items-center flex-1 max-w-md ml-4">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Rechercher un VIN..."
+              value={vinSearch}
+              onChange={(e) => setVinSearch(e.target.value.toUpperCase())}
+              className="pl-9 h-9 text-sm font-mono bg-muted/50 border-border focus:border-primary"
+              maxLength={17}
             />
-          </Link>
+          </div>
+        </form>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-3">
-            {/* VIN Search - Expandable */}
-            <div 
-              className="relative"
-              onMouseEnter={() => setIsSearchExpanded(true)}
-              onMouseLeave={() => !vinSearch && setIsSearchExpanded(false)}
-            >
-              <form onSubmit={handleVinSearch} className="flex items-center">
-                <div className={`flex items-center transition-all duration-300 ease-in-out overflow-hidden ${isSearchExpanded ? 'w-48' : 'w-0'}`}>
-                  <Input
-                    type="text"
-                    placeholder="Rechercher un VIN..."
-                    value={vinSearch}
-                    onChange={(e) => setVinSearch(e.target.value.toUpperCase())}
-                    className="h-9 text-sm font-mono bg-muted/50 border-border/50 focus:border-primary"
-                    onFocus={() => setIsSearchExpanded(true)}
-                    onBlur={() => !vinSearch && setIsSearchExpanded(false)}
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  variant="ghost" 
-                  size="sm" 
-                  className="p-2 hover:bg-muted/50"
-                  onClick={() => !isSearchExpanded && setIsSearchExpanded(true)}
-                >
-                  <Search className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+        {/* Right actions */}
+        <div className="hidden md:flex items-center gap-2 ml-auto">
+          <Button variant="default" size="sm" onClick={() => navigate(user ? "/" : "/auth")}>
+            <Plus className="w-4 h-4 mr-1" />
+            Contribuer
+          </Button>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <User className="w-4 h-4" />
+                  <span className="hidden lg:inline">Mon compte</span>
                 </Button>
-              </form>
-            </div>
-            <LanguageSwitcher />
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-2">
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
                     <User className="w-4 h-4" />
-                    Mon compte
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
+                    Profil
+                  </Link>
+                </DropdownMenuItem>
+                {isAdmin && (
                   <DropdownMenuItem asChild>
-                    <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
-                      <User className="w-4 h-4" />
-                      {t("nav.profile")}
+                    <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
+                      <Shield className="w-4 h-4" />
+                      Administration
                     </Link>
                   </DropdownMenuItem>
-                  {isAdmin && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
-                        <Shield className="w-4 h-4" />
-                        Administration
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="text-danger cursor-pointer">
-                    <LogOut className="w-4 h-4 mr-2" />
-                    {t("nav.logout")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/auth">{t("nav.login")}</Link>
-                </Button>
-                <Button variant="hero" size="sm" asChild>
-                  <Link to="/auth">{t("nav.contribute")}</Link>
-                </Button>
-              </>
-            )}
-          </div>
-
-          {/* Mobile Menu Toggle */}
-          <button
-            className="md:hidden p-2 text-foreground"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="text-danger cursor-pointer">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Déconnexion
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/auth">Connexion</Link>
+            </Button>
+          )}
         </div>
 
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border/50 animate-fade-in-up">
-            <nav className="flex flex-col gap-2">
-              {/* Mobile VIN Search */}
-              <form onSubmit={handleVinSearch} className="flex items-center gap-2 px-4 py-2">
-                <Input
-                  type="text"
-                  placeholder="Rechercher un VIN..."
-                  value={vinSearch}
-                  onChange={(e) => setVinSearch(e.target.value.toUpperCase())}
-                  className="h-10 text-sm font-mono bg-muted/50 border-border/50"
-                />
-                <Button type="submit" size="sm" variant="ghost" className="p-2">
-                  <Search className="w-5 h-5" />
-                </Button>
-              </form>
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <div className="px-4 py-2">
-                <LanguageSwitcher />
-              </div>
-              <div className="flex flex-col gap-2 pt-4 mt-2 border-t border-border/50">
-                {user ? (
-                  <>
-                    <Link
-                      to="/profile"
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <User className="w-5 h-5" />
-                      {t("nav.profile")}
-                    </Link>
-                    {isAdmin && (
-                      <Link
-                        to="/admin"
-                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-primary hover:bg-primary/10 transition-colors"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <Shield className="w-5 h-5" />
-                        Administration
-                      </Link>
-                    )}
-                    <Button
-                      variant="ghost"
-                      className="justify-start text-danger"
-                      onClick={() => {
-                        handleSignOut();
-                        setIsMenuOpen(false);
-                      }}
-                    >
-                      <LogOut className="w-5 h-5 mr-2" />
-                      {t("nav.logout")}
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button variant="ghost" className="justify-start" asChild>
-                      <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
-                        {t("nav.login")}
-                      </Link>
-                    </Button>
-                    <Button variant="hero" className="justify-start" asChild>
-                      <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
-                        {t("nav.contribute")}
-                      </Link>
-                    </Button>
-                  </>
-                )}
-              </div>
-            </nav>
-          </div>
-        )}
+        {/* Mobile toggle */}
+        <button
+          className="md:hidden p-2 text-foreground ml-auto"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-label="Menu"
+        >
+          {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
       </div>
+
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <div className="md:hidden bg-card border-b border-border px-4 pb-4 animate-fade-in-up">
+          <form onSubmit={handleVinSearch} className="flex items-center gap-2 py-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Rechercher un VIN..."
+                value={vinSearch}
+                onChange={(e) => setVinSearch(e.target.value.toUpperCase())}
+                className="pl-9 h-10 text-sm font-mono"
+                maxLength={17}
+              />
+            </div>
+            <Button type="submit" size="sm">
+              <Search className="w-4 h-4" />
+            </Button>
+          </form>
+          <div className="flex flex-col gap-1">
+            <Link to="/how-it-works" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground rounded-md hover:bg-muted/50" onClick={() => setIsMenuOpen(false)}>
+              Comment ça marche
+            </Link>
+            <Link to="/why" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground rounded-md hover:bg-muted/50" onClick={() => setIsMenuOpen(false)}>
+              Pourquoi VLINKS
+            </Link>
+            {user ? (
+              <>
+                <Link to="/profile" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground rounded-md hover:bg-muted/50" onClick={() => setIsMenuOpen(false)}>
+                  Profil
+                </Link>
+                {isAdmin && (
+                  <Link to="/admin" className="px-3 py-2 text-sm text-primary hover:bg-accent rounded-md" onClick={() => setIsMenuOpen(false)}>
+                    Administration
+                  </Link>
+                )}
+                <button onClick={() => { handleSignOut(); setIsMenuOpen(false); }} className="px-3 py-2 text-sm text-danger text-left rounded-md hover:bg-danger/5">
+                  Déconnexion
+                </button>
+              </>
+            ) : (
+              <Link to="/auth" className="px-3 py-2 text-sm text-primary font-medium rounded-md hover:bg-accent" onClick={() => setIsMenuOpen(false)}>
+                Connexion
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 };

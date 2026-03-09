@@ -547,13 +547,37 @@ const VINDetail = () => {
                   </div>
                 )}
                 
+                {/* Timeline header */}
+                <div className="px-4 pt-3 pb-1">
+                  <p className="text-[11px] text-muted-foreground tracking-wide uppercase">Du plus récent au plus ancien</p>
+                </div>
+
                 {filteredContributions.length > 0 ? (
-                  <div className="divide-y divide-border">
-                    {filteredContributions.map(c => (
-                      <div key={c.id} className="p-4">
-                        <ContributionCard contribution={c} adminActions={<AdminActions contributionId={c.id} contribution={c} />} />
+                  <div className="p-4 pt-2">
+                    <div className="relative">
+                      {/* Vertical timeline line */}
+                      <div className="absolute left-[7px] top-3 bottom-3 w-px bg-border" />
+                      
+                      <div className="space-y-0">
+                        {filteredContributions.map((c, i) => {
+                          const isHighlight = ["inspection_report", "ownership_change", "for_sale", "vehicle_history"].includes(c.type);
+                          return (
+                            <div key={c.id} className="relative pl-8">
+                              {/* Timeline node */}
+                              <div className={`absolute left-0 top-5 z-10 rounded-full border-2 border-card ${
+                                isHighlight 
+                                  ? "w-[15px] h-[15px] bg-primary" 
+                                  : "w-[11px] h-[11px] bg-muted-foreground/40 ml-0.5"
+                              }`} style={isHighlight ? { left: '-2px' } : { left: '0px' }} />
+                              
+                              <div className={`py-2 ${i < filteredContributions.length - 1 ? '' : ''}`}>
+                                <ContributionCard contribution={c} adminActions={<AdminActions contributionId={c.id} contribution={c} />} />
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    ))}
+                    </div>
                   </div>
                 ) : (
                   <div className="p-12 text-center">

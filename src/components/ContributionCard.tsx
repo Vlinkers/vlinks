@@ -75,7 +75,7 @@ export function ContributionCard({ contribution, adminActions, compact }: Contri
   const displayText = expanded ? fullText : fullText.slice(0, TEXT_TRUNCATE_LENGTH);
 
   return (
-    <div className="p-4 rounded-lg bg-card border border-border shadow-card transition-colors hover:border-primary/20">
+    <div className="rounded-lg bg-muted/30 border border-border hover:border-primary/20 transition-all">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">

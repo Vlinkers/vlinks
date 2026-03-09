@@ -1,5 +1,5 @@
 import { 
-  CheckCircle, AlertTriangle, Loader2, Car, Settings, Fuel, Gauge, Clock
+  CheckCircle, AlertTriangle, Loader2, Car, Settings, Fuel, Gauge, Calendar
 } from "lucide-react";
 
 interface VINDecodeData {
@@ -30,9 +30,9 @@ export const VehicleIdentificationCard = ({
 }: VehicleIdentificationCardProps) => {
   if (isLoading) {
     return (
-      <div className="p-5 rounded-lg bg-card border border-border shadow-card mb-6">
-        <div className="flex items-center gap-3">
-          <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+      <div className="rounded-xl border border-border bg-card shadow-sm mb-5">
+        <div className="p-6 flex items-center gap-3">
+          <Loader2 className="w-5 h-5 text-primary animate-spin" />
           <span className="text-sm text-muted-foreground">Identification du véhicule...</span>
         </div>
       </div>
@@ -43,13 +43,15 @@ export const VehicleIdentificationCard = ({
 
   if (!vinDecode.is_valid) {
     return (
-      <div className="p-5 rounded-lg bg-danger/5 border border-danger/20 mb-6">
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-danger mt-0.5 flex-shrink-0" />
+      <div className="rounded-xl border border-danger/30 bg-danger/5 mb-5">
+        <div className="p-5 flex items-start gap-3">
+          <div className="w-10 h-10 rounded-lg bg-danger/10 flex items-center justify-center flex-shrink-0">
+            <AlertTriangle className="w-5 h-5 text-danger" />
+          </div>
           <div>
-            <p className="font-display font-semibold text-danger text-sm">VIN non reconnu</p>
+            <p className="font-display font-semibold text-danger">VIN non reconnu</p>
             <p className="text-sm text-muted-foreground mt-1">
-              {vinDecode.error_message || "Ce VIN ne correspond pas à un véhicule valide."}
+              {vinDecode.error_message || "Ce VIN ne correspond pas à un véhicule valide dans la base NHTSA."}
             </p>
           </div>
         </div>
@@ -57,47 +59,59 @@ export const VehicleIdentificationCard = ({
     );
   }
 
-  const vehicleName = [vinDecode.model_year, vinDecode.make, vinDecode.model, vinDecode.trim]
+  const vehicleName = [vinDecode.model_year, vinDecode.make, vinDecode.model]
     .filter(Boolean)
     .join(" ");
 
-  const detailItems: { label: string; value: string; icon: typeof Car }[] = [];
-  if (vinDecode.body_class) detailItems.push({ label: "Type", value: vinDecode.body_class, icon: Car });
-  if (vinDecode.engine) detailItems.push({ label: "Moteur", value: vinDecode.engine, icon: Settings });
-  if (vinDecode.drive_type) detailItems.push({ label: "Transmission", value: vinDecode.drive_type, icon: Gauge });
-  if (vinDecode.fuel_type) detailItems.push({ label: "Carburant", value: vinDecode.fuel_type, icon: Fuel });
-  if (vinDecode.model_year) detailItems.push({ label: "Année", value: String(vinDecode.model_year), icon: Clock });
+  const specs: { icon: typeof Car; value: string }[] = [];
+  if (vinDecode.trim) specs.push({ icon: Car, value: vinDecode.trim });
+  if (vinDecode.body_class) specs.push({ icon: Car, value: vinDecode.body_class });
+  if (vinDecode.engine) specs.push({ icon: Settings, value: vinDecode.engine });
+  if (vinDecode.drive_type) specs.push({ icon: Gauge, value: vinDecode.drive_type });
+  if (vinDecode.fuel_type) specs.push({ icon: Fuel, value: vinDecode.fuel_type });
 
   return (
-    <div className="rounded-lg bg-card border border-border shadow-card overflow-hidden mb-6">
-      <div className="p-5">
-        <div className="flex items-center gap-2 mb-1">
-          <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
-          <span className="text-xs font-medium text-success">VIN reconnu</span>
-          <span className="text-xs text-muted-foreground font-mono ml-auto">{vin}</span>
+    <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden mb-5">
+      {/* Main header */}
+      <div className="p-5 md:p-6">
+        {/* Status + VIN row */}
+        <div className="flex items-center justify-between gap-4 mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-success/10 flex items-center justify-center">
+              <CheckCircle className="w-3.5 h-3.5 text-success" />
+            </div>
+            <span className="text-xs font-medium text-success">Véhicule identifié</span>
+          </div>
+          <code className="text-xs font-mono text-muted-foreground bg-muted px-2 py-1 rounded-md">
+            {vin}
+          </code>
         </div>
 
-        <h1 className="font-display text-xl md:text-2xl font-bold text-foreground mt-2">
-          {vehicleName || "Véhicule identifié"}
+        {/* Vehicle name */}
+        <h1 className="font-display text-xl md:text-2xl font-bold text-foreground leading-tight">
+          {vehicleName || "Véhicule"}
         </h1>
 
+        {/* Last updated */}
         {lastUpdated && (
-          <p className="text-xs text-muted-foreground mt-1">Dernière mise à jour : {lastUpdated}</p>
+          <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
+            <Calendar className="w-3.5 h-3.5" />
+            <span>Mis à jour {lastUpdated}</span>
+          </div>
         )}
       </div>
 
-      {detailItems.length > 0 && (
-        <div className="px-5 pb-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1.5 pt-3 border-t border-border">
-            {detailItems.map((item) => (
-              <div key={item.label} className="flex items-center justify-between py-1">
-                <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <item.icon className="w-3.5 h-3.5" />
-                  {item.label}
-                </span>
-                <span className="text-xs font-medium text-foreground text-right truncate max-w-[55%]">
-                  {item.value}
-                </span>
+      {/* Specs bar */}
+      {specs.length > 0 && (
+        <div className="px-5 md:px-6 pb-5 md:pb-6">
+          <div className="flex flex-wrap gap-2">
+            {specs.slice(0, 4).map((spec, i) => (
+              <div 
+                key={i} 
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-muted text-xs text-muted-foreground"
+              >
+                <spec.icon className="w-3 h-3" />
+                <span className="truncate max-w-[140px]">{spec.value}</span>
               </div>
             ))}
           </div>

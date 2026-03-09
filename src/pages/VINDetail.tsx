@@ -11,14 +11,14 @@ import { PDFDownloadDialog } from "@/components/PDFDownloadDialog";
 import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { useVINDecode } from "@/hooks/useVINDecode";
 import { VehicleIdentificationCard } from "@/components/VehicleIdentificationCard";
-import { ContributionCard, getContributionIcon, getContributionLabel, getContributionColor } from "@/components/ContributionCard";
+import { ContributionCard, getContributionLabel } from "@/components/ContributionCard";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { useVINFollow } from "@/hooks/useVINFollow";
 import { useAdmin } from "@/hooks/useAdmin";
 import { 
   Shield, AlertTriangle, CheckCircle, FileText, ChevronRight, Clock, Camera,
   FileSearch, Eye, EyeOff, Plus, Loader2, User, FileDown, Star, Trash2,
-  ExternalLink, File
+  ExternalLink, File, ChevronDown
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,12 +29,12 @@ import type { PublicContribution, ContributionDocument } from "@/hooks/useVINDat
 function SignalProofs({ contributionIds, allContributions }: { contributionIds: string[]; allContributions: PublicContribution[] }) {
   const matched = allContributions.filter((c) => contributionIds.includes(c.id));
   if (matched.length === 0) {
-    return <p className="text-xs text-muted-foreground px-3 pb-3">Aucune preuve accessible.</p>;
+    return <p className="text-xs text-muted-foreground px-4 pb-3">Aucune preuve accessible.</p>;
   }
   return (
-    <div className="border-t border-border px-3 pb-3 pt-2 space-y-2">
+    <div className="border-t border-border px-4 pb-3 pt-3 space-y-2">
       {matched.map((c) => (
-        <div key={c.id} className="p-2 rounded-md bg-muted/50 text-xs space-y-1">
+        <div key={c.id} className="p-2.5 rounded-md bg-background border border-border text-xs space-y-1">
           <div className="flex items-center justify-between">
             <span className="font-medium text-foreground">{c.author}</span>
             <span className="text-muted-foreground">{c.date}</span>
@@ -143,11 +143,11 @@ const VINDetail = () => {
   const AdminActions = ({ contributionId }: { contributionId: string }) => {
     if (!isAdmin) return null;
     return (
-      <div className="flex gap-1 mt-2">
-        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); handleAdminAction(contributionId, "hide"); }}>
+      <div className="flex gap-1.5 mt-3 pt-3 border-t border-border">
+        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); handleAdminAction(contributionId, "hide"); }}>
           <EyeOff className="w-3 h-3 mr-1" /> Masquer
         </Button>
-        <Button size="sm" variant="ghost" className="h-7 text-xs text-danger" onClick={(e) => { e.stopPropagation(); handleAdminAction(contributionId, "delete"); }}>
+        <Button size="sm" variant="outline" className="h-7 text-xs text-danger hover:bg-danger/5" onClick={(e) => { e.stopPropagation(); handleAdminAction(contributionId, "delete"); }}>
           <Trash2 className="w-3 h-3 mr-1" /> Supprimer
         </Button>
       </div>
@@ -161,12 +161,14 @@ const VINDetail = () => {
   // Loading
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-muted/30">
         <Header />
         <main className="pt-20 pb-16">
-          <div className="max-w-4xl mx-auto px-4 flex flex-col items-center justify-center min-h-[50vh]">
-            <Loader2 className="w-8 h-8 text-primary animate-spin mb-3" />
-            <p className="text-sm text-muted-foreground">Chargement du dossier...</p>
+          <div className="max-w-5xl mx-auto px-4 flex flex-col items-center justify-center min-h-[50vh]">
+            <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
+              <Loader2 className="w-6 h-6 text-primary animate-spin mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">Chargement du dossier...</p>
+            </div>
           </div>
         </main>
         <Footer />
@@ -177,12 +179,14 @@ const VINDetail = () => {
   // Error
   if (error) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-muted/30">
         <Header />
         <main className="pt-20 pb-16">
-          <div className="max-w-4xl mx-auto px-4 flex flex-col items-center justify-center min-h-[50vh]">
-            <AlertTriangle className="w-8 h-8 text-danger mb-3" />
-            <p className="text-sm text-muted-foreground">Erreur de chargement.</p>
+          <div className="max-w-5xl mx-auto px-4 flex flex-col items-center justify-center min-h-[50vh]">
+            <div className="p-6 rounded-xl bg-card border border-border shadow-sm text-center">
+              <AlertTriangle className="w-6 h-6 text-danger mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">Erreur de chargement du dossier.</p>
+            </div>
           </div>
         </main>
         <Footer />
@@ -193,21 +197,29 @@ const VINDetail = () => {
   // VIN not found
   if (!data) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-muted/30">
         <Header />
         <main className="pt-20 pb-16">
-          <div className="max-w-3xl mx-auto px-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-              <Link to="/" className="hover:text-foreground">Accueil</Link>
+          <div className="max-w-4xl mx-auto px-4">
+            {/* Breadcrumb */}
+            <nav className="flex items-center gap-2 text-xs text-muted-foreground py-4">
+              <Link to="/" className="hover:text-foreground transition-colors">Accueil</Link>
               <ChevronRight className="w-3 h-3" />
               <span className="text-foreground font-mono">{vin}</span>
-            </div>
+            </nav>
+
             <VehicleIdentificationCard vin={vin || ""} vinDecode={vinDecode} isLoading={isDecodingVIN} />
-            <div className="p-6 rounded-lg bg-card border border-border shadow-card text-center">
-              <h2 className="font-display text-lg font-bold mb-1">Ce VIN n'a pas encore de dossier</h2>
-              <p className="text-sm text-muted-foreground mb-4">Chaque contribution utile peut aider le prochain acheteur.</p>
-              <Button size="default" onClick={handleContributeClick}>
-                <Plus className="w-4 h-4 mr-1" />
+            
+            <div className="p-8 rounded-xl bg-card border border-border shadow-sm text-center">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <FileText className="w-6 h-6 text-primary" />
+              </div>
+              <h2 className="font-display text-lg font-bold text-foreground mb-2">Ce VIN n'a pas encore de dossier</h2>
+              <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+                Soyez le premier à contribuer. Chaque information utile peut aider le prochain acheteur.
+              </p>
+              <Button size="lg" onClick={handleContributeClick}>
+                <Plus className="w-4 h-4 mr-2" />
                 {currentUserId ? "Ajouter une contribution" : "Se connecter pour contribuer"}
               </Button>
             </div>
@@ -240,225 +252,355 @@ const VINDetail = () => {
   ];
 
   const statTiles = [
-    { icon: FileText, value: contributions.length, label: "Contributions" },
-    { icon: FileSearch, value: totalDocs, label: "Documents" },
-    { icon: Camera, value: totalPhotos, label: "Photos" },
-    { icon: AlertTriangle, value: observedSignals.length, label: "Signaux" },
+    { icon: FileText, value: contributions.length, label: "Contributions", color: "text-primary" },
+    { icon: FileSearch, value: totalDocs, label: "Documents", color: "text-primary" },
+    { icon: Camera, value: totalPhotos, label: "Photos", color: "text-primary" },
+    { icon: AlertTriangle, value: observedSignals.length, label: "Signaux", color: "text-warning" },
   ];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-muted/30 flex flex-col">
       <Header />
       <main className="pt-16 pb-12 flex-1">
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="max-w-5xl mx-auto px-4">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground py-3">
-            <Link to="/" className="hover:text-foreground">Accueil</Link>
+          <nav className="flex items-center gap-2 text-xs text-muted-foreground py-4">
+            <Link to="/" className="hover:text-foreground transition-colors">Accueil</Link>
             <ChevronRight className="w-3 h-3" />
             <span className="text-foreground font-mono">{vin}</span>
-          </div>
+          </nav>
 
           {/* A. Vehicle Header */}
           <VehicleIdentificationCard vin={vin || ""} vinDecode={vinDecode} isLoading={isDecodingVIN} lastUpdated={data.lastUpdated} />
 
           {/* Action bar */}
-          <div className="flex flex-wrap items-center gap-2 mb-6">
-            <Button size="sm" onClick={handleContributeClick}>
-              <Plus className="w-4 h-4 mr-1" />
+          <div className="flex flex-wrap items-center gap-2 mb-5">
+            <Button onClick={handleContributeClick} className="shadow-sm">
+              <Plus className="w-4 h-4 mr-1.5" />
               Ajouter une contribution
             </Button>
             {data.totalContributions > 0 && (
-              <Button variant="outline" size="sm" onClick={() => setShowPDFDialog(true)}>
-                <FileDown className="w-4 h-4 mr-1" />
+              <Button variant="outline" onClick={() => setShowPDFDialog(true)} className="bg-card">
+                <FileDown className="w-4 h-4 mr-1.5" />
                 Rapport PDF
               </Button>
             )}
-            <Button variant={isFollowing ? "secondary" : "outline"} size="sm" onClick={handleFollowClick} disabled={isFollowLoading}>
-              <Star className={`w-4 h-4 mr-1 ${isFollowing ? "fill-current" : ""}`} />
+            <Button 
+              variant={isFollowing ? "secondary" : "outline"} 
+              onClick={handleFollowClick} 
+              disabled={isFollowLoading}
+              className="bg-card"
+            >
+              <Star className={`w-4 h-4 mr-1.5 ${isFollowing ? "fill-current text-warning" : ""}`} />
               {isFollowing ? "Suivi" : "Suivre"}
             </Button>
             {isAdmin && (
-              <Button variant="outline" size="sm" asChild className="text-primary border-primary/20">
-                <Link to="/admin/contributions"><Shield className="w-4 h-4 mr-1" /> Modérer</Link>
+              <Button variant="outline" asChild className="bg-card border-primary/30 text-primary hover:bg-primary/5">
+                <Link to="/admin/contributions"><Shield className="w-4 h-4 mr-1.5" /> Modérer</Link>
               </Button>
             )}
           </div>
 
-          {/* Owner status */}
+          {/* Owner status badges */}
           {!isCheckingOwner && currentUserId && ownerVerificationStatus === 'verified' && (
-            <div className="mb-4 p-3 rounded-md bg-success/5 border border-success/20 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm"><CheckCircle className="w-4 h-4 text-success" /><span className="text-success font-medium">Propriétaire vérifié</span></div>
+            <div className="mb-5 p-4 rounded-xl bg-success/5 border border-success/20 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
+                  <CheckCircle className="w-4 h-4 text-success" />
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-success block">Propriétaire vérifié</span>
+                  <span className="text-xs text-muted-foreground">Vos contributions sont marquées comme vérifiées</span>
+                </div>
+              </div>
               <button onClick={handleEndOwnership} disabled={isEndingOwnership} className="text-xs text-muted-foreground hover:text-foreground underline">
                 {isEndingOwnership ? <Loader2 className="w-3 h-3 animate-spin" /> : "Révoquer"}
               </button>
             </div>
           )}
           {!isCheckingOwner && currentUserId && ownerVerificationStatus === 'pending' && (
-            <div className="mb-4 p-3 rounded-md bg-warning/5 border border-warning/20 flex items-center gap-2 text-sm">
-              <Clock className="w-4 h-4 text-warning" /><span className="text-warning">Vérification en cours</span>
+            <div className="mb-5 p-4 rounded-xl bg-warning/5 border border-warning/20 flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center">
+                <Clock className="w-4 h-4 text-warning" />
+              </div>
+              <div>
+                <span className="text-sm font-medium text-warning block">Vérification en cours</span>
+                <span className="text-xs text-muted-foreground">Nous examinons votre demande de propriété</span>
+              </div>
             </div>
           )}
 
-          {/* B. Stats tiles */}
+          {/* B. Stats tiles — more dense and professional */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             {statTiles.map((t, i) => (
-              <div key={i} className="p-4 rounded-lg bg-card border border-border shadow-card text-center">
-                <t.icon className="w-4 h-4 text-primary mx-auto mb-1" />
-                <span className="font-display text-xl font-bold text-foreground block">{t.value}</span>
-                <span className="text-xs text-muted-foreground">{t.label}</span>
+              <div key={i} className="p-4 rounded-xl bg-card border border-border shadow-sm flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0`}>
+                  <t.icon className={`w-5 h-5 ${t.color}`} />
+                </div>
+                <div className="min-w-0">
+                  <span className="font-display text-xl font-bold text-foreground block leading-none">{t.value}</span>
+                  <span className="text-xs text-muted-foreground">{t.label}</span>
+                </div>
               </div>
             ))}
           </div>
 
-          {/* C. Tabs */}
+          {/* C. Tabs — more robust product-like navigation */}
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="w-full justify-start bg-card border border-border rounded-lg h-auto p-1 flex-wrap">
-              <TabsTrigger value="overview" className="text-sm">Aperçu</TabsTrigger>
-              <TabsTrigger value="timeline" className="text-sm">Chronologie</TabsTrigger>
-              <TabsTrigger value="documents" className="text-sm">Documents{totalDocs > 0 && ` (${totalDocs})`}</TabsTrigger>
-              <TabsTrigger value="photos" className="text-sm">Photos{totalPhotos > 0 && ` (${totalPhotos})`}</TabsTrigger>
-            </TabsList>
+            <div className="bg-card border border-border rounded-xl p-1.5 mb-5">
+              <TabsList className="w-full justify-start bg-transparent h-auto p-0 gap-1">
+                <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium transition-all">
+                  Aperçu
+                </TabsTrigger>
+                <TabsTrigger value="timeline" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium transition-all">
+                  Chronologie
+                  {contributions.length > 0 && <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-[10px]">{contributions.length}</Badge>}
+                </TabsTrigger>
+                <TabsTrigger value="documents" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium transition-all">
+                  Documents
+                  {totalDocs > 0 && <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-[10px]">{totalDocs}</Badge>}
+                </TabsTrigger>
+                <TabsTrigger value="photos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium transition-all">
+                  Photos
+                  {totalPhotos > 0 && <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-[10px]">{totalPhotos}</Badge>}
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             {/* ── Aperçu ── */}
-            <TabsContent value="overview" className="space-y-6 mt-4">
-              {/* Latest contributions */}
-              {contributions.length > 0 && (
-                <div>
-                  <h3 className="font-display text-sm font-semibold text-foreground mb-3">Derniers éléments ajoutés</h3>
-                  <div className="space-y-3">
-                    {contributions.slice(0, 3).map(c => (
-                      <ContributionCard key={c.id} contribution={c} compact adminActions={<AdminActions contributionId={c.id} />} />
-                    ))}
-                  </div>
-                  {contributions.length > 3 && (
-                    <button onClick={() => { const el = document.querySelector('[data-value="timeline"]') as HTMLElement; el?.click(); }} className="text-xs text-primary hover:underline mt-2 block">
-                      Voir toute la chronologie →
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Observed signals */}
-              <div>
-                <h3 className="font-display text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-warning" /> Signaux observés
-                </h3>
-                <div className="rounded-lg bg-card border border-border shadow-card p-4">
-                  <p className="text-xs text-muted-foreground mb-3">Faits rapportés par les contributeurs.</p>
-                  {observedSignals.length > 0 ? (
-                    <div className="space-y-2">
-                      {observedSignals.map(signal => {
-                        const lastMonth = signal.lastObserved ? new Date(signal.lastObserved).toLocaleDateString("fr-CA", { month: "short", year: "numeric" }) : null;
-                        const isExpanded = expandedSignalId === signal.id;
-                        return (
-                          <div key={signal.id} className="rounded-md bg-muted/30 border border-border overflow-hidden">
-                            <button onClick={() => setExpandedSignalId(isExpanded ? null : signal.id)} className="w-full flex items-start gap-2 p-3 text-left hover:bg-muted/50 transition-colors">
-                              <AlertTriangle className="w-3.5 h-3.5 text-warning mt-0.5 flex-shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <span className="text-sm text-foreground">{signal.text}</span>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-xs text-muted-foreground">{signal.count} contribution{signal.count > 1 ? "s" : ""}</span>
-                                  {lastMonth && <span className="text-xs text-muted-foreground">· {lastMonth}</span>}
-                                </div>
-                              </div>
-                              <span className="text-xs text-primary shrink-0">{isExpanded ? "Masquer" : "Preuves"}</span>
-                            </button>
-                            {isExpanded && <SignalProofs contributionIds={signal.contributionIds} allContributions={contributions} />}
+            <TabsContent value="overview" className="space-y-5 mt-0">
+              <div className="grid gap-5 lg:grid-cols-3">
+                {/* Left column: Recent + Signals */}
+                <div className="lg:col-span-2 space-y-5">
+                  {/* Latest contributions */}
+                  {contributions.length > 0 && (
+                    <section className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+                      <div className="p-4 border-b border-border flex items-center justify-between">
+                        <h3 className="font-display text-sm font-semibold text-foreground">Derniers éléments</h3>
+                        {contributions.length > 3 && (
+                          <button 
+                            onClick={() => { const el = document.querySelector('[data-value="timeline"]') as HTMLElement; el?.click(); }} 
+                            className="text-xs text-primary hover:underline flex items-center gap-1"
+                          >
+                            Tout voir <ChevronRight className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="divide-y divide-border">
+                        {contributions.slice(0, 3).map(c => (
+                          <div key={c.id} className="p-4">
+                            <ContributionCard contribution={c} compact adminActions={<AdminActions contributionId={c.id} />} />
                           </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-3">Aucun signal observé.</p>
+                        ))}
+                      </div>
+                    </section>
                   )}
+
+                  {/* Observed signals */}
+                  <section className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+                    <div className="p-4 border-b border-border flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-warning" />
+                      <h3 className="font-display text-sm font-semibold text-foreground">Signaux observés</h3>
+                      {observedSignals.length > 0 && (
+                        <Badge variant="outline" className="ml-auto text-warning border-warning/30 bg-warning/5">
+                          {observedSignals.length}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      {observedSignals.length > 0 ? (
+                        <div className="space-y-2">
+                          {observedSignals.map(signal => {
+                            const lastMonth = signal.lastObserved ? new Date(signal.lastObserved).toLocaleDateString("fr-CA", { month: "short", year: "numeric" }) : null;
+                            const isExpanded = expandedSignalId === signal.id;
+                            return (
+                              <div key={signal.id} className="rounded-lg border border-border overflow-hidden bg-muted/30">
+                                <button onClick={() => setExpandedSignalId(isExpanded ? null : signal.id)} className="w-full flex items-start gap-3 p-3 text-left hover:bg-muted/50 transition-colors">
+                                  <div className="w-6 h-6 rounded-md bg-warning/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <AlertTriangle className="w-3.5 h-3.5 text-warning" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <span className="text-sm text-foreground block">{signal.text}</span>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <span className="text-xs text-muted-foreground">{signal.count} source{signal.count > 1 ? "s" : ""}</span>
+                                      {lastMonth && <span className="text-xs text-muted-foreground">· {lastMonth}</span>}
+                                    </div>
+                                  </div>
+                                  <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                                </button>
+                                {isExpanded && <SignalProofs contributionIds={signal.contributionIds} allContributions={contributions} />}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-center py-6">
+                          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center mx-auto mb-2">
+                            <Eye className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                          <p className="text-sm text-muted-foreground">Aucun signal observé</p>
+                          <p className="text-xs text-muted-foreground mt-1">Les signaux apparaîtront ici lorsque les contributeurs en rapporteront.</p>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                </div>
+
+                {/* Right column: Quick access */}
+                <div className="space-y-5">
+                  {/* Recent documents */}
+                  <section className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+                    <div className="p-4 border-b border-border flex items-center justify-between">
+                      <h3 className="font-display text-sm font-semibold text-foreground">Documents</h3>
+                      {allDocuments.length > 3 && (
+                        <button 
+                          onClick={() => { const el = document.querySelector('[data-value="documents"]') as HTMLElement; el?.click(); }} 
+                          className="text-xs text-primary hover:underline"
+                        >
+                          Tout voir
+                        </button>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      {allDocuments.length > 0 ? (
+                        <div className="space-y-2">
+                          {allDocuments.slice(0, 3).map(doc => (
+                            <DocRow key={doc.id} doc={doc} />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-4">
+                          <p className="text-xs text-muted-foreground">Aucun document</p>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+
+                  {/* Recent photos */}
+                  <section className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+                    <div className="p-4 border-b border-border flex items-center justify-between">
+                      <h3 className="font-display text-sm font-semibold text-foreground">Photos</h3>
+                      {allPhotos.length > 6 && (
+                        <button 
+                          onClick={() => { const el = document.querySelector('[data-value="photos"]') as HTMLElement; el?.click(); }} 
+                          className="text-xs text-primary hover:underline"
+                        >
+                          Tout voir
+                        </button>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      {allPhotos.length > 0 ? (
+                        <PhotoGallery photos={allPhotos.slice(0, 6)} />
+                      ) : (
+                        <div className="text-center py-4">
+                          <p className="text-xs text-muted-foreground">Aucune photo</p>
+                        </div>
+                      )}
+                    </div>
+                  </section>
                 </div>
               </div>
 
-              {/* Recent documents */}
-              {allDocuments.length > 0 && (
-                <div>
-                  <h3 className="font-display text-sm font-semibold text-foreground mb-3">Documents récents</h3>
-                  <div className="space-y-2">
-                    {allDocuments.slice(0, 3).map(doc => (
-                      <DocRow key={doc.id} doc={doc} />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Recent photos */}
-              {allPhotos.length > 0 && (
-                <div>
-                  <h3 className="font-display text-sm font-semibold text-foreground mb-3">Photos récentes</h3>
-                  <PhotoGallery photos={allPhotos.slice(0, 6)} />
-                </div>
-              )}
-
-              {/* Contribute CTA */}
+              {/* Contribute CTA if empty */}
               {contributions.length === 0 && (
-                <div className="p-6 rounded-lg border border-dashed border-primary/20 bg-accent/30 text-center">
-                  <p className="text-sm text-muted-foreground mb-3">Aucune contribution pour ce véhicule. Chaque contribution utile peut aider le prochain acheteur.</p>
-                  <Button size="sm" onClick={handleContributeClick}>
-                    <Plus className="w-4 h-4 mr-1" /> Ajouter une contribution
+                <div className="p-8 rounded-xl border-2 border-dashed border-primary/20 bg-primary/5 text-center">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    <Plus className="w-6 h-6 text-primary" />
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">Aucune contribution pour ce véhicule. Soyez le premier à enrichir ce dossier.</p>
+                  <Button onClick={handleContributeClick}>
+                    <Plus className="w-4 h-4 mr-1.5" /> Ajouter une contribution
                   </Button>
                 </div>
               )}
             </TabsContent>
 
             {/* ── Chronologie ── */}
-            <TabsContent value="timeline" className="mt-4">
-              {/* Filters */}
-              {allContributionTypes.length > 2 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {allContributionTypes.map(t => (
-                    <button key={t.type} onClick={() => setFilterType(t.type)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${filterType === t.type ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-border hover:border-primary/30"}`}>
-                      {t.label} ({t.count})
-                    </button>
-                  ))}
-                </div>
-              )}
-              {filteredContributions.length > 0 ? (
-                <div className="space-y-3">
-                  {filteredContributions.map(c => (
-                    <ContributionCard key={c.id} contribution={c} adminActions={<AdminActions contributionId={c.id} />} />
-                  ))}
-                </div>
-              ) : (
-                <div className="p-8 rounded-lg bg-card border border-border text-center">
-                  <p className="text-sm text-muted-foreground">Aucune contribution pour ce filtre.</p>
-                </div>
-              )}
+            <TabsContent value="timeline" className="mt-0">
+              <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+                {/* Filters */}
+                {allContributionTypes.length > 2 && (
+                  <div className="p-4 border-b border-border">
+                    <div className="flex flex-wrap gap-2">
+                      {allContributionTypes.map(t => (
+                        <button 
+                          key={t.type} 
+                          onClick={() => setFilterType(t.type)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                            filterType === t.type 
+                              ? "bg-primary text-primary-foreground border-primary shadow-sm" 
+                              : "bg-background text-muted-foreground border-border hover:border-primary/30 hover:text-foreground"
+                          }`}
+                        >
+                          {t.label} <span className="opacity-70">({t.count})</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {filteredContributions.length > 0 ? (
+                  <div className="divide-y divide-border">
+                    {filteredContributions.map(c => (
+                      <div key={c.id} className="p-4">
+                        <ContributionCard contribution={c} adminActions={<AdminActions contributionId={c.id} />} />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-12 text-center">
+                    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
+                      <FileText className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Aucune contribution pour ce filtre.</p>
+                  </div>
+                )}
+              </div>
             </TabsContent>
 
             {/* ── Documents ── */}
-            <TabsContent value="documents" className="mt-4">
-              {allDocuments.length > 0 ? (
-                <div className="space-y-2">
-                  {allDocuments.map(doc => <DocRow key={doc.id} doc={doc} />)}
-                </div>
-              ) : (
-                <div className="p-8 rounded-lg bg-card border border-border text-center">
-                  <p className="text-sm text-muted-foreground">Aucun document disponible.</p>
-                </div>
-              )}
+            <TabsContent value="documents" className="mt-0">
+              <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+                {allDocuments.length > 0 ? (
+                  <div className="p-4 space-y-2">
+                    {allDocuments.map(doc => <DocRow key={doc.id} doc={doc} />)}
+                  </div>
+                ) : (
+                  <div className="p-12 text-center">
+                    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
+                      <FileSearch className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Aucun document disponible.</p>
+                    <p className="text-xs text-muted-foreground mt-1">Les documents ajoutés par les contributeurs apparaîtront ici.</p>
+                  </div>
+                )}
+              </div>
             </TabsContent>
 
             {/* ── Photos ── */}
-            <TabsContent value="photos" className="mt-4">
-              {allPhotos.length > 0 ? (
-                <PhotoGallery photos={allPhotos} />
-              ) : (
-                <div className="p-8 rounded-lg bg-card border border-border text-center">
-                  <p className="text-sm text-muted-foreground">Aucune photo disponible.</p>
-                </div>
-              )}
+            <TabsContent value="photos" className="mt-0">
+              <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+                {allPhotos.length > 0 ? (
+                  <div className="p-4">
+                    <PhotoGallery photos={allPhotos} />
+                  </div>
+                ) : (
+                  <div className="p-12 text-center">
+                    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
+                      <Camera className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Aucune photo disponible.</p>
+                    <p className="text-xs text-muted-foreground mt-1">Les photos ajoutées par les contributeurs apparaîtront ici.</p>
+                  </div>
+                )}
+              </div>
             </TabsContent>
           </Tabs>
 
           {/* Owner claim link */}
           {!isCheckingOwner && currentUserId && ownerVerificationStatus === 'none' && (
-            <div className="mt-6 text-center">
+            <div className="mt-8 text-center">
               <button onClick={() => setShowOwnerForm(true)} className="text-xs text-muted-foreground hover:text-foreground underline">
                 Vous êtes le propriétaire ? Revendiquer ce VIN
               </button>
@@ -495,18 +637,23 @@ function DocRow({ doc }: { doc: ContributionDocument }) {
   }, [doc.filePath]);
 
   return (
-    <button onClick={handleOpen} disabled={!doc.filePath}
-      className="w-full flex items-center gap-3 p-3 rounded-lg bg-card border border-border shadow-card text-left hover:border-primary/20 transition-colors group">
-      <File className="w-4 h-4 text-primary flex-shrink-0" />
+    <button 
+      onClick={handleOpen} 
+      disabled={!doc.filePath}
+      className="w-full flex items-center gap-3 p-3 rounded-lg border border-border bg-background text-left hover:border-primary/30 hover:bg-muted/30 transition-all group"
+    >
+      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <File className="w-4 h-4 text-primary" />
+      </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-foreground truncate">{doc.fileName}</p>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {doc.description && <span>{doc.description}</span>}
+          {doc.description && <span className="truncate">{doc.description}</span>}
           {doc.fileSize && <span>{(doc.fileSize / 1024).toFixed(0)} Ko</span>}
         </div>
       </div>
-      <Badge variant="outline" className="text-[10px]">{doc.fileType?.split("/").pop()?.toUpperCase() || "DOC"}</Badge>
-      {doc.filePath && <ExternalLink className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary" />}
+      <Badge variant="outline" className="text-[10px] font-mono">{doc.fileType?.split("/").pop()?.toUpperCase() || "DOC"}</Badge>
+      {doc.filePath && <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />}
     </button>
   );
 }

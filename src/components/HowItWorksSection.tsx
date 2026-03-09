@@ -5,25 +5,19 @@ const steps = [
     number: "01",
     icon: Search,
     title: "Recherchez un VIN",
-    description: "Entrez le numéro VIN du véhicule qui vous intéresse pour découvrir son historique communautaire.",
+    description: "Consultez le dossier public d'un véhicule.",
   },
   {
     number: "02",
     icon: FileCheck,
-    title: "Consultez le dossier",
-    description: "Accédez aux avis, rapports d'inspection, notes vendeur et historique des annonces partagés par la communauté.",
+    title: "Explorez les informations",
+    description: "Documents, photos, chronologie, événements, observations.",
   },
   {
     number: "03",
     icon: Upload,
-    title: "Contribuez",
-    description: "Après votre achat, partagez votre expérience et vos documents pour aider les futurs acheteurs.",
-  },
-  {
-    number: "04",
-    icon: Users,
-    title: "Gagnez des récompenses",
-    description: "Accumulez des points et badges pour vos contributions. Débloquez des fonctionnalités premium gratuitement.",
+    title: "Contribuez au dossier",
+    description: "Ajoutez une information utile pour enrichir la base publique.",
   },
 ];
 

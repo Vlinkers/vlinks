@@ -159,35 +159,38 @@ const Profile = () => {
   const fetchContributions = async () => {
     if (!user) return;
 
-    // Fetch from public_contributions (published) + raw_contributions (for status)
-    // We need a combined view - using raw_contributions for status tracking
-    const { data: rawData, error: rawError } = await supabase
-      .from("raw_contributions")
+    // Fetch from public_contributions — user can see their own via RLS
+    const { data: pubData, error: pubError } = await supabase
+      .from("public_contributions")
       .select(`
         id,
         vin_id,
         contribution_type,
         created_at,
-        processing_status,
         is_owner_contribution,
-        vins!inner(vin)
+        status,
+        title,
+        summary,
+        vins!public_contributions_vin_id_fkey(vin)
       `)
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
-    if (rawError) {
-      console.error("Error fetching raw contributions:", rawError);
+    if (pubError) {
+      console.error("Error fetching contributions:", pubError);
       return;
     }
 
-    // Combine the data
-    const combined: UserContribution[] = (rawData || []).map((raw: any) => ({
-      id: raw.id,
-      vin: raw.vins?.vin || "N/A",
-      vin_id: raw.vin_id,
-      contribution_type: raw.contribution_type,
-      created_at: raw.created_at,
-      is_owner_contribution: raw.is_owner_contribution || false,
+    const combined: UserContribution[] = (pubData || []).map((row: any) => ({
+      id: row.id,
+      vin: row.vins?.vin || "N/A",
+      vin_id: row.vin_id,
+      contribution_type: row.contribution_type,
+      created_at: row.created_at,
+      is_owner_contribution: row.is_owner_contribution || false,
+      status: row.status || "pending",
+      title: row.title,
+      summary: row.summary,
     }));
 
     setContributions(combined);

@@ -79,6 +79,16 @@ const CONTRIBUTION_TYPE_LABELS: Record<string, { fr: string; en: string }> = {
   photo_evidence: { fr: "Photos/Preuves", en: "Photo Evidence" },
   observation: { fr: "Observation", en: "Observation" },
   purchase_decision: { fr: "Décision d'achat", en: "Purchase Decision" },
+  ownership_change: { fr: "Changement de propriétaire", en: "Ownership Change" },
+  for_sale: { fr: "En vente", en: "For Sale" },
+  price_change: { fr: "Changement de prix", en: "Price Change" },
+};
+
+const STATUS_LABELS: Record<string, { fr: string; en: string; variant: "warning" | "verified" | "danger" | "secondary" }> = {
+  pending: { fr: "En attente", en: "Pending", variant: "warning" },
+  approved: { fr: "Approuvée", en: "Approved", variant: "verified" },
+  rejected: { fr: "Rejetée", en: "Rejected", variant: "danger" },
+  hidden: { fr: "Masquée", en: "Hidden", variant: "secondary" },
 };
 
 const Profile = () => {

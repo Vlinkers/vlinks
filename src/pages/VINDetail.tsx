@@ -12,6 +12,7 @@ import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { useVINDecode } from "@/hooks/useVINDecode";
 import { VehicleIdentificationCard } from "@/components/VehicleIdentificationCard";
 import { ContributionCard, getContributionLabel } from "@/components/ContributionCard";
+import { AdminEditContribution } from "@/components/AdminEditContribution";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { useVINFollow } from "@/hooks/useVINFollow";
 import { useAdmin } from "@/hooks/useAdmin";

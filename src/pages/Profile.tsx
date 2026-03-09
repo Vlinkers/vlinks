@@ -359,24 +359,24 @@ const Profile = () => {
   const handleDeleteContribution = async (contributionId: string) => {
     setDeletingId(contributionId);
     
-    // Delete from raw_contributions
-    const { error: rawError } = await supabase
+    // Delete from public_contributions (user can delete own via RLS)
+    const { error } = await supabase
+      .from("public_contributions")
+      .delete()
+      .eq("id", contributionId)
+      .eq("user_id", user?.id);
+
+    // Also try to delete matching raw_contribution
+    await supabase
       .from("raw_contributions")
       .delete()
       .eq("id", contributionId)
       .eq("user_id", user?.id);
 
-    // Also delete from public_contributions
-    const { error: pubError } = await supabase
-      .from("public_contributions")
-      .delete()
-      .eq("user_id", user?.id)
-      .eq("vin_id", contributions.find(c => c.id === contributionId)?.vin_id);
-
     setDeletingId(null);
     setDeleteContributionId(null);
 
-    if (rawError) {
+    if (error) {
       toast({
         title: language === "fr" ? "Erreur" : "Error",
         description: language === "fr" 
@@ -386,10 +386,10 @@ const Profile = () => {
       });
     } else {
       toast({
-        title: language === "fr" ? "Supprimée" : "Deleted",
+        title: language === "fr" ? "Retirée" : "Withdrawn",
         description: language === "fr" 
           ? "Votre contribution a été retirée" 
-          : "Your contribution has been removed",
+          : "Your contribution has been withdrawn",
       });
       fetchContributions();
     }

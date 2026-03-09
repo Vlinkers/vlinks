@@ -626,6 +626,13 @@ const VINDetail = () => {
         </>
       )}
       <PDFDownloadDialog open={showPDFDialog} onOpenChange={setShowPDFDialog} vin={vin || ""} vehicleName={vehicleName} />
+      <AdminEditContribution
+        contribution={editingContribution}
+        open={!!editingContribution}
+        onOpenChange={(open) => { if (!open) setEditingContribution(null); }}
+        onSaved={() => { setEditingContribution(null); refetch(); }}
+        logAction={logAction}
+      />
     </div>
   );
 };

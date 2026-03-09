@@ -19,7 +19,7 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { 
   Shield, AlertTriangle, CheckCircle, FileText, ChevronRight, Clock, Camera,
   FileSearch, Eye, EyeOff, Plus, Loader2, User, FileDown, Star, Trash2,
-  ExternalLink, File, ChevronDown
+  ExternalLink, File, ChevronDown, Pencil
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";

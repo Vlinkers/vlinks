@@ -109,9 +109,9 @@ const Profile = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [revokeClaimId, setRevokeClaimId] = useState<string | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
-  
   // Filters
   const [filterType, setFilterType] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterVin, setFilterVin] = useState("");
 
   // Redirect if not authenticated

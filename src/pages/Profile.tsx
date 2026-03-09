@@ -587,6 +587,19 @@ const Profile = () => {
                           className="font-mono"
                         />
                       </div>
+                      <Select value={filterStatus} onValueChange={setFilterStatus}>
+                        <SelectTrigger className="w-full sm:w-44">
+                          <SelectValue placeholder={language === "fr" ? "Statut" : "Status"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{language === "fr" ? "Tous les statuts" : "All statuses"}</SelectItem>
+                          {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                            <SelectItem key={key} value={key}>
+                              {language === "fr" ? label.fr : label.en}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Select value={filterType} onValueChange={setFilterType}>
                         <SelectTrigger className="w-full sm:w-48">
                           <SelectValue placeholder={language === "fr" ? "Type" : "Type"} />
@@ -615,7 +628,7 @@ const Profile = () => {
                             key={contribution.id}
                             className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                           >
-                            <div className="flex-1 space-y-1">
+                            <div className="flex-1 space-y-1.5">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <code className="text-sm font-mono text-primary">{contribution.vin}</code>
                                 <Badge variant="outline" className="text-xs">
@@ -626,7 +639,13 @@ const Profile = () => {
                                     {language === "fr" ? "Propriétaire" : "Owner"}
                                   </Badge>
                                 )}
+                                {getStatusBadge(contribution.status)}
                               </div>
+                              {(contribution.title || contribution.summary) && (
+                                <p className="text-sm text-muted-foreground line-clamp-1">
+                                  {contribution.title || contribution.summary}
+                                </p>
+                              )}
                               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
@@ -634,7 +653,6 @@ const Profile = () => {
                                     language === "fr" ? "fr-CA" : "en-CA"
                                   )}
                                 </span>
-                                {getStatusBadge()}
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -642,19 +660,21 @@ const Profile = () => {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => navigate(`/vin/${contribution.vin}`)}
-                                title={language === "fr" ? "Voir" : "View"}
+                                title={language === "fr" ? "Voir le dossier" : "View dossier"}
                               >
                                 <Eye className="w-4 h-4" />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => setDeleteContributionId(contribution.id)}
-                                title={language === "fr" ? "Supprimer" : "Delete"}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                              {contribution.status === "pending" && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => setDeleteContributionId(contribution.id)}
+                                  title={language === "fr" ? "Retirer" : "Withdraw"}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              )}
                             </div>
                           </div>
                         ))}

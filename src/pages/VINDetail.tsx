@@ -142,10 +142,15 @@ const VINDetail = () => {
     if (!error) { await logAction(`contribution_${newStatus}`, "contribution", contributionId); toast({ title: `Contribution ${action === "approve" ? "approuvée" : action === "hide" ? "masquée" : "supprimée"}` }); refetch(); }
   };
 
-  const AdminActions = ({ contributionId }: { contributionId: string }) => {
+  const AdminActions = ({ contributionId, contribution: c }: { contributionId: string; contribution?: PublicContribution }) => {
     if (!isAdmin) return null;
     return (
       <div className="flex gap-1.5 mt-3 pt-3 border-t border-border">
+        {c && (
+          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); setEditingContribution(c); }}>
+            <Pencil className="w-3 h-3 mr-1" /> Modifier
+          </Button>
+        )}
         <Button size="sm" variant="outline" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); handleAdminAction(contributionId, "hide"); }}>
           <EyeOff className="w-3 h-3 mr-1" /> Masquer
         </Button>

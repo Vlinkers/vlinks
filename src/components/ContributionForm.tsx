@@ -307,7 +307,7 @@ export function ContributionForm({
     }
     await Promise.all(uploadPromises);
 
-    toast({ title: "Contribution soumise", description: "Elle sera publiée après validation." });
+    toast({ title: "Contribution enregistrée ✓", description: "Vous pouvez la suivre dans Mon profil > Contributions." });
     supabase.functions.invoke("notify-vin-followers", { body: { vin, contribution_type: contributionType } }).catch(console.error);
     clearDraft();
     onOpenChange(false);

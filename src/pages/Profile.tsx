@@ -51,6 +51,9 @@ interface UserContribution {
   contribution_type: string;
   created_at: string;
   is_owner_contribution: boolean;
+  status: string;
+  title: string | null;
+  summary: string | null;
 }
 
 interface OwnerClaim {

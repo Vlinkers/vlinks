@@ -551,7 +551,7 @@ const VINDetail = () => {
                   <div className="divide-y divide-border">
                     {filteredContributions.map(c => (
                       <div key={c.id} className="p-4">
-                        <ContributionCard contribution={c} adminActions={<AdminActions contributionId={c.id} />} />
+                        <ContributionCard contribution={c} adminActions={<AdminActions contributionId={c.id} contribution={c} />} />
                       </div>
                     ))}
                   </div>

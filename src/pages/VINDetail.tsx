@@ -396,7 +396,7 @@ const VINDetail = () => {
                       <div className="divide-y divide-border">
                         {contributions.slice(0, 3).map(c => (
                           <div key={c.id} className="p-4">
-                            <ContributionCard contribution={c} compact adminActions={<AdminActions contributionId={c.id} />} />
+                            <ContributionCard contribution={c} compact adminActions={<AdminActions contributionId={c.id} contribution={c} />} />
                           </div>
                         ))}
                       </div>

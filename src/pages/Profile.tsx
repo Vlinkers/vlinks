@@ -791,7 +791,7 @@ const Profile = () => {
                               <div className="flex items-center gap-2 flex-wrap">
                                 <code className="text-sm font-mono text-primary">{claim.vin}</code>
                                 {claim.status === "active" ? (
-                                  <Badge variant="default" className="bg-green-500/20 text-green-600">
+                                  <Badge variant="verified">
                                     {language === "fr" ? "Actif" : "Active"}
                                   </Badge>
                                 ) : (

@@ -560,7 +560,7 @@ const VINDetail = () => {
                       
                       <div className="space-y-0">
                         {filteredContributions.map((c, i) => {
-                          const isHighlight = ["inspection_report", "ownership_change", "for_sale", "vehicle_history"].includes(c.contribution_type);
+                          const isHighlight = ["inspection_report", "ownership_change", "for_sale", "vehicle_history"].includes(c.type);
                           return (
                             <div key={c.id} className="relative pl-8">
                               {/* Timeline node */}

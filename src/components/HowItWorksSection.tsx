@@ -1,4 +1,4 @@
-import { Search, Upload, FileCheck, Users } from "lucide-react";
+import { Search, Upload, FileCheck } from "lucide-react";
 
 const steps = [
   {

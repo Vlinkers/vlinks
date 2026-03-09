@@ -24,6 +24,12 @@ import {
   Pencil,
   FileText,
   Camera,
+  Calendar,
+  MapPin,
+  DollarSign,
+  User,
+  Building2,
+  Link as LinkIcon,
 } from "lucide-react";
 import { ObservedSignalsPanel } from "@/components/admin/ObservedSignalsPanel";
 
@@ -38,15 +44,16 @@ interface ContributionRow {
   vin_id: string;
   user_id: string;
   vin?: string;
-  intervention_type: string | null;
+  // New form fields stored in public_contributions
+  summary: string | null;
   intervention_date: string | null;
   mileage_at_intervention: number | null;
-}
-
-interface RawContribution {
-  title: string;
-  summary: string | null;
-  details: string | null;
+  province: string | null;
+  holder_type: string | null;
+  dealer_name: string | null;
+  asking_price: number | null;
+  old_price: number | null;
+  listing_url: string | null;
 }
 
 const statusBadge = (s: string) => {
@@ -60,6 +67,26 @@ const statusBadge = (s: string) => {
   }
 };
 
+const contributionTypeLabels: Record<string, string> = {
+  observation: "Observation",
+  inspection_report: "Rapport d'inspection",
+  vehicle_history: "Historique / Facture",
+  owner_exchange: "Échange vendeur",
+  mechanic_conversation: "Échange mécanicien",
+  ownership_change: "Changement propriétaire",
+  for_sale: "Mise en vente",
+  price_change: "Modification prix",
+  photo_evidence: "Photo",
+  purchase_decision: "Décision d'achat",
+};
+
+const holderTypeLabels: Record<string, string> = {
+  concessionnaire: "Concessionnaire",
+  depot_vente: "Dépôt-vente",
+  particulier: "Particulier",
+  inconnu: "Inconnu",
+};
+
 export default function AdminContributions() {
   const { logAction } = useAdmin();
   const { toast } = useToast();
@@ -68,14 +95,11 @@ export default function AdminContributions() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("pending");
   const [selected, setSelected] = useState<ContributionRow | null>(null);
-  const [rawData, setRawData] = useState<RawContribution | null>(null);
   const [documents, setDocuments] = useState<{ id: string; file_name: string }[]>([]);
   const [photos, setPhotos] = useState<{ id: string; file_name: string; file_path: string }[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState("");
-  const [editSummary, setEditSummary] = useState("");
-  const [editDetails, setEditDetails] = useState("");
+  const [editDescription, setEditDescription] = useState("");
   const [pendingCount, setPendingCount] = useState(0);
 
   const fetchContributions = async () => {
@@ -128,29 +152,9 @@ export default function AdminContributions() {
     setIsEditing(false);
     setDocuments([]);
     setPhotos([]);
+    setEditDescription(c.summary || "");
 
-    // Use the public_contributions own title/summary/details (already on the row via select *)
-    // Also fetch from raw_contributions by matching on the exact contribution id timeline
-    const { data: raw } = await supabase
-      .from("raw_contributions")
-      .select("title, summary, details")
-      .eq("vin_id", c.vin_id)
-      .eq("user_id", c.user_id)
-      .eq("contribution_type", c.contribution_type as any)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    // Fallback: use fields from public_contributions itself
-    const title = raw?.title || (c as any).title || "";
-    const summary = raw?.summary || (c as any).summary || "";
-    const details = raw?.details || (c as any).details || "";
-    setRawData({ title, summary, details });
-    setEditTitle(title);
-    setEditSummary(summary);
-    setEditDetails(details);
-
-    // Fetch documents & photos via vin_contributions matching same user+vin+type
+    // Fetch documents & photos via vin_contributions matching the specific contribution
     const { data: vc } = await supabase
       .from("vin_contributions")
       .select("id")
@@ -198,17 +202,27 @@ export default function AdminContributions() {
     if (!selected) return;
     setActionLoading(true);
 
-    // Update raw_contributions
+    // Update public_contributions summary directly
+    await supabase
+      .from("public_contributions")
+      .update({ summary: editDescription } as any)
+      .eq("id", selected.id);
+
+    // Also update raw_contributions for consistency
     await supabase
       .from("raw_contributions")
-      .update({ title: editTitle, summary: editSummary, details: editDetails })
+      .update({ summary: editDescription })
       .eq("vin_id", selected.vin_id)
-      .eq("user_id", selected.user_id);
+      .eq("user_id", selected.user_id)
+      .eq("contribution_type", selected.contribution_type as any);
 
-    await logAction("contribution_edited", "contribution", selected.id, { title: editTitle });
+    await logAction("contribution_edited", "contribution", selected.id, { summary: editDescription });
     toast({ title: "Contribution modifiée" });
     setIsEditing(false);
     setActionLoading(false);
+    
+    // Refresh the selected contribution
+    setSelected({ ...selected, summary: editDescription });
   };
 
   const deleteDocument = async (docId: string) => {
@@ -241,6 +255,16 @@ export default function AdminContributions() {
     { key: "deleted", label: "Supprimées" },
     { key: "all", label: "Tout" },
   ];
+
+  const formatDate = (date: string | null) => {
+    if (!date) return null;
+    return new Date(date).toLocaleDateString("fr-CA", { year: "numeric", month: "long" });
+  };
+
+  const formatPrice = (price: number | null) => {
+    if (!price) return null;
+    return new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(price);
+  };
 
   return (
     <AdminLayout>
@@ -301,7 +325,7 @@ export default function AdminContributions() {
                   onClick={() => openDetail(c)}
                 >
                   <td className="px-4 py-3 font-mono text-xs">{c.vin || "—"}</td>
-                  <td className="px-4 py-3 capitalize">{c.contribution_type.replace(/_/g, " ")}</td>
+                  <td className="px-4 py-3">{contributionTypeLabels[c.contribution_type] || c.contribution_type}</td>
                   <td className="px-4 py-3">{c.author_label}</td>
                   <td className="px-4 py-3">{statusBadge(c.status)}</td>
                   <td className="px-4 py-3 text-muted-foreground">{new Date(c.created_at).toLocaleDateString("fr-CA")}</td>
@@ -364,7 +388,7 @@ export default function AdminContributions() {
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">Type</p>
-                  <p className="capitalize">{selected.contribution_type.replace(/_/g, " ")}</p>
+                  <p>{contributionTypeLabels[selected.contribution_type] || selected.contribution_type}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">Auteur</p>
@@ -375,81 +399,99 @@ export default function AdminContributions() {
                   {statusBadge(selected.status)}
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs">Date</p>
+                  <p className="text-muted-foreground text-xs">Date soumission</p>
                   <p>{new Date(selected.created_at).toLocaleString("fr-CA")}</p>
                 </div>
-                {selected.intervention_type && (
+                {selected.is_owner_contribution && (
                   <div>
-                    <p className="text-muted-foreground text-xs">Intervention</p>
-                    <p>{selected.intervention_type}</p>
-                  </div>
-                )}
-                {selected.intervention_date && (
-                  <div>
-                    <p className="text-muted-foreground text-xs">Date intervention</p>
-                    <p>{selected.intervention_date}</p>
-                  </div>
-                )}
-                {selected.mileage_at_intervention && (
-                  <div>
-                    <p className="text-muted-foreground text-xs">Kilométrage</p>
-                    <p>{selected.mileage_at_intervention.toLocaleString()} km</p>
+                    <Badge variant="outline" className="bg-success/10 text-success border-success/30">
+                      <User className="w-3 h-3 mr-1" />
+                      Propriétaire
+                    </Badge>
                   </div>
                 )}
               </div>
 
-              {/* Raw content */}
-              {rawData && (
-                <div className="border border-border rounded-xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold">Contenu soumis</h3>
-                    <Button size="sm" variant="ghost" onClick={() => setIsEditing(!isEditing)}>
-                      <Pencil className="w-3.5 h-3.5 mr-1" />
-                      {isEditing ? "Annuler" : "Modifier"}
-                    </Button>
-                  </div>
+              {/* Contribution details - aligned with new form structure */}
+              <div className="border border-border rounded-xl p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">Contenu de la contribution</h3>
+                  <Button size="sm" variant="ghost" onClick={() => setIsEditing(!isEditing)}>
+                    <Pencil className="w-3.5 h-3.5 mr-1" />
+                    {isEditing ? "Annuler" : "Modifier"}
+                  </Button>
+                </div>
 
-                  {isEditing ? (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-xs text-muted-foreground">Titre</label>
-                        <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
-                      </div>
-                      <div>
-                        <label className="text-xs text-muted-foreground">Résumé</label>
-                        <Textarea value={editSummary} onChange={(e) => setEditSummary(e.target.value)} rows={3} />
-                      </div>
-                      <div>
-                        <label className="text-xs text-muted-foreground">Détails</label>
-                        <Textarea value={editDetails} onChange={(e) => setEditDetails(e.target.value)} rows={5} />
-                      </div>
-                      <Button size="sm" onClick={saveEdit} disabled={actionLoading}>
-                        {actionLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
-                        Enregistrer
-                      </Button>
+                {/* Context fields */}
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  {selected.intervention_date && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Calendar className="w-4 h-4" />
+                      <span>{formatDate(selected.intervention_date)}</span>
                     </div>
-                  ) : (
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <span className="text-muted-foreground text-xs">Titre :</span>
-                        <p className="font-medium">{rawData.title}</p>
-                      </div>
-                      {rawData.summary && (
-                        <div>
-                          <span className="text-muted-foreground text-xs">Résumé :</span>
-                          <p className="text-foreground/90">{rawData.summary}</p>
-                        </div>
+                  )}
+                  {selected.mileage_at_intervention && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="font-mono">{selected.mileage_at_intervention.toLocaleString()} km</span>
+                    </div>
+                  )}
+                  {selected.province && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="w-4 h-4" />
+                      <span>{selected.province}</span>
+                    </div>
+                  )}
+                  {selected.holder_type && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Building2 className="w-4 h-4" />
+                      <span>{holderTypeLabels[selected.holder_type] || selected.holder_type}</span>
+                      {selected.dealer_name && <span className="text-foreground">({selected.dealer_name})</span>}
+                    </div>
+                  )}
+                  {(selected.asking_price || selected.old_price) && (
+                    <div className="flex items-center gap-2 text-muted-foreground col-span-2">
+                      <DollarSign className="w-4 h-4" />
+                      {selected.old_price && (
+                        <span className="line-through">{formatPrice(selected.old_price)}</span>
                       )}
-                      {rawData.details && (
-                        <div>
-                          <span className="text-muted-foreground text-xs">Détails :</span>
-                          <p className="text-foreground/80 whitespace-pre-wrap">{rawData.details}</p>
-                        </div>
+                      {selected.asking_price && (
+                        <span className="text-foreground font-medium">{formatPrice(selected.asking_price)}</span>
                       )}
                     </div>
                   )}
+                  {selected.listing_url && (
+                    <div className="flex items-center gap-2 text-muted-foreground col-span-2">
+                      <LinkIcon className="w-4 h-4" />
+                      <a href={selected.listing_url} target="_blank" rel="noopener noreferrer" className="text-primary underline truncate max-w-xs">
+                        {selected.listing_url}
+                      </a>
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {/* Description / Summary */}
+                {isEditing ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs text-muted-foreground">Description</label>
+                      <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={5} />
+                    </div>
+                    <Button size="sm" onClick={saveEdit} disabled={actionLoading}>
+                      {actionLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                      Enregistrer
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {selected.summary && (
+                      <p className="text-foreground/90 whitespace-pre-wrap">{selected.summary}</p>
+                    )}
+                    {!selected.summary && (
+                      <p className="text-muted-foreground italic">Aucune description</p>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Documents */}
               {documents.length > 0 && (

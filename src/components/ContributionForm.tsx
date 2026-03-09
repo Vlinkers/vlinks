@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,6 +42,7 @@ import {
   Building2,
   UserCheck,
   HelpCircle,
+  RotateCcw,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -122,6 +123,10 @@ const initialWizardState: WizardState = {
   isAnonymous: false,
 };
 
+// ─── Draft storage key ───────────────────────────────────────────────
+
+const getDraftKey = (vin: string) => `vlinks_contribution_draft_${vin}`;
+
 // ─── Mapping wizard to DB contribution_type ──────────────────────────
 
 function resolveContributionType(state: WizardState): string {
@@ -174,6 +179,7 @@ export function ContributionForm({
   const [photos, setPhotos] = useState<File[]>([]);
   const [step, setStep] = useState<WizardStep>(1);
   const [w, setW] = useState<WizardState>({ ...initialWizardState });
+  const [hasDraft, setHasDraft] = useState(false);
 
   // Owner verification state
   const [showVerification, setShowVerification] = useState(false);
@@ -209,13 +215,52 @@ export function ContributionForm({
     checkOwnerStatus();
   }, [isOwnerClaim, open, vinId, vin]);
 
-  // Reset on close
+  // Load draft on open
+  useEffect(() => {
+    if (open && vin) {
+      const draftKey = getDraftKey(vin);
+      const savedDraft = localStorage.getItem(draftKey);
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft);
+          if (parsed.w && parsed.step) {
+            setW(parsed.w);
+            setStep(parsed.step);
+            setHasDraft(true);
+          }
+        } catch (e) {
+          console.error("Failed to parse draft:", e);
+        }
+      }
+    }
+  }, [open, vin]);
+
+  // Save draft on change
+  useEffect(() => {
+    if (open && vin) {
+      const draftKey = getDraftKey(vin);
+      // Only save if user has made some progress
+      if (w.profile || w.category || w.description) {
+        localStorage.setItem(draftKey, JSON.stringify({ w, step }));
+      }
+    }
+  }, [open, vin, w, step]);
+
+  // Clear draft function
+  const clearDraft = useCallback(() => {
+    if (vin) {
+      localStorage.removeItem(getDraftKey(vin));
+    }
+    setStep(1);
+    setW({ ...initialWizardState });
+    setDocuments([]);
+    setPhotos([]);
+    setHasDraft(false);
+  }, [vin]);
+
+  // Reset on close (but don't clear draft)
   useEffect(() => {
     if (!open) {
-      setStep(1);
-      setW({ ...initialWizardState });
-      setDocuments([]);
-      setPhotos([]);
       setShowVerification(false);
       setVerificationDocument(null);
       setVerificationDocumentType("");
@@ -227,7 +272,9 @@ export function ContributionForm({
 
   // ─── Helpers ─────────────────────────────────────────────────────
 
-  const updateW = (partial: Partial<WizardState>) => setW((prev) => ({ ...prev, ...partial }));
+  const updateW = useCallback((partial: Partial<WizardState>) => {
+    setW((prev) => ({ ...prev, ...partial }));
+  }, []);
 
   const handlePhotoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -235,6 +282,8 @@ export function ContributionForm({
       const newFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
       setPhotos((prev) => [...prev, ...newFiles].slice(0, 10));
     }
+    // Reset input so same file can be selected again
+    e.target.value = "";
   }, []);
 
   const handleDocumentUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -243,6 +292,7 @@ export function ContributionForm({
       const newFiles = Array.from(files).slice(0, 5 - documents.length);
       setDocuments((prev) => [...prev, ...newFiles]);
     }
+    e.target.value = "";
   }, [documents.length]);
 
   const handleVerificationDocumentUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -323,35 +373,49 @@ export function ContributionForm({
     } as any);
 
     // Upload documents
+    const uploadPromises: Promise<void>[] = [];
+    
     for (const doc of documents) {
-      const filePath = `${userId}/${contribution.id}/${doc.name}`;
-      const { error: uploadError } = await supabase.storage.from("vin-documents").upload(filePath, doc);
-      if (!uploadError) {
-        await supabase.from("contribution_documents").insert({
-          contribution_id: contribution.id, file_name: doc.name, file_path: filePath,
-          file_type: doc.type, file_size: doc.size,
-        });
-      }
+      const filePath = `${userId}/${contribution.id}/${Date.now()}_${doc.name}`;
+      uploadPromises.push(
+        supabase.storage.from("vin-documents").upload(filePath, doc).then(async ({ error: uploadError }) => {
+          if (!uploadError) {
+            await supabase.from("contribution_documents").insert({
+              contribution_id: contribution.id, file_name: doc.name, file_path: filePath,
+              file_type: doc.type, file_size: doc.size,
+            });
+          } else {
+            console.error("Document upload error:", uploadError);
+          }
+        })
+      );
     }
 
     // Upload photos
     for (const photo of photos) {
-      const filePath = `${userId}/${contribution.id}/${photo.name}`;
-      const { error: uploadError } = await supabase.storage.from("vin-photos").upload(filePath, photo);
-      if (!uploadError) {
-        const { data: urlData } = supabase.storage.from("vin-photos").getPublicUrl(filePath);
-        await supabase.from("contribution_photos").insert({
-          contribution_id: contribution.id, file_name: photo.name, file_path: urlData.publicUrl,
-        });
-      }
+      const filePath = `${userId}/${contribution.id}/${Date.now()}_${photo.name}`;
+      uploadPromises.push(
+        supabase.storage.from("vin-photos").upload(filePath, photo).then(async ({ error: uploadError }) => {
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage.from("vin-photos").getPublicUrl(filePath);
+            await supabase.from("contribution_photos").insert({
+              contribution_id: contribution.id, file_name: photo.name, file_path: urlData.publicUrl,
+            });
+          } else {
+            console.error("Photo upload error:", uploadError);
+          }
+        })
+      );
     }
+
+    // Wait for all uploads
+    await Promise.all(uploadPromises);
 
     toast({ title: "Contribution soumise", description: "Votre contribution sera examinée et publiée après validation par VLINKS." });
     supabase.functions.invoke("notify-vin-followers", { body: { vin, contribution_type: contributionType } }).catch(console.error);
 
-    setW({ ...initialWizardState });
-    setDocuments([]);
-    setPhotos([]);
+    // Clear draft after successful submission
+    clearDraft();
     onOpenChange(false);
     onSuccess?.();
   };
@@ -505,13 +569,13 @@ export function ContributionForm({
       <div className="grid grid-cols-2 gap-3">
         <Select onValueChange={(v) => updateW({ dateMonth: v })} value={w.dateMonth}>
           <SelectTrigger className="bg-muted/30"><SelectValue placeholder="Mois" /></SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper" className="max-h-60">
             {months.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select onValueChange={(v) => updateW({ dateYear: v })} value={w.dateYear}>
           <SelectTrigger className="bg-muted/30"><SelectValue placeholder="Année" /></SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper" className="max-h-60">
             {yearOptions.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
           </SelectContent>
         </Select>
@@ -528,9 +592,8 @@ export function ContributionForm({
         value={w.mileage}
         onChange={(e) => updateW({ mileage: e.target.value })}
         placeholder="Ex: 124500"
-        type="number"
-        min="0"
-        max="9999999"
+        inputMode="numeric"
+        pattern="[0-9]*"
         className="bg-muted/30"
       />
     </div>
@@ -583,7 +646,7 @@ export function ContributionForm({
       </Label>
       <Select onValueChange={(v) => updateW({ province: v })} value={w.province}>
         <SelectTrigger className="bg-muted/30"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
-        <SelectContent>
+        <SelectContent position="popper" className="max-h-60">
           {provinces.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
         </SelectContent>
       </Select>
@@ -687,6 +750,17 @@ export function ContributionForm({
           </div>
           <Progress value={(step / 4) * 100} className="h-1.5" />
         </div>
+
+        {/* Draft notice */}
+        {hasDraft && step === 1 && (
+          <div className="bg-muted/30 border border-border rounded-xl p-3 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">Brouillon restauré</p>
+            <Button type="button" variant="ghost" size="sm" onClick={clearDraft} className="text-muted-foreground hover:text-destructive">
+              <RotateCcw className="w-4 h-4 mr-1" />
+              Réinitialiser
+            </Button>
+          </div>
+        )}
 
         {/* Owner claim badge */}
         {isOwnerClaim && (
@@ -848,7 +922,14 @@ export function ContributionForm({
                     <DateSelector label="Date de mise en vente" />
                     <div className="space-y-2">
                       <Label className="text-sm font-semibold">Prix demandé ($) <span className="text-muted-foreground font-normal">— optionnel</span></Label>
-                      <Input value={w.askingPrice} onChange={(e) => updateW({ askingPrice: e.target.value })} placeholder="Ex: 36900" type="number" min="0" className="bg-muted/30" />
+                      <Input 
+                        value={w.askingPrice} 
+                        onChange={(e) => updateW({ askingPrice: e.target.value })} 
+                        placeholder="Ex: 36900" 
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        className="bg-muted/30" 
+                      />
                     </div>
                     <ProvinceField />
                     <HolderSelector />
@@ -877,11 +958,25 @@ export function ContributionForm({
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label className="text-sm font-semibold">Ancien prix ($)</Label>
-                        <Input value={w.oldPrice} onChange={(e) => updateW({ oldPrice: e.target.value })} placeholder="Ex: 39900" type="number" min="0" className="bg-muted/30" />
+                        <Input 
+                          value={w.oldPrice} 
+                          onChange={(e) => updateW({ oldPrice: e.target.value })} 
+                          placeholder="Ex: 39900" 
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          className="bg-muted/30" 
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label className="text-sm font-semibold">Nouveau prix ($)</Label>
-                        <Input value={w.askingPrice} onChange={(e) => updateW({ askingPrice: e.target.value })} placeholder="Ex: 36900" type="number" min="0" className="bg-muted/30" />
+                        <Input 
+                          value={w.askingPrice} 
+                          onChange={(e) => updateW({ askingPrice: e.target.value })} 
+                          placeholder="Ex: 36900" 
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          className="bg-muted/30" 
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -937,7 +1032,7 @@ export function ContributionForm({
                 </Label>
                 <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
                   {photos.map((photo, index) => (
-                    <div key={index} className="relative group aspect-square">
+                    <div key={`photo-${index}-${photo.name}`} className="relative group aspect-square">
                       <img src={URL.createObjectURL(photo)} alt={`Photo ${index + 1}`} className="w-full h-full object-cover rounded-lg border border-border" />
                       <button type="button" onClick={() => setPhotos((prev) => prev.filter((_, i) => i !== index))} className="absolute -top-2 -right-2 p-1 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                         <X className="w-3 h-3" />
@@ -962,7 +1057,7 @@ export function ContributionForm({
                 </Label>
                 <div className="flex flex-wrap gap-2">
                   {documents.map((doc, index) => (
-                    <div key={index} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
+                    <div key={`doc-${index}-${doc.name}`} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
                       <FileText className="w-4 h-4 text-primary" />
                       <span className="text-sm truncate max-w-[150px]">{doc.name}</span>
                       <button type="button" onClick={() => setDocuments((prev) => prev.filter((_, i) => i !== index))} className="text-muted-foreground hover:text-destructive">

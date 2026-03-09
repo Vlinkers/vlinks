@@ -68,6 +68,7 @@ const VINDetail = () => {
   const [showUsernameDialog, setShowUsernameDialog] = useState(false);
   const [isEndingOwnership, setIsEndingOwnership] = useState(false);
   const [filterType, setFilterType] = useState<ContributionType | "all">("all");
+  const [editingContribution, setEditingContribution] = useState<PublicContribution | null>(null);
 
   useEffect(() => {
     const check = async () => {

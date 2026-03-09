@@ -400,12 +400,14 @@ const Profile = () => {
     navigate("/");
   };
 
-  const getStatusBadge = () => {
-    return <Badge variant="default" className="bg-green-500/20 text-green-600">{language === "fr" ? "Publiée" : "Published"}</Badge>;
+  const getStatusBadge = (status: string) => {
+    const info = STATUS_LABELS[status] || STATUS_LABELS.pending;
+    return <Badge variant={info.variant}>{language === "fr" ? info.fr : info.en}</Badge>;
   };
 
   const filteredContributions = contributions.filter(c => {
     if (filterType !== "all" && c.contribution_type !== filterType) return false;
+    if (filterStatus !== "all" && c.status !== filterStatus) return false;
     if (filterVin && !c.vin.toLowerCase().includes(filterVin.toLowerCase())) return false;
     return true;
   });

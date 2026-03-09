@@ -1,17 +1,17 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -19,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
 import {
   FileText,
   Upload,
@@ -39,10 +38,10 @@ import {
   CalendarDays,
   ShoppingCart,
   Wrench,
-  Building2,
   UserCheck,
   HelpCircle,
   RotateCcw,
+  Check,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -78,15 +77,11 @@ type HolderType = "concessionnaire" | "depot_vente" | "particulier" | "inconnu";
 type WizardStep = 1 | 2 | 3 | 4;
 
 interface WizardState {
-  // Step 1
   profile: ContributorProfile | null;
-  // Step 2
   category: InfoCategory | null;
-  // Step 3 sub-selections
   documentSubType: DocumentSubType | null;
   exchangeSubType: ExchangeSubType | null;
   eventSubType: EventSubType | null;
-  // Step 3 fields
   dateMonth: string;
   dateYear: string;
   mileage: string;
@@ -97,45 +92,24 @@ interface WizardState {
   askingPrice: string;
   oldPrice: string;
   listingUrl: string;
-  // Step 4
   evidenceType: "photo" | "document" | "none" | null;
-  // General
   isAnonymous: boolean;
 }
 
 const initialWizardState: WizardState = {
-  profile: null,
-  category: null,
-  documentSubType: null,
-  exchangeSubType: null,
-  eventSubType: null,
-  dateMonth: "",
-  dateYear: "",
-  mileage: "",
-  description: "",
-  holderType: "",
-  dealerName: "",
-  province: "",
-  askingPrice: "",
-  oldPrice: "",
-  listingUrl: "",
-  evidenceType: null,
-  isAnonymous: false,
+  profile: null, category: null, documentSubType: null, exchangeSubType: null,
+  eventSubType: null, dateMonth: "", dateYear: "", mileage: "", description: "",
+  holderType: "", dealerName: "", province: "", askingPrice: "", oldPrice: "",
+  listingUrl: "", evidenceType: null, isAnonymous: false,
 };
 
-// ─── Draft storage key ───────────────────────────────────────────────
-
 const getDraftKey = (vin: string) => `vlinks_contribution_draft_${vin}`;
-
-// ─── Mapping wizard to DB contribution_type ──────────────────────────
 
 function resolveContributionType(state: WizardState): string {
   const { category, documentSubType, exchangeSubType, eventSubType } = state;
   if (category === "observation") return "observation";
   if (category === "document") {
     if (documentSubType === "inspection_report") return "inspection_report";
-    if (documentSubType === "invoice") return "vehicle_history";
-    if (documentSubType === "vehicle_history") return "vehicle_history";
     return "vehicle_history";
   }
   if (category === "exchange") {
@@ -146,11 +120,19 @@ function resolveContributionType(state: WizardState): string {
     if (eventSubType === "ownership_change") return "ownership_change";
     if (eventSubType === "for_sale") return "for_sale";
     if (eventSubType === "price_change") return "price_change";
-    if (eventSubType === "current_status") return "observation";
     return "observation";
   }
   return "observation";
 }
+
+// ─── Stepper steps config ────────────────────────────────────────────
+
+const STEPS = [
+  { num: 1, label: "Profil" },
+  { num: 2, label: "Type" },
+  { num: 3, label: "Détails" },
+  { num: 4, label: "Preuves" },
+];
 
 // ─── Props ──────────────────────────────────────────────────────────
 
@@ -166,12 +148,7 @@ interface ContributionFormProps {
 // ─── Component ──────────────────────────────────────────────────────
 
 export function ContributionForm({
-  vinId,
-  vin,
-  open,
-  onOpenChange,
-  onSuccess,
-  isOwnerClaim = false,
+  vinId, vin, open, onOpenChange, onSuccess, isOwnerClaim = false,
 }: ContributionFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -181,13 +158,11 @@ export function ContributionForm({
   const [w, setW] = useState<WizardState>({ ...initialWizardState });
   const [hasDraft, setHasDraft] = useState(false);
 
-  // Owner verification state
   const [showVerification, setShowVerification] = useState(false);
   const [ownerVerificationStatus, setOwnerVerificationStatus] = useState<"none" | "pending" | "verified">("none");
   const [verificationDocument, setVerificationDocument] = useState<File | null>(null);
   const [verificationDocumentType, setVerificationDocumentType] = useState("");
 
-  // Check owner verification status
   useEffect(() => {
     const checkOwnerStatus = async () => {
       if (!isOwnerClaim || !open) return;
@@ -199,109 +174,63 @@ export function ContributionForm({
         if (existingVin) checkVinId = existingVin.id;
       }
       if (checkVinId) {
-        const { data: verification } = await supabase
-          .from("owner_verifications")
-          .select("verification_status")
-          .eq("user_id", user.id)
-          .eq("vin_id", checkVinId)
-          .maybeSingle();
-        if (verification) {
-          setOwnerVerificationStatus(
-            verification.verification_status === "verified" ? "verified" : verification.verification_status === "pending" ? "pending" : "none"
-          );
-        }
+        const { data: verification } = await supabase.from("owner_verifications").select("verification_status").eq("user_id", user.id).eq("vin_id", checkVinId).maybeSingle();
+        if (verification) setOwnerVerificationStatus(verification.verification_status === "verified" ? "verified" : verification.verification_status === "pending" ? "pending" : "none");
       }
     };
     checkOwnerStatus();
   }, [isOwnerClaim, open, vinId, vin]);
 
-  // Load draft on open
   useEffect(() => {
     if (open && vin) {
-      const draftKey = getDraftKey(vin);
-      const savedDraft = localStorage.getItem(draftKey);
-      if (savedDraft) {
+      const saved = localStorage.getItem(getDraftKey(vin));
+      if (saved) {
         try {
-          const parsed = JSON.parse(savedDraft);
-          if (parsed.w && parsed.step) {
-            setW(parsed.w);
-            setStep(parsed.step);
-            setHasDraft(true);
-          }
-        } catch (e) {
-          console.error("Failed to parse draft:", e);
-        }
+          const parsed = JSON.parse(saved);
+          if (parsed.w && parsed.step) { setW(parsed.w); setStep(parsed.step); setHasDraft(true); }
+        } catch { /* ignore */ }
       }
     }
   }, [open, vin]);
 
-  // Save draft on change
   useEffect(() => {
-    if (open && vin) {
-      const draftKey = getDraftKey(vin);
-      // Only save if user has made some progress
-      if (w.profile || w.category || w.description) {
-        localStorage.setItem(draftKey, JSON.stringify({ w, step }));
-      }
+    if (open && vin && (w.profile || w.category || w.description)) {
+      localStorage.setItem(getDraftKey(vin), JSON.stringify({ w, step }));
     }
   }, [open, vin, w, step]);
 
-  // Clear draft function
-  const clearDraft = useCallback(() => {
-    if (vin) {
-      localStorage.removeItem(getDraftKey(vin));
-    }
-    setStep(1);
-    setW({ ...initialWizardState });
-    setDocuments([]);
-    setPhotos([]);
-    setHasDraft(false);
-  }, [vin]);
-
-  // Reset on close (but don't clear draft)
   useEffect(() => {
-    if (!open) {
-      setShowVerification(false);
-      setVerificationDocument(null);
-      setVerificationDocumentType("");
-    }
+    if (!open) { setShowVerification(false); setVerificationDocument(null); setVerificationDocumentType(""); }
   }, [open]);
 
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: currentYear - 1979 }, (_, i) => String(currentYear - i));
 
-  // ─── Helpers ─────────────────────────────────────────────────────
-
   const updateW = useCallback((partial: Partial<WizardState>) => {
     setW((prev) => ({ ...prev, ...partial }));
   }, []);
 
+  const clearDraft = useCallback(() => {
+    if (vin) localStorage.removeItem(getDraftKey(vin));
+    setStep(1); setW({ ...initialWizardState }); setDocuments([]); setPhotos([]); setHasDraft(false);
+  }, [vin]);
+
   const handlePhotoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      const newFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
-      setPhotos((prev) => [...prev, ...newFiles].slice(0, 10));
-    }
-    // Reset input so same file can be selected again
+    if (files) setPhotos((prev) => [...prev, ...Array.from(files).filter((f) => f.type.startsWith("image/"))].slice(0, 10));
     e.target.value = "";
   }, []);
 
   const handleDocumentUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      const newFiles = Array.from(files).slice(0, 5 - documents.length);
-      setDocuments((prev) => [...prev, ...newFiles]);
-    }
+    if (files) setDocuments((prev) => [...prev, ...Array.from(files).slice(0, 5 - prev.length)]);
     e.target.value = "";
-  }, [documents.length]);
+  }, []);
 
   const handleVerificationDocumentUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files?.[0]) {
-      if (files[0].size > 10 * 1024 * 1024) {
-        toast({ title: "Fichier trop volumineux", description: "Max 10 Mo", variant: "destructive" });
-        return;
-      }
+      if (files[0].size > 10 * 1024 * 1024) { toast({ title: "Fichier trop volumineux", description: "Max 10 Mo", variant: "destructive" }); return; }
       setVerificationDocument(files[0]);
     }
   }, [toast]);
@@ -309,112 +238,77 @@ export function ContributionForm({
   // ─── Submission ──────────────────────────────────────────────────
 
   const submitContribution = async (actualVinId: string, userId: string) => {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("username, public_id")
-      .eq("user_id", userId)
-      .maybeSingle();
-
+    const { data: profile } = await supabase.from("profiles").select("username, public_id").eq("user_id", userId).maybeSingle();
     const authorLabel = w.isAnonymous ? "Anonyme" : (profile?.username || "Anonyme");
     const authorPublicId = w.isAnonymous ? null : (profile?.public_id || null);
     const contributionType = resolveContributionType(w);
-
     const title = w.description.substring(0, 200);
     const summary = w.description;
-    const details = null;
-
     const mileage = w.mileage ? parseInt(w.mileage.replace(/\s/g, ""), 10) : null;
     const validMileage = mileage && !isNaN(mileage) ? mileage : null;
-
     let interventionDate: string | null = null;
     if (w.dateYear) {
       const monthIndex = w.dateMonth ? months.indexOf(w.dateMonth) + 1 : 1;
-      const monthStr = String(monthIndex).padStart(2, "0");
-      interventionDate = `${w.dateYear}-${monthStr}-01`;
+      interventionDate = `${w.dateYear}-${String(monthIndex).padStart(2, "0")}-01`;
     }
-
     const askingPrice = w.askingPrice ? parseInt(w.askingPrice.replace(/\s/g, ""), 10) : null;
     const validAskingPrice = askingPrice && !isNaN(askingPrice) ? askingPrice : null;
     const oldPriceVal = w.oldPrice ? parseInt(w.oldPrice.replace(/\s/g, ""), 10) : null;
     const validOldPrice = oldPriceVal && !isNaN(oldPriceVal) ? oldPriceVal : null;
     const listingUrl = w.listingUrl?.trim() || null;
-
     const holderType = w.holderType || null;
     const dealerName = w.holderType === "concessionnaire" ? (w.dealerName || null) : null;
     const province = w.province || null;
 
     const { error: rawError } = await supabase.from("raw_contributions").insert({
       vin_id: actualVinId, user_id: userId, contribution_type: contributionType,
-      title, summary, details, is_anonymous: w.isAnonymous, is_owner_contribution: isOwnerClaim,
+      title, summary, details: null, is_anonymous: w.isAnonymous, is_owner_contribution: isOwnerClaim,
       mileage_at_intervention: validMileage, intervention_date: interventionDate,
       province, holder_type: holderType, dealer_name: dealerName,
       asking_price: validAskingPrice, old_price: validOldPrice, listing_url: listingUrl,
     } as any);
     if (rawError) throw rawError;
 
-    const { data: contribution, error: contributionError } = await supabase
-      .from("vin_contributions")
-      .insert({
-        vin_id: actualVinId, user_id: userId, contribution_type: contributionType as any,
-        title, summary, details, is_anonymous: w.isAnonymous,
-      })
-      .select()
-      .single();
+    const { data: contribution, error: contributionError } = await supabase.from("vin_contributions").insert({
+      vin_id: actualVinId, user_id: userId, contribution_type: contributionType as any,
+      title, summary, details: null, is_anonymous: w.isAnonymous,
+    }).select().single();
     if (contributionError) throw contributionError;
 
     await supabase.from("public_contributions").insert({
       user_id: userId, vin_id: actualVinId, contribution_type: contributionType,
       is_anonymous: w.isAnonymous, is_owner_contribution: isOwnerClaim,
       author_label: authorLabel, author_public_id: authorPublicId, status: "pending",
-      title, summary, details,
+      title, summary, details: null,
       mileage_at_intervention: validMileage, intervention_date: interventionDate,
       province, holder_type: holderType, dealer_name: dealerName,
       asking_price: validAskingPrice, old_price: validOldPrice, listing_url: listingUrl,
     } as any);
 
-    // Upload documents
     const uploadPromises: Promise<void>[] = [];
-    
     for (const doc of documents) {
-      const filePath = `${userId}/${contribution.id}/${Date.now()}_${doc.name}`;
+      const filePath = `${userId}/${contribution.id}/${Date.now()}_${Math.random().toString(36).slice(2)}_${doc.name}`;
       uploadPromises.push(
         supabase.storage.from("vin-documents").upload(filePath, doc).then(async ({ error: uploadError }) => {
-          if (!uploadError) {
-            await supabase.from("contribution_documents").insert({
-              contribution_id: contribution.id, file_name: doc.name, file_path: filePath,
-              file_type: doc.type, file_size: doc.size,
-            });
-          } else {
-            console.error("Document upload error:", uploadError);
-          }
+          if (!uploadError) await supabase.from("contribution_documents").insert({ contribution_id: contribution.id, file_name: doc.name, file_path: filePath, file_type: doc.type, file_size: doc.size });
         })
       );
     }
-
-    // Upload photos
     for (const photo of photos) {
-      const filePath = `${userId}/${contribution.id}/${Date.now()}_${photo.name}`;
+      const filePath = `${userId}/${contribution.id}/${Date.now()}_${Math.random().toString(36).slice(2)}_${photo.name}`;
       uploadPromises.push(
         supabase.storage.from("vin-photos").upload(filePath, photo).then(async ({ error: uploadError }) => {
           if (!uploadError) {
             const { data: urlData } = supabase.storage.from("vin-photos").getPublicUrl(filePath);
-            await supabase.from("contribution_photos").insert({
-              contribution_id: contribution.id, file_name: photo.name, file_path: urlData.publicUrl,
-            });
-          } else {
-            console.error("Photo upload error:", uploadError);
+            await supabase.from("contribution_photos").insert({ contribution_id: contribution.id, file_name: photo.name, file_path: urlData.publicUrl });
           }
         })
       );
     }
-
-    // Wait for all uploads
     await Promise.all(uploadPromises);
 
-    toast({ title: "Contribution soumise", description: "Votre contribution sera examinée et publiée après validation par VLINKS." });
+    toast({ title: "Contribution soumise", description: "Elle sera publiée après validation." });
     supabase.functions.invoke("notify-vin-followers", { body: { vin, contribution_type: contributionType } }).catch(console.error);
-
-    // Clear draft after successful submission
     clearDraft();
     onOpenChange(false);
     onSuccess?.();
@@ -422,49 +316,33 @@ export function ContributionForm({
 
   const handleSubmit = async () => {
     if (!w.description || w.description.trim().length < 10) {
-      toast({ title: "Description requise", description: "Minimum 10 caractères", variant: "destructive" });
-      return;
+      toast({ title: "Description requise", description: "Minimum 10 caractères", variant: "destructive" }); return;
     }
-
     setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({ title: "Erreur", description: "Vous devez être connecté", variant: "destructive" });
-        return;
-      }
-
+      if (!user) { toast({ title: "Erreur", description: "Connexion requise", variant: "destructive" }); return; }
       let actualVinId = vinId;
       if (!actualVinId) {
         const { data: existingVin } = await supabase.from("vins").select("id").eq("vin", vin).maybeSingle();
-        if (existingVin) {
-          actualVinId = existingVin.id;
-        } else {
+        if (existingVin) { actualVinId = existingVin.id; }
+        else {
           const { data: newVin, error: vinError } = await supabase.from("vins").insert({ vin }).select("id").single();
           if (vinError) throw vinError;
           actualVinId = newVin.id;
         }
       }
-
-      if (isOwnerClaim && ownerVerificationStatus === "none") {
-        setShowVerification(true);
-        setIsSubmitting(false);
-        return;
-      }
-
+      if (isOwnerClaim && ownerVerificationStatus === "none") { setShowVerification(true); setIsSubmitting(false); return; }
       await submitContribution(actualVinId, user.id);
     } catch (error) {
       console.error("Error submitting contribution:", error);
-      toast({ title: "Erreur", description: "Une erreur est survenue lors de l'envoi", variant: "destructive" });
-    } finally {
-      setIsSubmitting(false);
-    }
+      toast({ title: "Erreur", description: "Une erreur est survenue", variant: "destructive" });
+    } finally { setIsSubmitting(false); }
   };
 
   const handleVerificationSubmit = async () => {
     if (!verificationDocument || !verificationDocumentType) {
-      toast({ title: "Formulaire incomplet", description: "Veuillez sélectionner un type et téléverser un document", variant: "destructive" });
-      return;
+      toast({ title: "Formulaire incomplet", variant: "destructive" }); return;
     }
     setIsSubmitting(true);
     try {
@@ -486,21 +364,13 @@ export function ContributionForm({
         user_id: user.id, vin_id: actualVinId, document_path: filePath,
         document_type: verificationDocumentType, verification_status: "pending",
       });
-      if (insertError) {
-        if (insertError.code === "23505") {
-          toast({ title: "Demande existante", description: "Une demande existe déjà", variant: "destructive" });
-          return;
-        }
-        throw insertError;
-      }
+      if (insertError) { if (insertError.code === "23505") { toast({ title: "Demande existante", variant: "destructive" }); return; } throw insertError; }
       setOwnerVerificationStatus("pending");
       await submitContribution(actualVinId!, user.id);
     } catch (error) {
       console.error("Error:", error);
-      toast({ title: "Erreur", description: "Une erreur est survenue", variant: "destructive" });
-    } finally {
-      setIsSubmitting(false);
-    }
+      toast({ title: "Erreur", variant: "destructive" });
+    } finally { setIsSubmitting(false); }
   };
 
   const skipVerification = async () => {
@@ -521,10 +391,8 @@ export function ContributionForm({
       await submitContribution(actualVinId!, user.id);
     } catch (error) {
       console.error("Error:", error);
-      toast({ title: "Erreur", description: "Une erreur est survenue", variant: "destructive" });
-    } finally {
-      setIsSubmitting(false);
-    }
+      toast({ title: "Erreur", variant: "destructive" });
+    } finally { setIsSubmitting(false); }
   };
 
   // ─── Step navigation ─────────────────────────────────────────────
@@ -533,600 +401,595 @@ export function ContributionForm({
   const canProceedStep2 = !!w.category;
   const canProceedStep3 = w.description.trim().length >= 10;
 
-  const goNext = () => {
-    if (step < 4) setStep((s) => (s + 1) as WizardStep);
-  };
-  const goBack = () => {
-    if (step > 1) setStep((s) => (s - 1) as WizardStep);
-  };
+  const goNext = () => { if (step < 4) setStep((s) => (s + 1) as WizardStep); };
+  const goBack = () => { if (step > 1) setStep((s) => (s - 1) as WizardStep); };
 
-  // ─── Render helpers ──────────────────────────────────────────────
+  // ─── Render ──────────────────────────────────────────────────────
 
-  const OptionButton = ({ selected, onClick, icon: Icon, label, description }: {
-    selected: boolean; onClick: () => void; icon?: any; label: string; description?: string;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${
-        selected
-          ? "border-primary bg-primary/10 ring-1 ring-primary/30"
-          : "border-border hover:border-muted-foreground/50 bg-muted/20"
-      }`}
-    >
-      {Icon && <Icon className={`w-5 h-5 shrink-0 ${selected ? "text-primary" : "text-muted-foreground"}`} />}
-      <div className="min-w-0">
-        <p className={`font-medium text-sm ${selected ? "text-primary" : "text-foreground"}`}>{label}</p>
-        {description && <p className="text-xs text-muted-foreground">{description}</p>}
-      </div>
-      {selected && <CheckCircle className="w-4 h-4 text-primary ml-auto shrink-0" />}
-    </button>
-  );
-
-  const DateSelector = ({ label }: { label: string }) => (
-    <div className="space-y-2">
-      <Label className="text-sm font-semibold">{label}</Label>
-      <div className="grid grid-cols-2 gap-3">
-        <Select onValueChange={(v) => updateW({ dateMonth: v })} value={w.dateMonth}>
-          <SelectTrigger className="bg-muted/30"><SelectValue placeholder="Mois" /></SelectTrigger>
-          <SelectContent position="popper" className="max-h-60">
-            {months.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select onValueChange={(v) => updateW({ dateYear: v })} value={w.dateYear}>
-          <SelectTrigger className="bg-muted/30"><SelectValue placeholder="Année" /></SelectTrigger>
-          <SelectContent position="popper" className="max-h-60">
-            {yearOptions.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-    </div>
-  );
-
-  const MileageField = () => (
-    <div className="space-y-2">
-      <Label className="text-sm font-semibold">
-        Kilométrage <span className="text-muted-foreground font-normal">— optionnel</span>
-      </Label>
-      <Input
-        value={w.mileage}
-        onChange={(e) => updateW({ mileage: e.target.value })}
-        placeholder="Ex: 124500"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        className="bg-muted/30"
-      />
-    </div>
-  );
-
-  const HolderSelector = () => (
-    <div className="space-y-2">
-      <Label className="text-sm font-semibold">Qui détient actuellement le véhicule ?</Label>
-      <div className="grid grid-cols-2 gap-2">
-        {(["concessionnaire", "depot_vente", "particulier", "inconnu"] as const).map((ht) => {
-          const labels: Record<string, string> = { concessionnaire: "Concessionnaire", depot_vente: "Dépôt-vente", particulier: "Particulier", inconnu: "Inconnu" };
-          return (
-            <button
-              key={ht}
-              type="button"
-              onClick={() => updateW({ holderType: w.holderType === ht ? "" : ht })}
-              className={`p-2.5 rounded-lg border text-sm text-center transition-all ${
-                w.holderType === ht
-                  ? "border-primary bg-primary/10 text-primary font-medium"
-                  : "border-border hover:border-muted-foreground/50 bg-muted/20 text-foreground"
-              }`}
-            >
-              {labels[ht]}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  const DealerNameField = () => {
-    if (w.holderType !== "concessionnaire") return null;
-    return (
-      <div className="space-y-2">
-        <Label className="text-sm font-semibold">Nom du concessionnaire</Label>
-        <Input
-          value={w.dealerName}
-          onChange={(e) => updateW({ dealerName: e.target.value })}
-          placeholder="Ex: Concessionnaire Volvo Montréal"
-          className="bg-muted/30"
-        />
-      </div>
-    );
-  };
-
-  const ProvinceField = () => (
-    <div className="space-y-2">
-      <Label className="text-sm font-semibold">
-        Province <span className="text-muted-foreground font-normal">— optionnel</span>
-      </Label>
-      <Select onValueChange={(v) => updateW({ province: v })} value={w.province}>
-        <SelectTrigger className="bg-muted/30"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
-        <SelectContent position="popper" className="max-h-60">
-          {provinces.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-
-  // ─── Verification step ───────────────────────────────────────────
-
+  // Verification step
   if (showVerification) {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto glass-strong">
-          <DialogHeader>
-            <DialogTitle className="font-display text-2xl flex items-center gap-2">
-              <Shield className="w-6 h-6 text-success" />
-              Vérification de propriété
-            </DialogTitle>
-            <DialogDescription>VIN: <span className="font-mono">{vin}</span></DialogDescription>
-          </DialogHeader>
-
-          <div className="bg-success/10 border border-success/30 rounded-xl p-4 space-y-2">
-            <p className="text-sm font-medium">Vous avez indiqué être propriétaire de ce véhicule.</p>
-            <p className="text-sm text-muted-foreground">Téléversez un document prouvant votre propriété.</p>
-          </div>
-
-          <div className="space-y-4">
-            <div className="space-y-3">
-              <Label className="text-base font-semibold">Type de document</Label>
-              <div className="grid grid-cols-1 gap-2">
-                {documentTypes.map((type) => (
-                  <button
-                    key={type.value}
-                    type="button"
-                    onClick={() => setVerificationDocumentType(type.value)}
-                    className={`p-3 rounded-xl border text-left transition-all ${
-                      verificationDocumentType === type.value ? "border-success bg-success/10" : "border-border hover:border-muted-foreground/50 bg-muted/30"
-                    }`}
-                  >
-                    <p className={`font-medium text-sm ${verificationDocumentType === type.value ? "text-success" : "text-foreground"}`}>{type.label}</p>
-                    <p className="text-xs text-muted-foreground">{type.description}</p>
-                  </button>
-                ))}
-              </div>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side="right" className="w-full sm:max-w-xl p-0 flex flex-col bg-muted/30">
+          <WizardHeader vin={vin} title="Vérification de propriété" subtitle="Prouvez que vous êtes le propriétaire" />
+          <div className="flex-1 overflow-y-auto p-5 md:p-6 space-y-5">
+            <div className="rounded-xl bg-success/5 border border-success/20 p-4">
+              <p className="text-sm font-medium text-foreground">Vous avez indiqué être propriétaire de ce véhicule.</p>
+              <p className="text-xs text-muted-foreground mt-1">Téléversez un document prouvant votre propriété.</p>
             </div>
 
-            <div className="space-y-3">
-              <Label className="text-base font-semibold">Document de vérification</Label>
+            <FormSection title="Type de document">
+              <div className="space-y-2">
+                {documentTypes.map((type) => (
+                  <OptionCard key={type.value} selected={verificationDocumentType === type.value} onClick={() => setVerificationDocumentType(type.value)} label={type.label} description={type.description} />
+                ))}
+              </div>
+            </FormSection>
+
+            <FormSection title="Document de vérification">
               {!verificationDocument ? (
-                <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-success/50 transition-colors bg-muted/20">
-                  <Upload className="w-8 h-8 text-muted-foreground mb-2" />
-                  <span className="text-sm text-muted-foreground">Cliquez pour téléverser</span>
-                  <span className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG (max 10 Mo)</span>
+                <label className="flex flex-col items-center justify-center h-28 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-success/40 transition-colors bg-card">
+                  <Upload className="w-6 h-6 text-muted-foreground mb-2" />
+                  <span className="text-xs text-muted-foreground">PDF, JPG, PNG — max 10 Mo</span>
                   <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleVerificationDocumentUpload} className="hidden" />
                 </label>
               ) : (
-                <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/30">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border">
+                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center flex-shrink-0">
                     <FileText className="w-5 h-5 text-success" />
-                    <div>
-                      <p className="text-sm font-medium truncate max-w-[200px]">{verificationDocument.name}</p>
-                      <p className="text-xs text-muted-foreground">{(verificationDocument.size / 1024).toFixed(1)} Ko</p>
-                    </div>
                   </div>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setVerificationDocument(null)}><X className="w-4 h-4" /></Button>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{verificationDocument.name}</p>
+                    <p className="text-xs text-muted-foreground">{(verificationDocument.size / 1024).toFixed(1)} Ko</p>
+                  </div>
+                  <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setVerificationDocument(null)}><X className="w-4 h-4" /></Button>
                 </div>
               )}
-            </div>
+            </FormSection>
           </div>
 
-          <div className="flex flex-col gap-3 pt-4">
-            <Button onClick={handleVerificationSubmit} variant="hero" className="w-full bg-success hover:bg-success/90" disabled={isSubmitting || !verificationDocument || !verificationDocumentType}>
-              {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Envoi...</> : <><Shield className="w-4 h-4 mr-2" />Valider mon statut</>}
+          <WizardFooter>
+            <Button variant="outline" onClick={skipVerification} disabled={isSubmitting} className="flex-1 bg-card">
+              Passer cette étape
             </Button>
-            <Button type="button" variant="ghost" onClick={skipVerification} disabled={isSubmitting} className="text-muted-foreground">
-              Continuer sans vérification
+            <Button onClick={handleVerificationSubmit} disabled={isSubmitting || !verificationDocument || !verificationDocumentType} className="flex-1">
+              {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Envoi...</> : <><Shield className="w-4 h-4 mr-2" />Valider</>}
             </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </WizardFooter>
+        </SheetContent>
+      </Sheet>
     );
   }
 
   // ─── Main wizard ─────────────────────────────────────────────────
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto glass-strong">
-        <DialogHeader>
-          <DialogTitle className="font-display text-2xl flex items-center gap-2">
-            {isOwnerClaim && <User className="w-6 h-6 text-success" />}
-            Contribuer
-          </DialogTitle>
-          <DialogDescription>VIN: <span className="font-mono">{vin}</span></DialogDescription>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full sm:max-w-xl p-0 flex flex-col bg-muted/30">
+        {/* Fixed header with stepper */}
+        <div className="border-b border-border bg-card">
+          <SheetHeader className="p-5 pb-0">
+            <div className="flex items-center gap-3">
+              {isOwnerClaim && <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center"><User className="w-4 h-4 text-success" /></div>}
+              <div>
+                <SheetTitle className="font-display text-lg">Contribuer au dossier</SheetTitle>
+                <SheetDescription className="text-xs">
+                  VIN <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-[11px]">{vin}</code>
+                </SheetDescription>
+              </div>
+            </div>
+          </SheetHeader>
 
-        {/* Progress */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Étape {step} / 4</span>
-            <span>{step === 1 ? "Votre profil" : step === 2 ? "Type d'information" : step === 3 ? "Détails" : "Preuves"}</span>
+          {/* Stepper */}
+          <div className="px-5 py-4">
+            <div className="flex items-center gap-1">
+              {STEPS.map((s, i) => (
+                <div key={s.num} className="flex items-center flex-1">
+                  <div className="flex items-center gap-2 flex-1">
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-semibold flex-shrink-0 transition-all ${
+                      step > s.num
+                        ? "bg-primary text-primary-foreground"
+                        : step === s.num
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-muted text-muted-foreground"
+                    }`}>
+                      {step > s.num ? <Check className="w-3.5 h-3.5" /> : s.num}
+                    </div>
+                    <span className={`text-xs font-medium hidden sm:block ${
+                      step >= s.num ? "text-foreground" : "text-muted-foreground"
+                    }`}>
+                      {s.label}
+                    </span>
+                  </div>
+                  {i < STEPS.length - 1 && (
+                    <div className={`h-px flex-1 mx-2 transition-colors ${
+                      step > s.num ? "bg-primary" : "bg-border"
+                    }`} />
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-          <Progress value={(step / 4) * 100} className="h-1.5" />
         </div>
 
         {/* Draft notice */}
         {hasDraft && step === 1 && (
-          <div className="bg-muted/30 border border-border rounded-xl p-3 flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Brouillon restauré</p>
-            <Button type="button" variant="ghost" size="sm" onClick={clearDraft} className="text-muted-foreground hover:text-destructive">
-              <RotateCcw className="w-4 h-4 mr-1" />
-              Réinitialiser
+          <div className="mx-5 mt-4 bg-card border border-border rounded-xl p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                <FileText className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <span className="text-sm text-muted-foreground">Brouillon restauré</span>
+            </div>
+            <Button type="button" variant="ghost" size="sm" onClick={clearDraft} className="text-xs text-muted-foreground hover:text-destructive h-7">
+              <RotateCcw className="w-3 h-3 mr-1" /> Effacer
             </Button>
           </div>
         )}
 
         {/* Owner claim badge */}
         {isOwnerClaim && (
-          <div className="bg-success/10 border border-success/30 rounded-xl p-3 flex items-center gap-2">
-            <User className="w-4 h-4 text-success" />
-            <p className="text-sm font-medium">Propriétaire</p>
-            {ownerVerificationStatus === "verified" && <Badge variant="verified" className="ml-auto"><CheckCircle className="w-3 h-3 mr-1" />Vérifié</Badge>}
-            {ownerVerificationStatus === "pending" && <Badge variant="info" className="ml-auto"><Shield className="w-3 h-3 mr-1" />En cours</Badge>}
-          </div>
-        )}
-
-        {/* ─── STEP 1: Profile ─── */}
-        {step === 1 && (
-          <div className="space-y-3">
-            <p className="text-sm font-semibold">Qui êtes-vous ?</p>
-            <div className="space-y-2">
-              <OptionButton selected={w.profile === "buyer"} onClick={() => updateW({ profile: "buyer" })} icon={ShoppingCart} label="Acheteur / prospect" description="Vous envisagez d'acheter ce véhicule" />
-              <OptionButton selected={w.profile === "current_owner"} onClick={() => updateW({ profile: "current_owner" })} icon={UserCheck} label="Propriétaire actuel" description="Vous possédez actuellement ce véhicule" />
-              <OptionButton selected={w.profile === "former_owner"} onClick={() => updateW({ profile: "former_owner" })} icon={User} label="Ancien propriétaire" description="Vous avez possédé ce véhicule" />
-              <OptionButton selected={w.profile === "professional"} onClick={() => updateW({ profile: "professional" })} icon={Wrench} label="Professionnel automobile" description="Mécanicien, concessionnaire, inspecteur..." />
-              <OptionButton selected={w.profile === "other"} onClick={() => updateW({ profile: "other" })} icon={HelpCircle} label="Autre" description="Voisin, ami, passant..." />
+          <div className="mx-5 mt-4 bg-success/5 border border-success/20 rounded-xl p-3 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center flex-shrink-0">
+              <User className="w-4 h-4 text-success" />
             </div>
-          </div>
-        )}
-
-        {/* ─── STEP 2: Category ─── */}
-        {step === 2 && (
-          <div className="space-y-3">
-            <p className="text-sm font-semibold">Que souhaitez-vous partager ?</p>
-            <div className="space-y-2">
-              <OptionButton selected={w.category === "observation"} onClick={() => updateW({ category: "observation" })} icon={Eye} label="Observation sur le véhicule" description="Ce que vous avez constaté sur place" />
-              <OptionButton selected={w.category === "document"} onClick={() => updateW({ category: "document" })} icon={FileSearch} label="Document ou rapport" description="Inspection, facture, historique..." />
-              <OptionButton selected={w.category === "exchange"} onClick={() => updateW({ category: "exchange" })} icon={MessageCircle} label="Échange avec une personne" description="Vendeur, mécanicien, concessionnaire..." />
-              <OptionButton selected={w.category === "event"} onClick={() => updateW({ category: "event" })} icon={CalendarDays} label="Événement du véhicule" description="Vente, changement de prix, propriétaire..." />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">Mode propriétaire</p>
+              <p className="text-xs text-muted-foreground">Votre contribution sera marquée comme vérifiée</p>
             </div>
+            {ownerVerificationStatus === "verified" && <Badge variant="outline" className="bg-success/10 text-success border-success/20 text-[10px]"><CheckCircle className="w-3 h-3 mr-1" />Vérifié</Badge>}
+            {ownerVerificationStatus === "pending" && <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20 text-[10px]"><Shield className="w-3 h-3 mr-1" />En cours</Badge>}
           </div>
         )}
 
-        {/* ─── STEP 3: Specific questions ─── */}
-        {step === 3 && (
-          <div className="space-y-4">
-            {/* ── Observation ── */}
-            {w.category === "observation" && (
-              <>
-                <DateSelector label="Date de l'observation" />
-                <MileageField />
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Description de ce que vous avez observé *</Label>
-                  <Textarea
-                    value={w.description}
-                    onChange={(e) => updateW({ description: e.target.value })}
-                    placeholder="Ex: Jantes avant abîmées côté passager, traces de rouille sous le châssis..."
-                    rows={4}
-                    className="bg-muted/30 resize-none"
-                  />
-                </div>
-              </>
-            )}
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto p-5 md:p-6">
 
-            {/* ── Document ── */}
-            {w.category === "document" && (
-              <>
+          {/* ─── STEP 1: Profile ─── */}
+          {step === 1 && (
+            <div className="space-y-4">
+              <FormSection title="Qui êtes-vous ?" subtitle="Sélectionnez votre rapport avec ce véhicule">
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Type de document</Label>
-                  <div className="space-y-2">
-                    <OptionButton selected={w.documentSubType === "inspection_report"} onClick={() => updateW({ documentSubType: "inspection_report" })} label="Rapport d'inspection" />
-                    <OptionButton selected={w.documentSubType === "invoice"} onClick={() => updateW({ documentSubType: "invoice" })} label="Facture d'entretien" />
-                    <OptionButton selected={w.documentSubType === "vehicle_history"} onClick={() => updateW({ documentSubType: "vehicle_history" })} label="Historique véhicule" />
-                    <OptionButton selected={w.documentSubType === "other_document"} onClick={() => updateW({ documentSubType: "other_document" })} label="Autre document" />
-                  </div>
+                  <OptionCard selected={w.profile === "buyer"} onClick={() => updateW({ profile: "buyer" })} icon={ShoppingCart} label="Acheteur / prospect" description="Vous envisagez d'acheter ce véhicule" />
+                  <OptionCard selected={w.profile === "current_owner"} onClick={() => updateW({ profile: "current_owner" })} icon={UserCheck} label="Propriétaire actuel" description="Vous possédez actuellement ce véhicule" />
+                  <OptionCard selected={w.profile === "former_owner"} onClick={() => updateW({ profile: "former_owner" })} icon={User} label="Ancien propriétaire" description="Vous avez possédé ce véhicule" />
+                  <OptionCard selected={w.profile === "professional"} onClick={() => updateW({ profile: "professional" })} icon={Wrench} label="Professionnel automobile" description="Mécanicien, concessionnaire, inspecteur..." />
+                  <OptionCard selected={w.profile === "other"} onClick={() => updateW({ profile: "other" })} icon={HelpCircle} label="Autre" description="Voisin, ami, passant..." />
                 </div>
-                <DateSelector label="Date du document" />
-                <MileageField />
+              </FormSection>
+            </div>
+          )}
+
+          {/* ─── STEP 2: Category ─── */}
+          {step === 2 && (
+            <div className="space-y-4">
+              <FormSection title="Type d'information" subtitle="Que souhaitez-vous partager ?">
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Description *</Label>
-                  <Textarea
-                    value={w.description}
-                    onChange={(e) => updateW({ description: e.target.value })}
-                    placeholder="Ex: Rapport d'inspection complet réalisé par CAA Québec..."
-                    rows={3}
-                    className="bg-muted/30 resize-none"
-                  />
+                  <OptionCard selected={w.category === "observation"} onClick={() => updateW({ category: "observation" })} icon={Eye} label="Observation" description="Ce que vous avez constaté sur place" />
+                  <OptionCard selected={w.category === "document"} onClick={() => updateW({ category: "document" })} icon={FileSearch} label="Document ou rapport" description="Inspection, facture, historique..." />
+                  <OptionCard selected={w.category === "exchange"} onClick={() => updateW({ category: "exchange" })} icon={MessageCircle} label="Échange avec une personne" description="Vendeur, mécanicien, concessionnaire..." />
+                  <OptionCard selected={w.category === "event"} onClick={() => updateW({ category: "event" })} icon={CalendarDays} label="Événement du véhicule" description="Vente, changement de prix, propriétaire..." />
                 </div>
-              </>
-            )}
+              </FormSection>
+            </div>
+          )}
 
-            {/* ── Exchange ── */}
-            {w.category === "exchange" && (
-              <>
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Avec qui ?</Label>
-                  <div className="space-y-2">
-                    <OptionButton selected={w.exchangeSubType === "seller"} onClick={() => updateW({ exchangeSubType: "seller" })} label="Vendeur" />
-                    <OptionButton selected={w.exchangeSubType === "mechanic"} onClick={() => updateW({ exchangeSubType: "mechanic" })} label="Mécanicien" />
-                    <OptionButton selected={w.exchangeSubType === "dealer"} onClick={() => updateW({ exchangeSubType: "dealer" })} label="Concessionnaire" />
-                    <OptionButton selected={w.exchangeSubType === "other_person"} onClick={() => updateW({ exchangeSubType: "other_person" })} label="Autre" />
-                  </div>
-                </div>
-                <DateSelector label="Date de l'échange" />
-                <MileageField />
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Sujet discuté *</Label>
-                  <Textarea
-                    value={w.description}
-                    onChange={(e) => updateW({ description: e.target.value })}
-                    placeholder="Ex: Le vendeur mentionne un changement de courroie récent..."
-                    rows={3}
-                    className="bg-muted/30 resize-none"
-                  />
-                </div>
-                {/* Seller type (if exchange with seller) */}
-                {w.exchangeSubType === "seller" && (
-                  <>
-                    <HolderSelector />
-                    <DealerNameField />
-                    {w.holderType === "concessionnaire" && <ProvinceField />}
-                  </>
-                )}
-              </>
-            )}
-
-            {/* ── Event ── */}
-            {w.category === "event" && (
-              <>
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Type d'événement</Label>
-                  <div className="space-y-2">
-                    <OptionButton selected={w.eventSubType === "ownership_change"} onClick={() => updateW({ eventSubType: "ownership_change" })} label="Changement de propriétaire" />
-                    <OptionButton selected={w.eventSubType === "for_sale"} onClick={() => updateW({ eventSubType: "for_sale" })} label="Mise en vente" />
-                    <OptionButton selected={w.eventSubType === "price_change"} onClick={() => updateW({ eventSubType: "price_change" })} label="Modification du prix" />
-                    <OptionButton selected={w.eventSubType === "current_status"} onClick={() => updateW({ eventSubType: "current_status" })} label="Statut actuel du véhicule" />
-                  </div>
-                </div>
-
-                {/* Ownership change */}
-                {w.eventSubType === "ownership_change" && (
-                  <>
-                    <DateSelector label="Date de la transaction" />
-                    <MileageField />
-                    <HolderSelector />
-                    <DealerNameField />
-                    <ProvinceField />
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Description *</Label>
-                      <Textarea
-                        value={w.description}
-                        onChange={(e) => updateW({ description: e.target.value })}
-                        placeholder="Ex: Véhicule vendu par Uslynn Auto..."
-                        rows={3}
-                        className="bg-muted/30 resize-none"
-                      />
-                    </div>
-                  </>
-                )}
-
-                {/* For sale */}
-                {w.eventSubType === "for_sale" && (
-                  <>
-                    <DateSelector label="Date de mise en vente" />
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Prix demandé ($) <span className="text-muted-foreground font-normal">— optionnel</span></Label>
-                      <Input 
-                        value={w.askingPrice} 
-                        onChange={(e) => updateW({ askingPrice: e.target.value })} 
-                        placeholder="Ex: 36900" 
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        className="bg-muted/30" 
-                      />
-                    </div>
-                    <ProvinceField />
-                    <HolderSelector />
-                    <DealerNameField />
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Lien vers l'annonce <span className="text-muted-foreground font-normal">— optionnel</span></Label>
-                      <Input value={w.listingUrl} onChange={(e) => updateW({ listingUrl: e.target.value })} placeholder="Ex: https://www.autohebdo.net/..." type="url" className="bg-muted/30" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Description *</Label>
-                      <Textarea
-                        value={w.description}
-                        onChange={(e) => updateW({ description: e.target.value })}
-                        placeholder="Ex: En vente chez Uslynn Auto, véhicule affiché sur AutoHebdo..."
-                        rows={3}
-                        className="bg-muted/30 resize-none"
-                      />
-                    </div>
-                  </>
-                )}
-
-                {/* Price change */}
-                {w.eventSubType === "price_change" && (
-                  <>
-                    <DateSelector label="Date de modification du prix" />
+          {/* ─── STEP 3: Details ─── */}
+          {step === 3 && (
+            <div className="space-y-5">
+              {/* Observation */}
+              {w.category === "observation" && (
+                <>
+                  <FormSection title="Contexte de l'observation">
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label className="text-sm font-semibold">Ancien prix ($)</Label>
-                        <Input 
-                          value={w.oldPrice} 
-                          onChange={(e) => updateW({ oldPrice: e.target.value })} 
-                          placeholder="Ex: 39900" 
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          className="bg-muted/30" 
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-sm font-semibold">Nouveau prix ($)</Label>
-                        <Input 
-                          value={w.askingPrice} 
-                          onChange={(e) => updateW({ askingPrice: e.target.value })} 
-                          placeholder="Ex: 36900" 
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          className="bg-muted/30" 
-                        />
-                      </div>
+                      <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
+                      <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Contexte *</Label>
-                      <Textarea
-                        value={w.description}
-                        onChange={(e) => updateW({ description: e.target.value })}
-                        placeholder="Ex: Annonce AutoTrader mise à jour avec baisse de prix..."
-                        rows={3}
-                        className="bg-muted/30 resize-none"
-                      />
-                    </div>
-                  </>
-                )}
+                    <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
+                  </FormSection>
+                  <FormSection title="Description *">
+                    <Textarea value={w.description} onChange={(e) => updateW({ description: e.target.value })}
+                      placeholder="Ex: Jantes avant abîmées côté passager, traces de rouille sous le châssis..."
+                      rows={4} className="bg-card border-border resize-none" />
+                  </FormSection>
+                </>
+              )}
 
-                {/* Current status */}
-                {w.eventSubType === "current_status" && (
-                  <>
-                    <HolderSelector />
-                    <DealerNameField />
-                    {w.holderType === "concessionnaire" && <ProvinceField />}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Description *</Label>
-                      <Textarea
-                        value={w.description}
-                        onChange={(e) => updateW({ description: e.target.value })}
-                        placeholder="Ex: Le véhicule est actuellement chez un concessionnaire..."
-                        rows={3}
-                        className="bg-muted/30 resize-none"
-                      />
+              {/* Document */}
+              {w.category === "document" && (
+                <>
+                  <FormSection title="Type de document">
+                    <div className="grid grid-cols-2 gap-2">
+                      {(["inspection_report", "invoice", "vehicle_history", "other_document"] as const).map((dt) => {
+                        const labels: Record<string, string> = { inspection_report: "Rapport d'inspection", invoice: "Facture d'entretien", vehicle_history: "Historique véhicule", other_document: "Autre document" };
+                        return <ChipButton key={dt} selected={w.documentSubType === dt} onClick={() => updateW({ documentSubType: dt })} label={labels[dt]} />;
+                      })}
                     </div>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
-        {/* ─── STEP 4: Evidence ─── */}
-        {step === 4 && (
-          <div className="space-y-4">
-            <p className="text-sm font-semibold">Preuve disponible ?</p>
-            <div className="space-y-2">
-              <OptionButton selected={w.evidenceType === "photo"} onClick={() => updateW({ evidenceType: "photo" })} icon={Camera} label="Photo" description="Ajouter des photos du véhicule" />
-              <OptionButton selected={w.evidenceType === "document"} onClick={() => updateW({ evidenceType: "document" })} icon={FileText} label="Document" description="PDF, facture, rapport..." />
-              <OptionButton selected={w.evidenceType === "none"} onClick={() => updateW({ evidenceType: "none" })} label="Aucune preuve" description="Continuer sans pièce jointe" />
-            </div>
-
-            {w.evidenceType === "photo" && (
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold flex items-center gap-2">
-                  <Camera className="w-4 h-4" /> Photos ({photos.length}/10)
-                </Label>
-                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-                  {photos.map((photo, index) => (
-                    <div key={`photo-${index}-${photo.name}`} className="relative group aspect-square">
-                      <img src={URL.createObjectURL(photo)} alt={`Photo ${index + 1}`} className="w-full h-full object-cover rounded-lg border border-border" />
-                      <button type="button" onClick={() => setPhotos((prev) => prev.filter((_, i) => i !== index))} className="absolute -top-2 -right-2 p-1 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-                        <X className="w-3 h-3" />
-                      </button>
+                  </FormSection>
+                  <FormSection title="Contexte">
+                    <div className="grid grid-cols-2 gap-3">
+                      <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
+                      <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                     </div>
-                  ))}
-                  {photos.length < 10 && (
-                    <label className="aspect-square flex flex-col items-center justify-center rounded-lg border border-dashed border-border hover:border-primary cursor-pointer transition-colors">
-                      <ImageIcon className="w-6 h-6 text-muted-foreground mb-1" />
-                      <span className="text-xs text-muted-foreground">Ajouter</span>
-                      <input type="file" className="hidden" onChange={handlePhotoUpload} accept="image/*" multiple />
-                    </label>
+                    <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
+                  </FormSection>
+                  <FormSection title="Description *">
+                    <Textarea value={w.description} onChange={(e) => updateW({ description: e.target.value })}
+                      placeholder="Ex: Rapport d'inspection complet réalisé par CAA Québec..."
+                      rows={3} className="bg-card border-border resize-none" />
+                  </FormSection>
+                </>
+              )}
+
+              {/* Exchange */}
+              {w.category === "exchange" && (
+                <>
+                  <FormSection title="Avec qui ?">
+                    <div className="grid grid-cols-2 gap-2">
+                      {(["seller", "mechanic", "dealer", "other_person"] as const).map((st) => {
+                        const labels: Record<string, string> = { seller: "Vendeur", mechanic: "Mécanicien", dealer: "Concessionnaire", other_person: "Autre" };
+                        return <ChipButton key={st} selected={w.exchangeSubType === st} onClick={() => updateW({ exchangeSubType: st })} label={labels[st]} />;
+                      })}
+                    </div>
+                  </FormSection>
+                  <FormSection title="Contexte">
+                    <div className="grid grid-cols-2 gap-3">
+                      <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
+                      <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
+                    </div>
+                    <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
+                  </FormSection>
+                  <FormSection title="Sujet discuté *">
+                    <Textarea value={w.description} onChange={(e) => updateW({ description: e.target.value })}
+                      placeholder="Ex: Le vendeur mentionne un changement de courroie récent..."
+                      rows={3} className="bg-card border-border resize-none" />
+                  </FormSection>
+                  {w.exchangeSubType === "seller" && (
+                    <FormSection title="Informations vendeur">
+                      <HolderGrid value={w.holderType} onChange={(v) => updateW({ holderType: w.holderType === v ? "" : v })} />
+                      {w.holderType === "concessionnaire" && (
+                        <div className="space-y-2 mt-3">
+                          <Label className="text-xs font-medium text-muted-foreground">Nom du concessionnaire</Label>
+                          <Input value={w.dealerName} onChange={(e) => updateW({ dealerName: e.target.value })} placeholder="Ex: Volvo Montréal" className="bg-card border-border" />
+                        </div>
+                      )}
+                      {w.holderType === "concessionnaire" && <ProvinceSelect value={w.province} onChange={(v) => updateW({ province: v })} />}
+                    </FormSection>
                   )}
-                </div>
-              </div>
-            )}
+                </>
+              )}
 
-            {w.evidenceType === "document" && (
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold flex items-center gap-2">
-                  <File className="w-4 h-4" /> Documents ({documents.length}/5)
-                </Label>
-                <div className="flex flex-wrap gap-2">
-                  {documents.map((doc, index) => (
-                    <div key={`doc-${index}-${doc.name}`} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
-                      <FileText className="w-4 h-4 text-primary" />
-                      <span className="text-sm truncate max-w-[150px]">{doc.name}</span>
-                      <button type="button" onClick={() => setDocuments((prev) => prev.filter((_, i) => i !== index))} className="text-muted-foreground hover:text-destructive">
-                        <X className="w-4 h-4" />
-                      </button>
+              {/* Event */}
+              {w.category === "event" && (
+                <>
+                  <FormSection title="Type d'événement">
+                    <div className="grid grid-cols-2 gap-2">
+                      {(["ownership_change", "for_sale", "price_change", "current_status"] as const).map((et) => {
+                        const labels: Record<string, string> = { ownership_change: "Changement de propriétaire", for_sale: "Mise en vente", price_change: "Modification du prix", current_status: "Statut actuel" };
+                        return <ChipButton key={et} selected={w.eventSubType === et} onClick={() => updateW({ eventSubType: et })} label={labels[et]} />;
+                      })}
                     </div>
-                  ))}
-                  {documents.length < 5 && (
-                    <label className="flex items-center gap-2 px-4 py-2 rounded-lg border border-dashed border-border hover:border-primary cursor-pointer transition-colors">
-                      <Upload className="w-4 h-4" />
-                      <span className="text-sm">Ajouter</span>
-                      <input type="file" className="hidden" onChange={handleDocumentUpload} accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png" multiple />
-                    </label>
+                  </FormSection>
+
+                  {w.eventSubType === "ownership_change" && (
+                    <>
+                      <FormSection title="Contexte">
+                        <div className="grid grid-cols-2 gap-3">
+                          <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
+                          <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
+                        </div>
+                        <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
+                        <HolderGrid value={w.holderType} onChange={(v) => updateW({ holderType: w.holderType === v ? "" : v })} />
+                        {w.holderType === "concessionnaire" && <Input value={w.dealerName} onChange={(e) => updateW({ dealerName: e.target.value })} placeholder="Nom du concessionnaire" className="bg-card border-border mt-2" />}
+                        <ProvinceSelect value={w.province} onChange={(v) => updateW({ province: v })} />
+                      </FormSection>
+                      <FormSection title="Description *">
+                        <Textarea value={w.description} onChange={(e) => updateW({ description: e.target.value })} placeholder="Ex: Véhicule vendu par Uslynn Auto..." rows={3} className="bg-card border-border resize-none" />
+                      </FormSection>
+                    </>
                   )}
-                </div>
-                <p className="text-xs text-muted-foreground">🔒 Les documents servent uniquement de preuves internes.</p>
-              </div>
-            )}
 
-            {/* Anonymous toggle */}
-            <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border">
-              <div>
-                <Label className="font-medium text-sm">Contribution anonyme</Label>
-                <p className="text-xs text-muted-foreground">Votre nom ne sera pas affiché</p>
-              </div>
-              <Switch checked={w.isAnonymous} onCheckedChange={(checked) => updateW({ isAnonymous: checked })} />
+                  {w.eventSubType === "for_sale" && (
+                    <>
+                      <FormSection title="Détails de la mise en vente">
+                        <div className="grid grid-cols-2 gap-3">
+                          <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
+                          <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-medium text-muted-foreground">Prix demandé ($)</Label>
+                          <Input value={w.askingPrice} onChange={(e) => updateW({ askingPrice: e.target.value })} placeholder="Ex: 36900" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border" />
+                        </div>
+                        <ProvinceSelect value={w.province} onChange={(v) => updateW({ province: v })} />
+                        <HolderGrid value={w.holderType} onChange={(v) => updateW({ holderType: w.holderType === v ? "" : v })} />
+                        {w.holderType === "concessionnaire" && <Input value={w.dealerName} onChange={(e) => updateW({ dealerName: e.target.value })} placeholder="Nom du concessionnaire" className="bg-card border-border mt-2" />}
+                        <div className="space-y-2">
+                          <Label className="text-xs font-medium text-muted-foreground">Lien vers l'annonce</Label>
+                          <Input value={w.listingUrl} onChange={(e) => updateW({ listingUrl: e.target.value })} placeholder="https://..." type="url" className="bg-card border-border" />
+                        </div>
+                      </FormSection>
+                      <FormSection title="Description *">
+                        <Textarea value={w.description} onChange={(e) => updateW({ description: e.target.value })} placeholder="Ex: En vente chez Uslynn Auto..." rows={3} className="bg-card border-border resize-none" />
+                      </FormSection>
+                    </>
+                  )}
+
+                  {w.eventSubType === "price_change" && (
+                    <>
+                      <FormSection title="Modification de prix">
+                        <div className="grid grid-cols-2 gap-3">
+                          <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
+                          <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium text-muted-foreground">Ancien prix ($)</Label>
+                            <Input value={w.oldPrice} onChange={(e) => updateW({ oldPrice: e.target.value })} placeholder="39900" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium text-muted-foreground">Nouveau prix ($)</Label>
+                            <Input value={w.askingPrice} onChange={(e) => updateW({ askingPrice: e.target.value })} placeholder="36900" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border" />
+                          </div>
+                        </div>
+                      </FormSection>
+                      <FormSection title="Contexte *">
+                        <Textarea value={w.description} onChange={(e) => updateW({ description: e.target.value })} placeholder="Ex: Annonce mise à jour avec baisse de prix..." rows={3} className="bg-card border-border resize-none" />
+                      </FormSection>
+                    </>
+                  )}
+
+                  {w.eventSubType === "current_status" && (
+                    <>
+                      <FormSection title="Statut actuel">
+                        <HolderGrid value={w.holderType} onChange={(v) => updateW({ holderType: w.holderType === v ? "" : v })} />
+                        {w.holderType === "concessionnaire" && <Input value={w.dealerName} onChange={(e) => updateW({ dealerName: e.target.value })} placeholder="Nom du concessionnaire" className="bg-card border-border mt-2" />}
+                        {w.holderType === "concessionnaire" && <ProvinceSelect value={w.province} onChange={(v) => updateW({ province: v })} />}
+                      </FormSection>
+                      <FormSection title="Description *">
+                        <Textarea value={w.description} onChange={(e) => updateW({ description: e.target.value })} placeholder="Ex: Le véhicule est actuellement chez un concessionnaire..." rows={3} className="bg-card border-border resize-none" />
+                      </FormSection>
+                    </>
+                  )}
+                </>
+              )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ─── Navigation ─── */}
-        <div className="flex gap-3 pt-2">
+          {/* ─── STEP 4: Evidence ─── */}
+          {step === 4 && (
+            <div className="space-y-5">
+              <FormSection title="Preuves disponibles" subtitle="Ajoutez des photos ou documents pour renforcer votre contribution">
+                <div className="space-y-2">
+                  <OptionCard selected={w.evidenceType === "photo"} onClick={() => updateW({ evidenceType: "photo" })} icon={Camera} label="Photos" description="Ajouter des photos du véhicule" />
+                  <OptionCard selected={w.evidenceType === "document"} onClick={() => updateW({ evidenceType: "document" })} icon={FileText} label="Documents" description="PDF, facture, rapport..." />
+                  <OptionCard selected={w.evidenceType === "none"} onClick={() => updateW({ evidenceType: "none" })} label="Aucune preuve" description="Continuer sans pièce jointe" />
+                </div>
+              </FormSection>
+
+              {w.evidenceType === "photo" && (
+                <FormSection title={`Photos (${photos.length}/10)`}>
+                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                    {photos.map((photo, index) => (
+                      <div key={`photo-${index}-${photo.name}`} className="relative group aspect-square">
+                        <img src={URL.createObjectURL(photo)} alt={`Photo ${index + 1}`} className="w-full h-full object-cover rounded-xl border border-border" />
+                        <button type="button" onClick={() => setPhotos((prev) => prev.filter((_, i) => i !== index))} className="absolute -top-1.5 -right-1.5 p-1 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                    {photos.length < 10 && (
+                      <label className="aspect-square flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border hover:border-primary/40 cursor-pointer transition-colors bg-card">
+                        <ImageIcon className="w-5 h-5 text-muted-foreground mb-1" />
+                        <span className="text-[10px] text-muted-foreground">Ajouter</span>
+                        <input type="file" className="hidden" onChange={handlePhotoUpload} accept="image/*" multiple />
+                      </label>
+                    )}
+                  </div>
+                </FormSection>
+              )}
+
+              {w.evidenceType === "document" && (
+                <FormSection title={`Documents (${documents.length}/5)`}>
+                  <div className="space-y-2">
+                    {documents.map((doc, index) => (
+                      <div key={`doc-${index}-${doc.name}`} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border">
+                        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <File className="w-4 h-4 text-primary" />
+                        </div>
+                        <span className="text-sm truncate flex-1">{doc.name}</span>
+                        <button type="button" onClick={() => setDocuments((prev) => prev.filter((_, i) => i !== index))} className="text-muted-foreground hover:text-destructive">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    {documents.length < 5 && (
+                      <label className="flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-border hover:border-primary/40 cursor-pointer transition-colors bg-card">
+                        <Upload className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">Ajouter un document</span>
+                        <input type="file" className="hidden" onChange={handleDocumentUpload} accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png" multiple />
+                      </label>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">🔒 Les documents servent uniquement de preuves internes.</p>
+                </FormSection>
+              )}
+
+              {/* Anonymous toggle */}
+              <div className="rounded-xl bg-card border border-border p-4 flex items-center justify-between">
+                <div>
+                  <Label className="font-medium text-sm">Contribution anonyme</Label>
+                  <p className="text-xs text-muted-foreground">Votre nom ne sera pas affiché publiquement</p>
+                </div>
+                <Switch checked={w.isAnonymous} onCheckedChange={(checked) => updateW({ isAnonymous: checked })} />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Fixed footer */}
+        <WizardFooter>
           {step > 1 ? (
-            <Button type="button" variant="outline" onClick={goBack} className="flex-1">
+            <Button type="button" variant="outline" onClick={goBack} className="flex-1 bg-card">
               <ArrowLeft className="w-4 h-4 mr-2" /> Retour
             </Button>
           ) : (
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1 bg-card">
               Annuler
             </Button>
           )}
 
           {step < 4 ? (
-            <Button
-              type="button"
-              variant="hero"
-              onClick={goNext}
-              disabled={
-                (step === 1 && !canProceedStep1) ||
-                (step === 2 && !canProceedStep2) ||
-                (step === 3 && !canProceedStep3)
-              }
-              className="flex-1"
-            >
+            <Button type="button" onClick={goNext}
+              disabled={(step === 1 && !canProceedStep1) || (step === 2 && !canProceedStep2) || (step === 3 && !canProceedStep3)}
+              className="flex-1 shadow-sm">
               Suivant <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
-            <Button
-              type="button"
-              variant="hero"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className={`flex-1 ${isOwnerClaim ? "bg-success hover:bg-success/90" : ""}`}
-            >
-              {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Envoi...</> : "Envoyer"}
+            <Button type="button" onClick={handleSubmit} disabled={isSubmitting}
+              className={`flex-1 shadow-sm ${isOwnerClaim ? "bg-success hover:bg-success/90" : ""}`}>
+              {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Envoi...</> : "Envoyer la contribution"}
             </Button>
           )}
+        </WizardFooter>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+// ─── Sub-components ────────────────────────────────────────────────
+
+function WizardHeader({ vin, title, subtitle }: { vin: string; title: string; subtitle?: string }) {
+  return (
+    <div className="border-b border-border bg-card p-5">
+      <h2 className="font-display text-lg font-semibold text-foreground">{title}</h2>
+      {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
+      <p className="text-xs text-muted-foreground mt-1">VIN <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-[11px]">{vin}</code></p>
+    </div>
+  );
+}
+
+function WizardFooter({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="border-t border-border bg-card p-4 flex gap-3">
+      {children}
+    </div>
+  );
+}
+
+function FormSection({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl bg-card border border-border p-4 space-y-3">
+      <div>
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function OptionCard({ selected, onClick, icon: Icon, label, description }: {
+  selected: boolean; onClick: () => void; icon?: any; label: string; description?: string;
+}) {
+  return (
+    <button type="button" onClick={onClick}
+      className={`w-full p-3.5 rounded-xl border text-left transition-all flex items-center gap-3 ${
+        selected
+          ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+          : "border-border bg-background hover:border-muted-foreground/30"
+      }`}>
+      {Icon && (
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+          selected ? "bg-primary/10" : "bg-muted"
+        }`}>
+          <Icon className={`w-4.5 h-4.5 ${selected ? "text-primary" : "text-muted-foreground"}`} />
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className={`font-medium text-sm ${selected ? "text-primary" : "text-foreground"}`}>{label}</p>
+        {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+      </div>
+      {selected && (
+        <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+          <Check className="w-3.5 h-3.5 text-primary-foreground" />
+        </div>
+      )}
+    </button>
+  );
+}
+
+function ChipButton({ selected, onClick, label }: { selected: boolean; onClick: () => void; label: string }) {
+  return (
+    <button type="button" onClick={onClick}
+      className={`px-3 py-2.5 rounded-xl border text-sm font-medium text-center transition-all ${
+        selected
+          ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/20"
+          : "border-border bg-background text-foreground hover:border-muted-foreground/30"
+      }`}>
+      {label}
+    </button>
+  );
+}
+
+function DateField({ label, type, value, onChange, yearOptions }: {
+  label: string; type: "month" | "year"; value: string; onChange: (v: string) => void; yearOptions?: string[];
+}) {
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
+      <Select onValueChange={onChange} value={value}>
+        <SelectTrigger className="bg-card border-border h-10"><SelectValue placeholder={type === "month" ? "Mois" : "Année"} /></SelectTrigger>
+        <SelectContent position="popper" className="max-h-60">
+          {type === "month"
+            ? months.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)
+            : (yearOptions || []).map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)
+          }
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+function MileageInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs font-medium text-muted-foreground">
+        Kilométrage <span className="font-normal">— optionnel</span>
+      </Label>
+      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder="Ex: 124500" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border" />
+    </div>
+  );
+}
+
+function HolderGrid({ value, onChange }: { value: string; onChange: (v: HolderType) => void }) {
+  const options: { key: HolderType; label: string }[] = [
+    { key: "concessionnaire", label: "Concessionnaire" },
+    { key: "depot_vente", label: "Dépôt-vente" },
+    { key: "particulier", label: "Particulier" },
+    { key: "inconnu", label: "Inconnu" },
+  ];
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs font-medium text-muted-foreground">Détenteur du véhicule</Label>
+      <div className="grid grid-cols-2 gap-2">
+        {options.map((o) => (
+          <ChipButton key={o.key} selected={value === o.key} onClick={() => onChange(o.key)} label={o.label} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProvinceSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs font-medium text-muted-foreground">Province <span className="font-normal">— optionnel</span></Label>
+      <Select onValueChange={onChange} value={value}>
+        <SelectTrigger className="bg-card border-border h-10"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+        <SelectContent position="popper" className="max-h-60">
+          {provinces.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }

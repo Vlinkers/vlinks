@@ -12,13 +12,14 @@ import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { useVINDecode } from "@/hooks/useVINDecode";
 import { VehicleIdentificationCard } from "@/components/VehicleIdentificationCard";
 import { ContributionCard, getContributionLabel } from "@/components/ContributionCard";
+import { AdminEditContribution } from "@/components/AdminEditContribution";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { useVINFollow } from "@/hooks/useVINFollow";
 import { useAdmin } from "@/hooks/useAdmin";
 import { 
   Shield, AlertTriangle, CheckCircle, FileText, ChevronRight, Clock, Camera,
   FileSearch, Eye, EyeOff, Plus, Loader2, User, FileDown, Star, Trash2,
-  ExternalLink, File, ChevronDown
+  ExternalLink, File, ChevronDown, Pencil
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,6 +68,7 @@ const VINDetail = () => {
   const [showUsernameDialog, setShowUsernameDialog] = useState(false);
   const [isEndingOwnership, setIsEndingOwnership] = useState(false);
   const [filterType, setFilterType] = useState<ContributionType | "all">("all");
+  const [editingContribution, setEditingContribution] = useState<PublicContribution | null>(null);
 
   useEffect(() => {
     const check = async () => {
@@ -140,10 +142,15 @@ const VINDetail = () => {
     if (!error) { await logAction(`contribution_${newStatus}`, "contribution", contributionId); toast({ title: `Contribution ${action === "approve" ? "approuvée" : action === "hide" ? "masquée" : "supprimée"}` }); refetch(); }
   };
 
-  const AdminActions = ({ contributionId }: { contributionId: string }) => {
+  const AdminActions = ({ contributionId, contribution: c }: { contributionId: string; contribution?: PublicContribution }) => {
     if (!isAdmin) return null;
     return (
       <div className="flex gap-1.5 mt-3 pt-3 border-t border-border">
+        {c && (
+          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); setEditingContribution(c); }}>
+            <Pencil className="w-3 h-3 mr-1" /> Modifier
+          </Button>
+        )}
         <Button size="sm" variant="outline" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); handleAdminAction(contributionId, "hide"); }}>
           <EyeOff className="w-3 h-3 mr-1" /> Masquer
         </Button>
@@ -389,7 +396,7 @@ const VINDetail = () => {
                       <div className="divide-y divide-border">
                         {contributions.slice(0, 3).map(c => (
                           <div key={c.id} className="p-4">
-                            <ContributionCard contribution={c} compact adminActions={<AdminActions contributionId={c.id} />} />
+                            <ContributionCard contribution={c} compact adminActions={<AdminActions contributionId={c.id} contribution={c} />} />
                           </div>
                         ))}
                       </div>
@@ -544,7 +551,7 @@ const VINDetail = () => {
                   <div className="divide-y divide-border">
                     {filteredContributions.map(c => (
                       <div key={c.id} className="p-4">
-                        <ContributionCard contribution={c} adminActions={<AdminActions contributionId={c.id} />} />
+                        <ContributionCard contribution={c} adminActions={<AdminActions contributionId={c.id} contribution={c} />} />
                       </div>
                     ))}
                   </div>
@@ -619,6 +626,13 @@ const VINDetail = () => {
         </>
       )}
       <PDFDownloadDialog open={showPDFDialog} onOpenChange={setShowPDFDialog} vin={vin || ""} vehicleName={vehicleName} />
+      <AdminEditContribution
+        contribution={editingContribution}
+        open={!!editingContribution}
+        onOpenChange={(open) => { if (!open) setEditingContribution(null); }}
+        onSaved={() => { setEditingContribution(null); refetch(); }}
+        logAction={logAction}
+      />
     </div>
   );
 };

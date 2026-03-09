@@ -51,6 +51,9 @@ interface UserContribution {
   contribution_type: string;
   created_at: string;
   is_owner_contribution: boolean;
+  status: string;
+  title: string | null;
+  summary: string | null;
 }
 
 interface OwnerClaim {
@@ -76,6 +79,16 @@ const CONTRIBUTION_TYPE_LABELS: Record<string, { fr: string; en: string }> = {
   photo_evidence: { fr: "Photos/Preuves", en: "Photo Evidence" },
   observation: { fr: "Observation", en: "Observation" },
   purchase_decision: { fr: "Décision d'achat", en: "Purchase Decision" },
+  ownership_change: { fr: "Changement de propriétaire", en: "Ownership Change" },
+  for_sale: { fr: "En vente", en: "For Sale" },
+  price_change: { fr: "Changement de prix", en: "Price Change" },
+};
+
+const STATUS_LABELS: Record<string, { fr: string; en: string; variant: "warning" | "verified" | "danger" | "secondary" }> = {
+  pending: { fr: "En attente", en: "Pending", variant: "warning" },
+  approved: { fr: "Approuvée", en: "Approved", variant: "verified" },
+  rejected: { fr: "Rejetée", en: "Rejected", variant: "danger" },
+  hidden: { fr: "Masquée", en: "Hidden", variant: "secondary" },
 };
 
 const Profile = () => {
@@ -96,9 +109,9 @@ const Profile = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [revokeClaimId, setRevokeClaimId] = useState<string | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
-  
   // Filters
   const [filterType, setFilterType] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterVin, setFilterVin] = useState("");
 
   // Redirect if not authenticated
@@ -146,35 +159,38 @@ const Profile = () => {
   const fetchContributions = async () => {
     if (!user) return;
 
-    // Fetch from public_contributions (published) + raw_contributions (for status)
-    // We need a combined view - using raw_contributions for status tracking
-    const { data: rawData, error: rawError } = await supabase
-      .from("raw_contributions")
+    // Fetch from public_contributions — user can see their own via RLS
+    const { data: pubData, error: pubError } = await supabase
+      .from("public_contributions")
       .select(`
         id,
         vin_id,
         contribution_type,
         created_at,
-        processing_status,
         is_owner_contribution,
-        vins!inner(vin)
+        status,
+        title,
+        summary,
+        vins!public_contributions_vin_id_fkey(vin)
       `)
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
-    if (rawError) {
-      console.error("Error fetching raw contributions:", rawError);
+    if (pubError) {
+      console.error("Error fetching contributions:", pubError);
       return;
     }
 
-    // Combine the data
-    const combined: UserContribution[] = (rawData || []).map((raw: any) => ({
-      id: raw.id,
-      vin: raw.vins?.vin || "N/A",
-      vin_id: raw.vin_id,
-      contribution_type: raw.contribution_type,
-      created_at: raw.created_at,
-      is_owner_contribution: raw.is_owner_contribution || false,
+    const combined: UserContribution[] = (pubData || []).map((row: any) => ({
+      id: row.id,
+      vin: row.vins?.vin || "N/A",
+      vin_id: row.vin_id,
+      contribution_type: row.contribution_type,
+      created_at: row.created_at,
+      is_owner_contribution: row.is_owner_contribution || false,
+      status: row.status || "pending",
+      title: row.title,
+      summary: row.summary,
     }));
 
     setContributions(combined);
@@ -343,24 +359,24 @@ const Profile = () => {
   const handleDeleteContribution = async (contributionId: string) => {
     setDeletingId(contributionId);
     
-    // Delete from raw_contributions
-    const { error: rawError } = await supabase
+    // Delete from public_contributions (user can delete own via RLS)
+    const { error } = await supabase
+      .from("public_contributions")
+      .delete()
+      .eq("id", contributionId)
+      .eq("user_id", user?.id);
+
+    // Also try to delete matching raw_contribution
+    await supabase
       .from("raw_contributions")
       .delete()
       .eq("id", contributionId)
       .eq("user_id", user?.id);
 
-    // Also delete from public_contributions
-    const { error: pubError } = await supabase
-      .from("public_contributions")
-      .delete()
-      .eq("user_id", user?.id)
-      .eq("vin_id", contributions.find(c => c.id === contributionId)?.vin_id);
-
     setDeletingId(null);
     setDeleteContributionId(null);
 
-    if (rawError) {
+    if (error) {
       toast({
         title: language === "fr" ? "Erreur" : "Error",
         description: language === "fr" 
@@ -370,10 +386,10 @@ const Profile = () => {
       });
     } else {
       toast({
-        title: language === "fr" ? "Supprimée" : "Deleted",
+        title: language === "fr" ? "Retirée" : "Withdrawn",
         description: language === "fr" 
           ? "Votre contribution a été retirée" 
-          : "Your contribution has been removed",
+          : "Your contribution has been withdrawn",
       });
       fetchContributions();
     }
@@ -384,12 +400,14 @@ const Profile = () => {
     navigate("/");
   };
 
-  const getStatusBadge = () => {
-    return <Badge variant="default" className="bg-green-500/20 text-green-600">{language === "fr" ? "Publiée" : "Published"}</Badge>;
+  const getStatusBadge = (status: string) => {
+    const info = STATUS_LABELS[status] || STATUS_LABELS.pending;
+    return <Badge variant={info.variant}>{language === "fr" ? info.fr : info.en}</Badge>;
   };
 
   const filteredContributions = contributions.filter(c => {
     if (filterType !== "all" && c.contribution_type !== filterType) return false;
+    if (filterStatus !== "all" && c.status !== filterStatus) return false;
     if (filterVin && !c.vin.toLowerCase().includes(filterVin.toLowerCase())) return false;
     return true;
   });
@@ -569,6 +587,19 @@ const Profile = () => {
                           className="font-mono"
                         />
                       </div>
+                      <Select value={filterStatus} onValueChange={setFilterStatus}>
+                        <SelectTrigger className="w-full sm:w-44">
+                          <SelectValue placeholder={language === "fr" ? "Statut" : "Status"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{language === "fr" ? "Tous les statuts" : "All statuses"}</SelectItem>
+                          {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                            <SelectItem key={key} value={key}>
+                              {language === "fr" ? label.fr : label.en}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Select value={filterType} onValueChange={setFilterType}>
                         <SelectTrigger className="w-full sm:w-48">
                           <SelectValue placeholder={language === "fr" ? "Type" : "Type"} />
@@ -597,7 +628,7 @@ const Profile = () => {
                             key={contribution.id}
                             className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                           >
-                            <div className="flex-1 space-y-1">
+                            <div className="flex-1 space-y-1.5">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <code className="text-sm font-mono text-primary">{contribution.vin}</code>
                                 <Badge variant="outline" className="text-xs">
@@ -608,7 +639,13 @@ const Profile = () => {
                                     {language === "fr" ? "Propriétaire" : "Owner"}
                                   </Badge>
                                 )}
+                                {getStatusBadge(contribution.status)}
                               </div>
+                              {(contribution.title || contribution.summary) && (
+                                <p className="text-sm text-muted-foreground line-clamp-1">
+                                  {contribution.title || contribution.summary}
+                                </p>
+                              )}
                               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
@@ -616,7 +653,6 @@ const Profile = () => {
                                     language === "fr" ? "fr-CA" : "en-CA"
                                   )}
                                 </span>
-                                {getStatusBadge()}
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -624,19 +660,21 @@ const Profile = () => {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => navigate(`/vin/${contribution.vin}`)}
-                                title={language === "fr" ? "Voir" : "View"}
+                                title={language === "fr" ? "Voir le dossier" : "View dossier"}
                               >
                                 <Eye className="w-4 h-4" />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => setDeleteContributionId(contribution.id)}
-                                title={language === "fr" ? "Supprimer" : "Delete"}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                              {contribution.status === "pending" && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => setDeleteContributionId(contribution.id)}
+                                  title={language === "fr" ? "Retirer" : "Withdraw"}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -753,7 +791,7 @@ const Profile = () => {
                               <div className="flex items-center gap-2 flex-wrap">
                                 <code className="text-sm font-mono text-primary">{claim.vin}</code>
                                 {claim.status === "active" ? (
-                                  <Badge variant="default" className="bg-green-500/20 text-green-600">
+                                  <Badge variant="verified">
                                     {language === "fr" ? "Actif" : "Active"}
                                   </Badge>
                                 ) : (

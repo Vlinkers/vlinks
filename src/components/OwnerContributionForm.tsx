@@ -356,7 +356,7 @@ export function OwnerContributionForm({
     }
 
     for (const photo of photos) {
-      const filePath = `${userId}/${contribution.id}/${photo.name}`;
+      const filePath = buildSafeFilePath(`${userId}/${contribution.id}`, photo.name);
       const { error: uploadError } = await supabase.storage
         .from("vin-photos")
         .upload(filePath, photo);

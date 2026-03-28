@@ -20,6 +20,8 @@ interface VehicleIdentificationCardProps {
   vinDecode: VINDecodeData | null | undefined;
   isLoading: boolean;
   lastUpdated?: string;
+  showClaimBanner?: boolean;
+  onClaimClick?: () => void;
 }
 
 export const VehicleIdentificationCard = ({
@@ -27,6 +29,8 @@ export const VehicleIdentificationCard = ({
   vinDecode,
   isLoading,
   lastUpdated,
+  showClaimBanner,
+  onClaimClick,
 }: VehicleIdentificationCardProps) => {
   if (isLoading) {
     return (

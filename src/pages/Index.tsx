@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import SocialProofSection from "@/components/SocialProofSection";
@@ -10,6 +11,8 @@ import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 
 const Index = () => {
+  const [heroVisible, setHeroVisible] = useState(true);
+
   return (
     <>
       <SEO
@@ -18,9 +21,9 @@ const Index = () => {
         canonical="https://vlinks.ca"
       />
       <div className="min-h-screen bg-background">
-        <Header />
+        <Header hideSearch={heroVisible} />
         <main>
-          <HeroSection />
+          <HeroSection onVisibilityChange={setHeroVisible} />
           <SocialProofSection />
           <HowItWorksSection />
           <WhyVlinksSection />

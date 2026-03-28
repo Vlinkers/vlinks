@@ -28,7 +28,7 @@ const HeroSection = ({ onVisibilityChange }: { onVisibilityChange?: (visible: bo
   };
 
   return (
-    <section className="pt-20 pb-12 px-4 bg-background">
+    <section ref={heroRef} className="pt-20 pb-12 px-4 bg-background">
       <div className="max-w-3xl mx-auto text-center">
         <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4">
           Consultez le dossier d'un véhicule

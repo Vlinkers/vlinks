@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { sanitizeSelectValue, desanitizeSelectValue } from "@/lib/sanitizeSelectValue";
 import {
   FileText,
   Upload,
@@ -937,7 +938,7 @@ function DateField({ label, type, value, onChange, yearOptions }: {
   return (
     <div className="space-y-2">
       <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
-      <Select onValueChange={onChange} value={value}>
+      <Select onValueChange={onChange} value={sanitizeSelectValue(value, "__placeholder__")}>
         <SelectTrigger className="bg-card border-border h-10"><SelectValue placeholder={type === "month" ? "Mois" : "Année"} /></SelectTrigger>
         <SelectContent position="popper" className="max-h-60">
           {type === "month"
@@ -984,7 +985,7 @@ function ProvinceSelect({ value, onChange }: { value: string; onChange: (v: stri
   return (
     <div className="space-y-2">
       <Label className="text-xs font-medium text-muted-foreground">Province <span className="font-normal">— optionnel</span></Label>
-      <Select onValueChange={onChange} value={value}>
+      <Select onValueChange={onChange} value={sanitizeSelectValue(value, "__placeholder__")}>
         <SelectTrigger className="bg-card border-border h-10"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
         <SelectContent position="popper" className="max-h-60">
           {provinces.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}

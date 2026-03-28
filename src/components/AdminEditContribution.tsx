@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { sanitizeSelectValue, desanitizeSelectValue } from "@/lib/sanitizeSelectValue";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, Trash2, X, File, Camera, ArrowLeft, AlertTriangle, RefreshCw } from "lucide-react";
@@ -255,10 +256,10 @@ export function AdminEditContribution({ contribution, open, onOpenChange, onSave
               </div>
 
               <FieldGroup label="Province">
-                <Select value={province} onValueChange={setProvince}>
+                <Select value={sanitizeSelectValue(province)} onValueChange={(v) => setProvince(desanitizeSelectValue(v) ?? "")}>
                   <SelectTrigger className="bg-background"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">— Aucune —</SelectItem>
+                    <SelectItem value="none">— Aucune —</SelectItem>
                     {PROVINCES.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -280,10 +281,10 @@ export function AdminEditContribution({ contribution, open, onOpenChange, onSave
                 <div className="rounded-lg border border-border p-4 space-y-4 bg-muted/20">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Champs spécifiques</p>
                   <FieldGroup label="Type de vendeur">
-                    <Select value={holderType} onValueChange={setHolderType}>
+                    <Select value={sanitizeSelectValue(holderType)} onValueChange={(v) => setHolderType(desanitizeSelectValue(v) ?? "")}>
                       <SelectTrigger className="bg-background"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">— Aucun —</SelectItem>
+                        <SelectItem value="none">— Aucun —</SelectItem>
                         {HOLDER_TYPES.map(h => <SelectItem key={h.value} value={h.value}>{h.label}</SelectItem>)}
                       </SelectContent>
                     </Select>

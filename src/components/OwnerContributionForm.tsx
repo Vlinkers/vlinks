@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { buildSafeFilePath } from "@/lib/sanitizeFileName";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";

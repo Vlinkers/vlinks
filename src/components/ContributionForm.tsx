@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { sanitizeSelectValue, desanitizeSelectValue } from "@/lib/sanitizeSelectValue";
+import { buildSafeFilePath } from "@/lib/sanitizeFileName";
 import {
   FileText,
   Upload,

@@ -259,7 +259,7 @@ const VINDetail = () => {
       .filter(t => t.count > 0),
   ];
 
-  const [activeTab, setActiveTab] = useState("overview");
+
 
   const statTiles = [
     { icon: FileText, value: contributions.length, label: "Contributions", color: "text-primary", targetTab: "timeline" },

@@ -214,33 +214,27 @@ function DocumentsList({ documents }: { documents: ContributionDocument[] }) {
 function renderTextContent(
   contribution: PublicContribution,
   displayText: string,
-  summaryText: string,
   expanded: boolean
 ) {
   const { type } = contribution;
 
+  // displayText is already deduplicated upstream — just render it in the right style
+
   if (type === "observation" || type === "owner_exchange" || type === "mechanic_conversation") {
-    if (!displayText && !summaryText) return null;
+    if (!displayText) return null;
     return (
       <div className="mt-2">
-        {summaryText && summaryText !== displayText && (
-          <p className="text-sm text-foreground/90 mb-1.5 whitespace-pre-line">{summaryText}</p>
-        )}
-        {displayText && (
-          <blockquote className="text-sm text-muted-foreground border-l-2 border-primary/20 pl-3 italic leading-relaxed whitespace-pre-line">
-            {displayText}
-          </blockquote>
-        )}
+        <blockquote className="text-sm text-muted-foreground border-l-2 border-primary/20 pl-3 italic leading-relaxed whitespace-pre-line">
+          {displayText}
+        </blockquote>
       </div>
     );
   }
 
   if (type === "purchase_decision") {
-    return summaryText ? (
+    return displayText ? (
       <div className="mt-2">
-        <p className="text-sm text-foreground/90 whitespace-pre-line">
-          {expanded ? (contribution.details || summaryText) : summaryText.slice(0, TEXT_TRUNCATE_LENGTH)}
-        </p>
+        <p className="text-sm text-foreground/90 whitespace-pre-line">{displayText}</p>
       </div>
     ) : null;
   }
@@ -262,12 +256,11 @@ function renderTextContent(
 
     return (
       <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-        {summaryText && <p className="text-sm text-foreground/90 whitespace-pre-line">🔄 {summaryText}</p>}
         {dateDisplay && <p>{dateDisplay}</p>}
         {holderLabel && <p>Vendu par : <span className="text-foreground/80">{holderLabel}</span></p>}
         {contribution.province && <p>Province : <span className="text-foreground/80">{contribution.province}</span></p>}
         {contribution.mileageAtIntervention && <p>Kilométrage : <span className="text-foreground/80">{contribution.mileageAtIntervention.toLocaleString()} km</span></p>}
-        {contribution.details && <p className="italic whitespace-pre-line mt-1">{contribution.details}</p>}
+        {displayText && <p className="italic whitespace-pre-line mt-1">{displayText}</p>}
       </div>
     );
   }
@@ -282,14 +275,13 @@ function renderTextContent(
 
     return (
       <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-        {summaryText && <p className="text-sm text-foreground/90 whitespace-pre-line">🏷️ {summaryText}</p>}
         {holderLabel && <p>Vendeur : <span className="text-foreground/80">{holderLabel}</span></p>}
         {contribution.province && <p>Province : <span className="text-foreground/80">{contribution.province}</span></p>}
         {contribution.askingPrice && <p>Prix demandé : <span className="text-foreground/80 font-medium">{contribution.askingPrice.toLocaleString()} $</span></p>}
         {contribution.listingUrl && (
           <p><a href={contribution.listingUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Voir l'annonce ↗</a></p>
         )}
-        {contribution.details && <p className="italic whitespace-pre-line mt-1">{contribution.details}</p>}
+        {displayText && <p className="italic whitespace-pre-line mt-1">{displayText}</p>}
       </div>
     );
   }
@@ -304,27 +296,20 @@ function renderTextContent(
             {contribution.oldPrice ? `${contribution.oldPrice.toLocaleString()} $` : "—"} → {contribution.askingPrice ? `${contribution.askingPrice.toLocaleString()} $` : "—"}
           </p>
         )}
-        {summaryText && <p className="italic whitespace-pre-line">{summaryText}</p>}
+        {displayText && <p className="italic whitespace-pre-line">{displayText}</p>}
       </div>
     );
   }
 
   if (type === "inspection_report" || type === "vehicle_history") {
-    return (
+    return displayText ? (
       <div className="mt-2 space-y-1.5">
-        {summaryText && <p className="text-sm text-foreground/90 whitespace-pre-line">{summaryText}</p>}
-        {contribution.details && contribution.details !== summaryText && expanded && (
-          <p className="text-sm text-muted-foreground whitespace-pre-line">{contribution.details}</p>
-        )}
+        <p className="text-sm text-foreground/90 whitespace-pre-line">{displayText}</p>
       </div>
-    );
+    ) : null;
   }
 
-  if (type === "photo_evidence") {
-    return summaryText ? <p className="text-sm text-foreground/90 mt-2">{summaryText}</p> : null;
-  }
-
-  return summaryText ? <p className="text-sm text-foreground/90 mt-2 whitespace-pre-line">{summaryText}</p> : null;
+  return displayText ? <p className="text-sm text-foreground/90 mt-2 whitespace-pre-line">{displayText}</p> : null;
 }
 
 export { getContributionIcon, getContributionLabel, getContributionColor };

@@ -69,10 +69,22 @@ export function ContributionCard({ contribution, adminActions, compact }: Contri
   const [expanded, setExpanded] = useState(false);
   const Icon = getContributionIcon(contribution.type);
 
-  const fullText = contribution.details || contribution.summaryPublic || "";
-  const summaryText = contribution.summaryPublic || "";
-  const isLongText = fullText.length > TEXT_TRUNCATE_LENGTH;
-  const displayText = expanded ? fullText : fullText.slice(0, TEXT_TRUNCATE_LENGTH);
+  const title = contribution.title || "";
+  const summary = contribution.summaryPublic || "";
+  const details = contribution.details || "";
+
+  // Dedup: pick the display title (title first, fallback to summary)
+  const displayTitle = title || summary;
+
+  // Body = details if different from title, else summary if different from title, else nothing
+  const bodyText = details && details !== displayTitle
+    ? details
+    : summary && summary !== displayTitle
+    ? summary
+    : "";
+
+  const isLongText = bodyText.length > TEXT_TRUNCATE_LENGTH;
+  const displayText = expanded ? bodyText : bodyText.slice(0, TEXT_TRUNCATE_LENGTH);
 
   return (
     <div className="rounded-lg bg-muted/30 border border-border hover:border-primary/20 transition-all">

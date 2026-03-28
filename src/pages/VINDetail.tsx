@@ -369,7 +369,7 @@ const VINDetail = () => {
           </div>
 
           {/* C. Tabs — more robust product-like navigation */}
-          <Tabs defaultValue="overview" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="bg-card border border-border rounded-xl p-1.5 mb-5">
               <TabsList className="w-full justify-start bg-transparent h-auto p-0 gap-1">
                 <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium transition-all">

@@ -18,8 +18,8 @@ import { useVINFollow } from "@/hooks/useVINFollow";
 import { useAdmin } from "@/hooks/useAdmin";
 import { 
   Shield, AlertTriangle, CheckCircle, FileText, ChevronRight, Clock, Camera,
-  FileSearch, Eye, EyeOff, Plus, Loader2, User, FileDown, Star, Trash2,
-  ExternalLink, File, ChevronDown, Pencil
+  FileSearch, Eye, EyeOff, Plus, Loader2, User, Users, FileDown, Star, Trash2,
+  ExternalLink, File, ChevronDown, Pencil, Calendar
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";

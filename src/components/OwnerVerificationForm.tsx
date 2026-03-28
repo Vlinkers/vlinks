@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { buildSafeFilePath } from "@/lib/sanitizeFileName";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -122,7 +123,7 @@ export function OwnerVerificationForm({
       }
 
       // Upload document to private bucket
-      const filePath = `${user.id}/${actualVinId}/${Date.now()}_${document.name}`;
+      const filePath = buildSafeFilePath(`${user.id}/${actualVinId}`, document.name);
       const { error: uploadError } = await supabase.storage
         .from("owner-verification-docs")
         .upload(filePath, document);

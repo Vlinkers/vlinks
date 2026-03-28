@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { buildSafeFilePath } from "@/lib/sanitizeFileName";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -339,7 +340,7 @@ export function OwnerContributionForm({
     }
 
     for (const doc of documents) {
-      const filePath = `${userId}/${contribution.id}/${doc.name}`;
+      const filePath = buildSafeFilePath(`${userId}/${contribution.id}`, doc.name);
       const { error: uploadError } = await supabase.storage
         .from("vin-documents")
         .upload(filePath, doc);
@@ -356,7 +357,7 @@ export function OwnerContributionForm({
     }
 
     for (const photo of photos) {
-      const filePath = `${userId}/${contribution.id}/${photo.name}`;
+      const filePath = buildSafeFilePath(`${userId}/${contribution.id}`, photo.name);
       const { error: uploadError } = await supabase.storage
         .from("vin-photos")
         .upload(filePath, photo);
@@ -487,7 +488,7 @@ export function OwnerContributionForm({
         return;
       }
 
-      const filePath = `${user.id}/${actualVinId}/${verificationDocument.name}`;
+      const filePath = buildSafeFilePath(`${user.id}/${actualVinId}`, verificationDocument.name);
       const { error: uploadError } = await supabase.storage
         .from("owner-verification-docs")
         .upload(filePath, verificationDocument);

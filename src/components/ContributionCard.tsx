@@ -132,15 +132,15 @@ export function ContributionCard({ contribution, adminActions, compact }: Contri
         </div>
       </div>
 
-      {/* Title — show title, or fallback to summary as title if no title exists */}
-      {(title || (!title && summary)) && (
+      {/* Title */}
+      {displayTitle && (
         <h3 className="text-sm font-semibold text-foreground mt-2">
-          {title || summary}
+          {displayTitle}
         </h3>
       )}
 
       {/* Content — only body text that differs from the title */}
-      {!compact && displayText && renderTextContent(contribution, displayText, expanded)}
+      {!compact && renderTextContent(contribution, displayText, expanded)}
 
       {/* Read more */}
       {!compact && isLongText && (

@@ -938,7 +938,7 @@ function DateField({ label, type, value, onChange, yearOptions }: {
   return (
     <div className="space-y-2">
       <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
-      <Select onValueChange={onChange} value={value}>
+      <Select onValueChange={onChange} value={sanitizeSelectValue(value, "__placeholder__")}>
         <SelectTrigger className="bg-card border-border h-10"><SelectValue placeholder={type === "month" ? "Mois" : "Année"} /></SelectTrigger>
         <SelectContent position="popper" className="max-h-60">
           {type === "month"

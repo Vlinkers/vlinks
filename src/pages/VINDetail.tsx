@@ -69,6 +69,7 @@ const VINDetail = () => {
   const [isEndingOwnership, setIsEndingOwnership] = useState(false);
   const [filterType, setFilterType] = useState<ContributionType | "all">("all");
   const [editingContribution, setEditingContribution] = useState<PublicContribution | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     const check = async () => {
@@ -258,11 +259,13 @@ const VINDetail = () => {
       .filter(t => t.count > 0),
   ];
 
+
+
   const statTiles = [
-    { icon: FileText, value: contributions.length, label: "Contributions", color: "text-primary" },
-    { icon: FileSearch, value: totalDocs, label: "Documents", color: "text-primary" },
-    { icon: Camera, value: totalPhotos, label: "Photos", color: "text-primary" },
-    { icon: AlertTriangle, value: observedSignals.length, label: "Signaux", color: "text-warning" },
+    { icon: FileText, value: contributions.length, label: "Contributions", color: "text-primary", targetTab: "timeline" },
+    { icon: FileSearch, value: totalDocs, label: "Documents", color: "text-primary", targetTab: "documents" },
+    { icon: Camera, value: totalPhotos, label: "Photos", color: "text-primary", targetTab: "photos" },
+    { icon: AlertTriangle, value: observedSignals.length, label: "Signaux", color: "text-warning", targetTab: "overview-signals" },
   ];
 
   return (
@@ -340,7 +343,20 @@ const VINDetail = () => {
           {/* B. Stats tiles — more dense and professional */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             {statTiles.map((t, i) => (
-              <div key={i} className="p-4 rounded-xl bg-card border border-border shadow-sm flex items-center gap-3">
+              <button
+                key={i}
+                onClick={() => {
+                  if (t.targetTab === "overview-signals") {
+                    setActiveTab("overview");
+                    setTimeout(() => {
+                      document.getElementById("signals-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 100);
+                  } else {
+                    setActiveTab(t.targetTab);
+                  }
+                }}
+                className="p-4 rounded-xl bg-card border border-border shadow-sm flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-md transition-all text-left"
+              >
                 <div className={`w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0`}>
                   <t.icon className={`w-5 h-5 ${t.color}`} />
                 </div>
@@ -348,12 +364,12 @@ const VINDetail = () => {
                   <span className="font-display text-xl font-bold text-foreground block leading-none">{t.value}</span>
                   <span className="text-xs text-muted-foreground">{t.label}</span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
 
           {/* C. Tabs — more robust product-like navigation */}
-          <Tabs defaultValue="overview" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="bg-card border border-border rounded-xl p-1.5 mb-5">
               <TabsList className="w-full justify-start bg-transparent h-auto p-0 gap-1">
                 <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium transition-all">
@@ -404,7 +420,7 @@ const VINDetail = () => {
                   )}
 
                   {/* Observed signals */}
-                  <section className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+                  <section id="signals-section" className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
                     <div className="p-4 border-b border-border flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4 text-warning" />
                       <h3 className="font-display text-sm font-semibold text-foreground">Signaux observés</h3>

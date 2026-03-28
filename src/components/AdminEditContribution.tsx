@@ -281,10 +281,10 @@ export function AdminEditContribution({ contribution, open, onOpenChange, onSave
                 <div className="rounded-lg border border-border p-4 space-y-4 bg-muted/20">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Champs spécifiques</p>
                   <FieldGroup label="Type de vendeur">
-                    <Select value={holderType} onValueChange={setHolderType}>
+                    <Select value={sanitizeSelectValue(holderType)} onValueChange={(v) => setHolderType(desanitizeSelectValue(v) ?? "")}>
                       <SelectTrigger className="bg-background"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">— Aucun —</SelectItem>
+                        <SelectItem value="none">— Aucun —</SelectItem>
                         {HOLDER_TYPES.map(h => <SelectItem key={h.value} value={h.value}>{h.label}</SelectItem>)}
                       </SelectContent>
                     </Select>

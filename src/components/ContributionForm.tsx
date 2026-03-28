@@ -288,7 +288,7 @@ export function ContributionForm({
 
     const uploadPromises: Promise<void>[] = [];
     for (const doc of documents) {
-      const filePath = `${userId}/${contribution.id}/${Date.now()}_${Math.random().toString(36).slice(2)}_${doc.name}`;
+      const filePath = buildSafeFilePath(`${userId}/${contribution.id}`, doc.name);
       uploadPromises.push(
         supabase.storage.from("vin-documents").upload(filePath, doc).then(async ({ error: uploadError }) => {
           if (!uploadError) await supabase.from("contribution_documents").insert({ contribution_id: contribution.id, file_name: doc.name, file_path: filePath, file_type: doc.type, file_size: doc.size });
@@ -296,7 +296,7 @@ export function ContributionForm({
       );
     }
     for (const photo of photos) {
-      const filePath = `${userId}/${contribution.id}/${Date.now()}_${Math.random().toString(36).slice(2)}_${photo.name}`;
+      const filePath = buildSafeFilePath(`${userId}/${contribution.id}`, photo.name);
       uploadPromises.push(
         supabase.storage.from("vin-photos").upload(filePath, photo).then(async ({ error: uploadError }) => {
           if (!uploadError) {

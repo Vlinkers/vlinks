@@ -63,12 +63,16 @@ export const VehicleIdentificationCard = ({
     .filter(Boolean)
     .join(" ");
 
-  const specs: { icon: typeof Car; value: string }[] = [];
-  if (vinDecode.trim) specs.push({ icon: Car, value: vinDecode.trim });
-  if (vinDecode.body_class) specs.push({ icon: Car, value: vinDecode.body_class });
-  if (vinDecode.engine) specs.push({ icon: Settings, value: vinDecode.engine });
-  if (vinDecode.drive_type) specs.push({ icon: Gauge, value: vinDecode.drive_type });
-  if (vinDecode.fuel_type) specs.push({ icon: Fuel, value: vinDecode.fuel_type });
+  // Level 2 — Key specs (engine, fuel, drive)
+  const keySpecs: { icon: typeof Car; value: string }[] = [];
+  if (vinDecode.engine) keySpecs.push({ icon: Settings, value: vinDecode.engine });
+  if (vinDecode.fuel_type) keySpecs.push({ icon: Fuel, value: vinDecode.fuel_type });
+  if (vinDecode.drive_type) keySpecs.push({ icon: Gauge, value: vinDecode.drive_type });
+
+  // Level 3 — Secondary details (trim, body)
+  const secondarySpecs: { icon: typeof Car; value: string }[] = [];
+  if (vinDecode.trim) secondarySpecs.push({ icon: Car, value: vinDecode.trim });
+  if (vinDecode.body_class) secondarySpecs.push({ icon: Car, value: vinDecode.body_class });
 
   return (
     <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden mb-5">
@@ -101,20 +105,37 @@ export const VehicleIdentificationCard = ({
         )}
       </div>
 
-      {/* Specs bar */}
-      {specs.length > 0 && (
-        <div className="px-5 md:px-6 pb-5 md:pb-6">
-          <div className="flex flex-wrap gap-2">
-            {specs.slice(0, 4).map((spec, i) => (
-              <div 
-                key={i} 
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-muted text-xs text-muted-foreground"
-              >
-                <spec.icon className="w-3 h-3" />
-                <span className="truncate max-w-[140px]">{spec.value}</span>
-              </div>
-            ))}
-          </div>
+      {/* Specs */}
+      {(keySpecs.length > 0 || secondarySpecs.length > 0) && (
+        <div className="px-5 md:px-6 pb-5 md:pb-6 space-y-2">
+          {/* Level 2 — Key specs */}
+          {keySpecs.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {keySpecs.map((spec, i) => (
+                <div
+                  key={i}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/8 border border-primary/15 text-xs font-medium text-foreground"
+                >
+                  <spec.icon className="w-3.5 h-3.5 text-primary" />
+                  <span>{spec.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Level 3 — Secondary details */}
+          {secondarySpecs.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {secondarySpecs.map((spec, i) => (
+                <div
+                  key={i}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted text-[11px] text-muted-foreground"
+                >
+                  <spec.icon className="w-3 h-3" />
+                  <span className="truncate max-w-[160px]">{spec.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

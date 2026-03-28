@@ -258,11 +258,13 @@ const VINDetail = () => {
       .filter(t => t.count > 0),
   ];
 
+  const [activeTab, setActiveTab] = useState("overview");
+
   const statTiles = [
-    { icon: FileText, value: contributions.length, label: "Contributions", color: "text-primary" },
-    { icon: FileSearch, value: totalDocs, label: "Documents", color: "text-primary" },
-    { icon: Camera, value: totalPhotos, label: "Photos", color: "text-primary" },
-    { icon: AlertTriangle, value: observedSignals.length, label: "Signaux", color: "text-warning" },
+    { icon: FileText, value: contributions.length, label: "Contributions", color: "text-primary", targetTab: "timeline" },
+    { icon: FileSearch, value: totalDocs, label: "Documents", color: "text-primary", targetTab: "documents" },
+    { icon: Camera, value: totalPhotos, label: "Photos", color: "text-primary", targetTab: "photos" },
+    { icon: AlertTriangle, value: observedSignals.length, label: "Signaux", color: "text-warning", targetTab: "overview-signals" },
   ];
 
   return (

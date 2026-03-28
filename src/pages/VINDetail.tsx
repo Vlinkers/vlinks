@@ -281,7 +281,14 @@ const VINDetail = () => {
           </nav>
 
           {/* A. Vehicle Header */}
-          <VehicleIdentificationCard vin={vin || ""} vinDecode={vinDecode} isLoading={isDecodingVIN} lastUpdated={data.lastUpdated} />
+          <VehicleIdentificationCard
+            vin={vin || ""}
+            vinDecode={vinDecode}
+            isLoading={isDecodingVIN}
+            lastUpdated={data.lastUpdated}
+            showClaimBanner={!isCheckingOwner && !!currentUserId && ownerVerificationStatus === 'none'}
+            onClaimClick={() => setShowOwnerForm(true)}
+          />
 
           {/* Action bar */}
           <div className="flex flex-wrap items-center gap-2 mb-5">
@@ -645,14 +652,6 @@ const VINDetail = () => {
             </TabsContent>
           </Tabs>
 
-          {/* Owner claim link */}
-          {!isCheckingOwner && currentUserId && ownerVerificationStatus === 'none' && (
-            <div className="mt-8 text-center">
-              <button onClick={() => setShowOwnerForm(true)} className="text-xs text-muted-foreground hover:text-foreground underline">
-                Vous êtes le propriétaire ? Revendiquer ce VIN
-              </button>
-            </div>
-          )}
         </div>
       </main>
 

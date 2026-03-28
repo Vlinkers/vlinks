@@ -339,7 +339,7 @@ export function OwnerContributionForm({
     }
 
     for (const doc of documents) {
-      const filePath = `${userId}/${contribution.id}/${doc.name}`;
+      const filePath = buildSafeFilePath(`${userId}/${contribution.id}`, doc.name);
       const { error: uploadError } = await supabase.storage
         .from("vin-documents")
         .upload(filePath, doc);

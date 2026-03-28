@@ -420,7 +420,7 @@ const VINDetail = () => {
                   )}
 
                   {/* Observed signals */}
-                  <section className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+                  <section id="signals-section" className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
                     <div className="p-4 border-b border-border flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4 text-warning" />
                       <h3 className="font-display text-sm font-semibold text-foreground">Signaux observés</h3>

@@ -1,5 +1,5 @@
 import { 
-  CheckCircle, AlertTriangle, Loader2, Car, Settings, Fuel, Gauge, Calendar
+  CheckCircle, AlertTriangle, Loader2, Car, Settings, Fuel, Gauge, Calendar, Shield
 } from "lucide-react";
 
 interface VINDecodeData {

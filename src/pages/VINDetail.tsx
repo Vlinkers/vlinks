@@ -652,14 +652,6 @@ const VINDetail = () => {
             </TabsContent>
           </Tabs>
 
-          {/* Owner claim link */}
-          {!isCheckingOwner && currentUserId && ownerVerificationStatus === 'none' && (
-            <div className="mt-8 text-center">
-              <button onClick={() => setShowOwnerForm(true)} className="text-xs text-muted-foreground hover:text-foreground underline">
-                Vous êtes le propriétaire ? Revendiquer ce VIN
-              </button>
-            </div>
-          )}
         </div>
       </main>
 

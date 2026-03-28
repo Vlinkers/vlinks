@@ -142,6 +142,24 @@ export const VehicleIdentificationCard = ({
           )}
         </div>
       )}
+
+      {/* Owner claim banner */}
+      {showClaimBanner && onClaimClick && (
+        <div className="px-5 md:px-6 pb-4">
+          <button
+            onClick={onClaimClick}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-lg bg-muted/60 border border-border hover:border-primary/30 hover:bg-muted transition-all text-left group"
+          >
+            <Shield className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+            <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+              Vous êtes le propriétaire actuel ?
+            </span>
+            <span className="text-xs font-medium text-primary ml-auto">
+              Revendiquer ce VIN →
+            </span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

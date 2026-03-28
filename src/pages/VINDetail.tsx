@@ -281,7 +281,14 @@ const VINDetail = () => {
           </nav>
 
           {/* A. Vehicle Header */}
-          <VehicleIdentificationCard vin={vin || ""} vinDecode={vinDecode} isLoading={isDecodingVIN} lastUpdated={data.lastUpdated} />
+          <VehicleIdentificationCard
+            vin={vin || ""}
+            vinDecode={vinDecode}
+            isLoading={isDecodingVIN}
+            lastUpdated={data.lastUpdated}
+            showClaimBanner={!isCheckingOwner && !!currentUserId && ownerVerificationStatus === 'none'}
+            onClaimClick={() => setShowOwnerForm(true)}
+          />
 
           {/* Action bar */}
           <div className="flex flex-wrap items-center gap-2 mb-5">

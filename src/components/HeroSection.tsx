@@ -4,9 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus } from "lucide-react";
 
-const HeroSection = () => {
+const HeroSection = ({ onVisibilityChange }: { onVisibilityChange?: (visible: boolean) => void }) => {
   const [vinInput, setVinInput] = useState("");
   const navigate = useNavigate();
+
+  const heroRef = React.useRef<HTMLElement>(null);
+
+  React.useEffect(() => {
+    if (!onVisibilityChange || !heroRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => onVisibilityChange(entry.isIntersecting),
+      { threshold: 0.1 }
+    );
+    observer.observe(heroRef.current);
+    return () => observer.disconnect();
+  }, [onVisibilityChange]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

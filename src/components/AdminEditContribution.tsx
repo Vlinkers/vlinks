@@ -256,10 +256,10 @@ export function AdminEditContribution({ contribution, open, onOpenChange, onSave
               </div>
 
               <FieldGroup label="Province">
-                <Select value={province} onValueChange={setProvince}>
+                <Select value={sanitizeSelectValue(province)} onValueChange={(v) => setProvince(desanitizeSelectValue(v) ?? "")}>
                   <SelectTrigger className="bg-background"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">— Aucune —</SelectItem>
+                    <SelectItem value="none">— Aucune —</SelectItem>
                     {PROVINCES.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                   </SelectContent>
                 </Select>

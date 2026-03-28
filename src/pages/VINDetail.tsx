@@ -343,7 +343,20 @@ const VINDetail = () => {
           {/* B. Stats tiles — more dense and professional */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             {statTiles.map((t, i) => (
-              <div key={i} className="p-4 rounded-xl bg-card border border-border shadow-sm flex items-center gap-3">
+              <button
+                key={i}
+                onClick={() => {
+                  if (t.targetTab === "overview-signals") {
+                    setActiveTab("overview");
+                    setTimeout(() => {
+                      document.getElementById("signals-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 100);
+                  } else {
+                    setActiveTab(t.targetTab);
+                  }
+                }}
+                className="p-4 rounded-xl bg-card border border-border shadow-sm flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-md transition-all text-left"
+              >
                 <div className={`w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0`}>
                   <t.icon className={`w-5 h-5 ${t.color}`} />
                 </div>
@@ -351,7 +364,7 @@ const VINDetail = () => {
                   <span className="font-display text-xl font-bold text-foreground block leading-none">{t.value}</span>
                   <span className="text-xs text-muted-foreground">{t.label}</span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
 

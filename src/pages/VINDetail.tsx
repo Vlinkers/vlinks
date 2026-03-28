@@ -399,34 +399,39 @@ const VINDetail = () => {
 
             {/* ── Aperçu ── */}
             <TabsContent value="overview" className="space-y-5 mt-0">
-              <div className="grid gap-5 lg:grid-cols-3">
-                {/* Left column: Recent + Signals */}
-                <div className="lg:col-span-2 space-y-5">
-                  {/* Latest contributions */}
-                  {contributions.length > 0 && (
-                    <section className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
-                      <div className="p-4 border-b border-border flex items-center justify-between">
-                        <h3 className="font-display text-sm font-semibold text-foreground">Derniers éléments</h3>
-                        {contributions.length > 3 && (
-                          <button 
-                            onClick={() => { const el = document.querySelector('[data-value="timeline"]') as HTMLElement; el?.click(); }} 
-                            className="text-xs text-primary hover:underline flex items-center gap-1"
-                          >
-                            Tout voir <ChevronRight className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                      <div className="divide-y divide-border">
-                        {contributions.slice(0, 3).map(c => (
-                          <div key={c.id} className="p-4">
-                            <ContributionCard contribution={c} compact adminActions={<AdminActions contributionId={c.id} contribution={c} />} />
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
+              {/* Activity summary bar */}
+              {contributions.length > 0 && (() => {
+                const lastDate = contributions[0]?.date;
+                const daysAgo = lastDate ? Math.max(0, Math.floor((Date.now() - new Date(lastDate).getTime()) / 86400000)) : null;
+                const typeCounts = contributions.reduce<Record<string, number>>((acc, c) => { acc[c.type] = (acc[c.type] || 0) + 1; return acc; }, {});
+                const topType = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0];
 
-                  {/* Observed signals */}
+                return (
+                  <div className="rounded-xl bg-card border border-border shadow-sm p-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
+                    {daysAgo !== null && (
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-primary" />
+                        Dernière activité {daysAgo === 0 ? "aujourd'hui" : `il y a ${daysAgo} jour${daysAgo > 1 ? "s" : ""}`}
+                      </span>
+                    )}
+                    {topType && (
+                      <span className="flex items-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5 text-primary" />
+                        Type le plus fréquent : <span className="text-foreground font-medium">{getContributionLabel(topType[0] as ContributionType)}</span>
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-primary" />
+                      {new Set(contributions.map(c => c.author)).size} contributeur{new Set(contributions.map(c => c.author)).size > 1 ? "s" : ""}
+                    </span>
+                  </div>
+                );
+              })()}
+
+              <div className="grid gap-5 lg:grid-cols-3">
+                {/* Left column: Signals (primary) + Recent compact */}
+                <div className="lg:col-span-2 space-y-5">
+                  {/* Observed signals — central element */}
                   <section id="signals-section" className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
                     <div className="p-4 border-b border-border flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4 text-warning" />
@@ -474,6 +479,32 @@ const VINDetail = () => {
                       )}
                     </div>
                   </section>
+
+                  {/* Latest 3 contributions — compact */}
+                  {contributions.length > 0 && (
+                    <section className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+                      <div className="p-4 border-b border-border flex items-center justify-between">
+                        <h3 className="font-display text-sm font-semibold text-foreground">Dernières contributions</h3>
+                      </div>
+                      <div className="divide-y divide-border">
+                        {contributions.slice(0, 3).map(c => (
+                          <div key={c.id} className="p-4">
+                            <ContributionCard contribution={c} compact />
+                          </div>
+                        ))}
+                      </div>
+                      <div className="p-4 border-t border-border">
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => setActiveTab("timeline")}
+                        >
+                          Voir toute la chronologie
+                          <ChevronRight className="w-4 h-4 ml-1.5" />
+                        </Button>
+                      </div>
+                    </section>
+                  )}
                 </div>
 
                 {/* Right column: Quick access */}
@@ -483,8 +514,8 @@ const VINDetail = () => {
                     <div className="p-4 border-b border-border flex items-center justify-between">
                       <h3 className="font-display text-sm font-semibold text-foreground">Documents</h3>
                       {allDocuments.length > 3 && (
-                        <button 
-                          onClick={() => { const el = document.querySelector('[data-value="documents"]') as HTMLElement; el?.click(); }} 
+                        <button
+                          onClick={() => setActiveTab("documents")}
                           className="text-xs text-primary hover:underline"
                         >
                           Tout voir
@@ -511,8 +542,8 @@ const VINDetail = () => {
                     <div className="p-4 border-b border-border flex items-center justify-between">
                       <h3 className="font-display text-sm font-semibold text-foreground">Photos</h3>
                       {allPhotos.length > 6 && (
-                        <button 
-                          onClick={() => { const el = document.querySelector('[data-value="photos"]') as HTMLElement; el?.click(); }} 
+                        <button
+                          onClick={() => setActiveTab("photos")}
                           className="text-xs text-primary hover:underline"
                         >
                           Tout voir

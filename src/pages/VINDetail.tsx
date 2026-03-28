@@ -69,6 +69,7 @@ const VINDetail = () => {
   const [isEndingOwnership, setIsEndingOwnership] = useState(false);
   const [filterType, setFilterType] = useState<ContributionType | "all">("all");
   const [editingContribution, setEditingContribution] = useState<PublicContribution | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     const check = async () => {

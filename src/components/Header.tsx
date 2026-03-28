@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const Header = () => {
+const Header = ({ hideSearch = false }: { hideSearch?: boolean }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [vinSearch, setVinSearch] = useState("");
   const { user, signOut } = useAuth();
@@ -44,8 +44,13 @@ const Header = () => {
           <span className="font-display font-bold text-lg text-foreground hidden sm:block">VLINKS</span>
         </Link>
 
-        {/* VIN Search — always visible on desktop */}
-        <form onSubmit={handleVinSearch} className="hidden md:flex items-center flex-1 max-w-md ml-4">
+        {/* VIN Search — hidden on homepage when hero is visible */}
+        <form
+          onSubmit={handleVinSearch}
+          className={`hidden md:flex items-center flex-1 max-w-md ml-4 transition-opacity duration-300 ${
+            hideSearch ? "opacity-0 pointer-events-none" : "opacity-100"
+          }`}
+        >
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input

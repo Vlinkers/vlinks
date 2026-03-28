@@ -359,7 +359,7 @@ export function ContributionForm({
           actualVinId = newVin.id;
         }
       }
-      const filePath = `${user.id}/${actualVinId}/${Date.now()}_${verificationDocument.name}`;
+      const filePath = buildSafeFilePath(`${user.id}/${actualVinId}`, verificationDocument.name);
       await supabase.storage.from("owner-verification-docs").upload(filePath, verificationDocument);
       const { error: insertError } = await supabase.from("owner_verifications").insert({
         user_id: user.id, vin_id: actualVinId, document_path: filePath,

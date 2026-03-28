@@ -487,7 +487,7 @@ export function OwnerContributionForm({
         return;
       }
 
-      const filePath = `${user.id}/${actualVinId}/${verificationDocument.name}`;
+      const filePath = buildSafeFilePath(`${user.id}/${actualVinId}`, verificationDocument.name);
       const { error: uploadError } = await supabase.storage
         .from("owner-verification-docs")
         .upload(filePath, verificationDocument);

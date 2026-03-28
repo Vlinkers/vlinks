@@ -122,7 +122,7 @@ export function OwnerVerificationForm({
       }
 
       // Upload document to private bucket
-      const filePath = `${user.id}/${actualVinId}/${Date.now()}_${document.name}`;
+      const filePath = buildSafeFilePath(`${user.id}/${actualVinId}`, document.name);
       const { error: uploadError } = await supabase.storage
         .from("owner-verification-docs")
         .upload(filePath, document);

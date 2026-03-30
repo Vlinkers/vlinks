@@ -84,7 +84,7 @@ export default function AdminVINs() {
             <tbody>
               {filtered.map((v) => (
                 <tr key={v.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                  <td className="px-4 py-3 font-mono text-xs">{v.vin}</td>
+                  <td className="px-4 py-3"><span className="vin-code">{v.vin}</span></td>
                   <td className="px-4 py-3">{[v.year, v.make, v.model].filter(Boolean).join(" ") || "—"}</td>
                   <td className="px-4 py-3">{v.trust_score ?? 0}</td>
                   <td className="px-4 py-3">{v.contributions_count ?? 0}</td>

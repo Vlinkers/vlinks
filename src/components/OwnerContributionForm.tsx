@@ -688,7 +688,7 @@ export function OwnerContributionForm({
         {/* VIN display */}
         <div className="bg-muted/50 rounded-lg p-3 flex items-center gap-3">
           <Car className="w-5 h-5 text-muted-foreground" />
-          <span className="font-mono text-sm">{vin}</span>
+          <span className="vin-code">{vin}</span>
           {ownerVerificationStatus === 'verified' && (
             <span className="ml-auto text-xs bg-success/20 text-success px-2 py-1 rounded-full flex items-center gap-1">
               <CheckCircle className="w-3 h-3" />

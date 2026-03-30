@@ -384,7 +384,7 @@ export default function AdminContributions() {
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <p className="text-muted-foreground text-xs">VIN</p>
-                  <p className="font-mono text-sm">{selected.vin}</p>
+                  <p className="vin-code inline-block">{selected.vin}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">Type</p>

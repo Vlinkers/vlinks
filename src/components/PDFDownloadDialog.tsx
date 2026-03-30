@@ -86,7 +86,7 @@ export function PDFDownloadDialog({ open, onOpenChange, vin, vehicleName }: PDFD
           <DialogDescription>
             {vehicleName && <span className="font-medium text-foreground">{vehicleName}</span>}
             {vehicleName && <br />}
-            <span className="font-mono text-xs">{vin}</span>
+            <span className="vin-code">{vin}</span>
           </DialogDescription>
         </DialogHeader>
 

@@ -210,7 +210,7 @@ export function OwnerClaimForm({
             Revendiquer ce VIN (beta)
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            VIN: <span className="font-mono">{vin}</span>
+            VIN: <span className="vin-code">{vin}</span>
           </DialogDescription>
         </DialogHeader>
 

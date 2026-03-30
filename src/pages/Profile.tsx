@@ -789,7 +789,7 @@ const Profile = () => {
                           >
                             <div className="flex-1 space-y-1">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <code className="text-sm font-mono text-primary">{claim.vin}</code>
+                                <code className="vin-code">{claim.vin}</code>
                                 {claim.status === "active" ? (
                                   <Badge variant="verified">
                                     {language === "fr" ? "Actif" : "Active"}

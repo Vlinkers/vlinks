@@ -44,7 +44,7 @@ const DossierExamplesSection = () => {
                 <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground">
                   2018 Volvo XC90 T6 Momentum
                 </h3>
-                <p className="text-sm text-muted-foreground">VIN: YV4A22PK2J1234567</p>
+                <p className="text-sm text-muted-foreground">VIN: <span className="vin-code">YV4A22PK2J1234567</span></p>
               </div>
               <div className="flex flex-wrap gap-3">
                 <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">

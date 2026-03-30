@@ -476,7 +476,7 @@ export function ContributionForm({
               <div>
                 <SheetTitle className="font-display text-lg">Contribuer au dossier</SheetTitle>
                 <SheetDescription className="text-xs">
-                  VIN <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-[11px]">{vin}</code>
+                  VIN <code className="vin-code">{vin}</code>
                 </SheetDescription>
               </div>
             </div>

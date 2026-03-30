@@ -213,7 +213,7 @@ const VINDetail = () => {
             <nav className="flex items-center gap-2 text-xs text-muted-foreground py-4">
               <Link to="/" className="hover:text-foreground transition-colors">Accueil</Link>
               <ChevronRight className="w-3 h-3" />
-              <span className="text-foreground font-mono">{vin}</span>
+              <span className="vin-code">{vin}</span>
             </nav>
 
             <VehicleIdentificationCard vin={vin || ""} vinDecode={vinDecode} isLoading={isDecodingVIN} />

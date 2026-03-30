@@ -94,7 +94,7 @@ export function ContributionCard({ contribution, adminActions, compact }: Contri
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1.5">
-            <Badge variant="outline" className={`text-xs ${getContributionColor(contribution.type)}`}>
+            <Badge variant={getContributionBadgeVariant(contribution.type)} className="text-xs">
               <Icon className="w-3 h-3 mr-1" />
               {getContributionLabel(contribution.type)}
             </Badge>

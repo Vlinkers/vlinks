@@ -324,7 +324,7 @@ export default function AdminContributions() {
                   className="border-b border-border/50 hover:bg-muted/20 cursor-pointer transition-colors"
                   onClick={() => openDetail(c)}
                 >
-                  <td className="px-4 py-3 font-mono text-xs">{c.vin || "—"}</td>
+                  <td className="px-4 py-3"><span className="vin-code">{c.vin || "—"}</span></td>
                   <td className="px-4 py-3">{contributionTypeLabels[c.contribution_type] || c.contribution_type}</td>
                   <td className="px-4 py-3">{c.author_label}</td>
                   <td className="px-4 py-3">{statusBadge(c.status)}</td>

@@ -717,7 +717,7 @@ const Profile = () => {
                             className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                           >
                             <div className="flex-1 space-y-1">
-                              <code className="text-sm font-mono text-primary">{fv.vin}</code>
+                              <code className="vin-code">{fv.vin}</code>
                               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />

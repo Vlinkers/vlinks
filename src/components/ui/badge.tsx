@@ -17,6 +17,12 @@ const badgeVariants = cva(
         danger: "border-danger/30 bg-danger/10 text-danger",
         info: "border-primary/30 bg-primary/10 text-primary",
         premium: "border-accent/30 bg-accent/10 text-accent",
+        // Contribution type semantic badges
+        inspection: "border-[#15803D]/20 bg-[#DCFCE7] text-[#15803D]",
+        signal: "border-[#92400E]/20 bg-[#FEF3C7] text-[#92400E]",
+        accident: "border-[#B91C1C]/20 bg-[#FEE2E2] text-[#B91C1C]",
+        photo: "border-[#7E22CE]/20 bg-[#F3E8FF] text-[#7E22CE]",
+        document: "border-[#475569]/20 bg-[#F1F5F9] text-[#475569]",
       },
     },
     defaultVariants: {

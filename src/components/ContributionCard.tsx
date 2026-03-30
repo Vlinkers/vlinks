@@ -41,19 +41,21 @@ const getContributionLabel = (type: ContributionType) => {
   }
 };
 
-const getContributionColor = (type: ContributionType) => {
+type ContributionBadgeVariant = "inspection" | "signal" | "accident" | "photo" | "document" | "info";
+
+const getContributionBadgeVariant = (type: ContributionType): ContributionBadgeVariant => {
   switch (type) {
-    case "inspection_report": return "bg-primary/10 text-primary border-primary/20";
-    case "vehicle_history": return "bg-primary/10 text-primary border-primary/20";
-    case "owner_exchange": return "bg-accent text-accent-foreground border-accent-foreground/20";
-    case "mechanic_conversation": return "bg-warning/10 text-warning border-warning/20";
-    case "photo_evidence": return "bg-success/10 text-success border-success/20";
-    case "observation": return "bg-muted text-muted-foreground border-border";
-    case "purchase_decision": return "bg-muted text-muted-foreground border-border";
-    case "ownership_change": return "bg-primary/10 text-primary border-primary/20";
-    case "for_sale": return "bg-warning/10 text-warning border-warning/20";
-    case "price_change": return "bg-accent text-accent-foreground border-accent-foreground/20";
-    default: return "bg-muted text-muted-foreground border-border";
+    case "inspection_report": return "inspection";
+    case "vehicle_history": return "inspection";
+    case "mechanic_conversation": return "inspection";
+    case "observation": return "signal";
+    case "for_sale": return "signal";
+    case "price_change": return "signal";
+    case "purchase_decision": return "accident";
+    case "photo_evidence": return "photo";
+    case "owner_exchange": return "document";
+    case "ownership_change": return "document";
+    default: return "info";
   }
 };
 
@@ -92,7 +94,7 @@ export function ContributionCard({ contribution, adminActions, compact }: Contri
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1.5">
-            <Badge variant="outline" className={`text-xs ${getContributionColor(contribution.type)}`}>
+            <Badge variant={getContributionBadgeVariant(contribution.type)} className="text-xs">
               <Icon className="w-3 h-3 mr-1" />
               {getContributionLabel(contribution.type)}
             </Badge>
@@ -312,4 +314,4 @@ function renderTextContent(
   return displayText ? <p className="text-sm text-foreground/90 mt-2 whitespace-pre-line">{displayText}</p> : null;
 }
 
-export { getContributionIcon, getContributionLabel, getContributionColor };
+export { getContributionIcon, getContributionLabel, getContributionBadgeVariant };

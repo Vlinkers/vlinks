@@ -192,7 +192,7 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
     return {
       id: c.id,
       type: c.contribution_type,
-      date: new Date(c.created_at).toLocaleDateString("fr-CA", {
+      date: new Date(c.intervention_date ?? c.created_at).toLocaleDateString("fr-CA", {
         day: "numeric",
         month: "short",
         year: "numeric",

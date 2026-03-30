@@ -476,7 +476,7 @@ export function ContributionForm({
               <div>
                 <SheetTitle className="font-display text-lg">Contribuer au dossier</SheetTitle>
                 <SheetDescription className="text-xs">
-                  VIN <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-[11px]">{vin}</code>
+                  VIN <code className="vin-code">{vin}</code>
                 </SheetDescription>
               </div>
             </div>
@@ -865,7 +865,7 @@ function WizardHeader({ vin, title, subtitle }: { vin: string; title: string; su
     <div className="border-b border-border bg-card p-5">
       <h2 className="font-display text-lg font-semibold text-foreground">{title}</h2>
       {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
-      <p className="text-xs text-muted-foreground mt-1">VIN <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-[11px]">{vin}</code></p>
+      <p className="text-xs text-muted-foreground mt-1">VIN <code className="vin-code">{vin}</code></p>
     </div>
   );
 }

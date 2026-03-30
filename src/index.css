@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 @layer base {
   :root {
@@ -95,6 +95,18 @@
 
   .glass-strong {
     @apply bg-card border-b border-border;
+  }
+
+  .vin-code {
+    font-family: 'JetBrains Mono', monospace;
+    color: hsl(var(--primary));
+    background: hsl(224 70% 97%);
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+    font-size: 0.85em;
+    line-height: 1.5;
   }
 }
 

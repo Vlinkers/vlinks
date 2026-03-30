@@ -186,7 +186,7 @@ export function OwnerVerificationForm({
             Je suis propriétaire de ce véhicule
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            VIN: <span className="font-mono">{vin}</span>
+            VIN: <span className="vin-code">{vin}</span>
           </DialogDescription>
         </DialogHeader>
 

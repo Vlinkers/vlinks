@@ -101,6 +101,15 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
     .eq("status", "approved")
     .order("created_at", { ascending: false });
 
+  // Sort by intervention_date (when available) then created_at as fallback
+  if (contributions) {
+    contributions.sort((a: any, b: any) => {
+      const dateA = new Date(a.intervention_date ?? a.created_at).getTime();
+      const dateB = new Date(b.intervention_date ?? b.created_at).getTime();
+      return dateB - dateA;
+    });
+  }
+
   if (contribError) throw contribError;
 
   // Fetch all vin_contributions for this VIN to map photos/documents
@@ -183,7 +192,7 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
     return {
       id: c.id,
       type: c.contribution_type,
-      date: new Date(c.created_at).toLocaleDateString("fr-CA", {
+      date: new Date(c.intervention_date ?? c.created_at).toLocaleDateString("fr-CA", {
         day: "numeric",
         month: "short",
         year: "numeric",

@@ -630,7 +630,7 @@ const Profile = () => {
                           >
                             <div className="flex-1 space-y-1.5">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <code className="text-sm font-mono text-primary">{contribution.vin}</code>
+                                <code className="vin-code">{contribution.vin}</code>
                                 <Badge variant="outline" className="text-xs">
                                   {CONTRIBUTION_TYPE_LABELS[contribution.contribution_type]?.[language] || contribution.contribution_type}
                                 </Badge>

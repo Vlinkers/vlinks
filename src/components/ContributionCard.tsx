@@ -41,19 +41,21 @@ const getContributionLabel = (type: ContributionType) => {
   }
 };
 
-const getContributionColor = (type: ContributionType) => {
+type ContributionBadgeVariant = "inspection" | "signal" | "accident" | "photo" | "document" | "info";
+
+const getContributionBadgeVariant = (type: ContributionType): ContributionBadgeVariant => {
   switch (type) {
-    case "inspection_report": return "bg-primary/10 text-primary border-primary/20";
-    case "vehicle_history": return "bg-primary/10 text-primary border-primary/20";
-    case "owner_exchange": return "bg-accent text-accent-foreground border-accent-foreground/20";
-    case "mechanic_conversation": return "bg-warning/10 text-warning border-warning/20";
-    case "photo_evidence": return "bg-success/10 text-success border-success/20";
-    case "observation": return "bg-muted text-muted-foreground border-border";
-    case "purchase_decision": return "bg-muted text-muted-foreground border-border";
-    case "ownership_change": return "bg-primary/10 text-primary border-primary/20";
-    case "for_sale": return "bg-warning/10 text-warning border-warning/20";
-    case "price_change": return "bg-accent text-accent-foreground border-accent-foreground/20";
-    default: return "bg-muted text-muted-foreground border-border";
+    case "inspection_report": return "inspection";
+    case "vehicle_history": return "inspection";
+    case "mechanic_conversation": return "inspection";
+    case "observation": return "signal";
+    case "for_sale": return "signal";
+    case "price_change": return "signal";
+    case "purchase_decision": return "accident";
+    case "photo_evidence": return "photo";
+    case "owner_exchange": return "document";
+    case "ownership_change": return "document";
+    default: return "info";
   }
 };
 

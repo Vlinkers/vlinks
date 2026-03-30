@@ -314,4 +314,4 @@ function renderTextContent(
   return displayText ? <p className="text-sm text-foreground/90 mt-2 whitespace-pre-line">{displayText}</p> : null;
 }
 
-export { getContributionIcon, getContributionLabel, getContributionColor };
+export { getContributionIcon, getContributionLabel, getContributionBadgeVariant };

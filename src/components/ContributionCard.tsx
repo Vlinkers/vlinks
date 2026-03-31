@@ -90,6 +90,27 @@ export function ContributionCard({ contribution, adminActions, compact, renderMo
   const isLongText = bodyText.length > TEXT_TRUNCATE_LENGTH;
   const displayText = expanded ? bodyText : bodyText.slice(0, TEXT_TRUNCATE_LENGTH);
 
+  // Body-only mode: skip header/title wrapper, render content + media + admin only
+  if (renderMode === "body-only") {
+    return (
+      <div>
+        {!compact && renderTextContent(contribution, displayText, expanded)}
+        {!compact && isLongText && (
+          <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 mt-2">
+            {expanded ? <><ChevronUp className="w-3 h-3" /> Réduire</> : <><ChevronDown className="w-3 h-3" /> Lire plus</>}
+          </button>
+        )}
+        {!compact && contribution.hasPhotos && contribution.photos.length > 0 && (
+          <div className="mt-3"><PhotoGallery photos={contribution.photos} /></div>
+        )}
+        {!compact && contribution.hasDocuments && contribution.documents.length > 0 && (
+          <DocumentsList documents={contribution.documents} />
+        )}
+        {adminActions}
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-lg bg-muted/30 border border-border hover:border-primary/20 transition-all">
       {/* Header */}

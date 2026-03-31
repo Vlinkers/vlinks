@@ -21,7 +21,7 @@ const Index = () => {
         canonical="https://vlinks.ca"
       />
       <div className="min-h-screen bg-background">
-        <Header hideSearch={heroVisible} />
+        <Header hideSearch={heroVisible} transparent={heroVisible} />
         <main>
           <HeroSection onVisibilityChange={setHeroVisible} />
           <SocialProofSection />

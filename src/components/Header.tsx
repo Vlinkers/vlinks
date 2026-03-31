@@ -103,7 +103,7 @@ const Header = ({ hideSearch = false, transparent = false }: { hideSearch?: bool
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button variant="ghost" size="sm" asChild>
+            <Button variant="ghost" size="sm" asChild className={transparent ? "text-white hover:bg-white/10" : ""}>
               <Link to="/auth">Connexion</Link>
             </Button>
           )}

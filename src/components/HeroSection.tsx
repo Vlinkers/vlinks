@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
 const HeroSection = ({ onVisibilityChange }: { onVisibilityChange?: (visible: boolean) => void }) => {
@@ -28,31 +27,49 @@ const HeroSection = ({ onVisibilityChange }: { onVisibilityChange?: (visible: bo
   };
 
   return (
-    <section ref={heroRef} className="pt-20 pb-16 px-4 bg-[#0F172A]">
-      <div className="max-w-3xl mx-auto text-center">
-        <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-          Chaque VIN a une histoire.
+    <section ref={heroRef} className="pt-28 pb-20 px-4 bg-[#0F172A]">
+      <div className="max-w-[640px] mx-auto text-center">
+        {/* Eyebrow */}
+        <p className="text-[#3B82F6] text-xs font-medium tracking-[0.2em] uppercase mb-6">
+          🇨🇦 Plateforme communautaire · Québec
+        </p>
+
+        {/* H1 */}
+        <h1 className="font-display text-[2rem] sm:text-[2.75rem] lg:text-[3.25rem] font-bold text-white leading-tight mb-4">
+          Chaque VIN a une{" "}
+          <em className="italic text-[#60A5FA] not-italic font-bold" style={{ fontStyle: "italic" }}>histoire</em>.
         </h1>
-        <p className="text-base sm:text-lg text-slate-400 mb-8 max-w-2xl mx-auto">
+
+        {/* Subtitle */}
+        <p className="text-[#94A3B8] text-base mb-10 max-w-lg mx-auto leading-relaxed">
           Avant d'acheter un véhicule usagé, consultez ce que les autres acheteurs ont découvert sur ce VIN.
         </p>
-        <form onSubmit={handleSearch} className="max-w-xl mx-auto mb-4">
-          <div className="flex items-center bg-white rounded-full overflow-hidden shadow-lg">
-            <Search className="w-5 h-5 text-slate-400 ml-5 shrink-0" />
-            <Input
+
+        {/* Search bar */}
+        <form onSubmit={handleSearch} className="max-w-[540px] mx-auto mb-4">
+          <div className="flex items-center bg-white rounded-[10px] overflow-hidden shadow-lg">
+            <Search className="w-5 h-5 text-slate-400 ml-4 shrink-0" />
+            <input
               type="text"
-              placeholder="Entrez un numéro VIN (ex: 1HGBH41JXMN109186)"
+              placeholder="Entrez un numéro VIN..."
               value={vinInput}
               onChange={(e) => setVinInput(e.target.value.toUpperCase())}
               maxLength={17}
-              className="flex-1 border-0 bg-transparent h-14 text-base font-mono tracking-wider uppercase text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0 px-3"
+              className="flex-1 h-[52px] bg-transparent text-base font-mono tracking-wider uppercase text-slate-900 placeholder:text-slate-400 border-0 outline-none px-3"
             />
-            <Button type="submit" className="h-10 rounded-full px-6 mr-2 shrink-0 font-semibold">
+            <Button
+              type="submit"
+              className="h-10 rounded-lg px-6 mr-1.5 shrink-0 font-semibold text-sm"
+            >
               Rechercher →
             </Button>
           </div>
         </form>
-        <p className="text-sm text-slate-500">Aucune inscription requise pour consulter</p>
+
+        {/* Helper text */}
+        <p className="text-[#64748B] text-[13px]">
+          Aucune inscription requise pour consulter
+        </p>
       </div>
     </section>
   );

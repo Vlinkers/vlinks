@@ -43,7 +43,7 @@ const Header = ({ hideSearch = false, transparent = false }: { hideSearch?: bool
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0">
           <img src={vlinksIcon} alt="VLINKS" className="h-7 w-auto" />
-          <span className="font-display font-bold text-lg text-foreground hidden sm:block">VLINKS</span>
+          <span className={`font-display font-bold text-lg hidden sm:block ${transparent ? "text-white" : "text-foreground"}`}>VLINKS</span>
         </Link>
 
         {/* VIN Search — hidden on homepage when hero is visible */}

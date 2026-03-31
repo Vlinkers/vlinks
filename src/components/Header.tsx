@@ -75,7 +75,7 @@ const Header = ({ hideSearch = false, transparent = false }: { hideSearch?: bool
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2">
+                <Button variant="ghost" size="sm" className={`gap-2 ${transparent ? "text-white hover:bg-white/10" : ""}`}>
                   <User className="w-4 h-4" />
                   <span className="hidden lg:inline">Mon compte</span>
                 </Button>

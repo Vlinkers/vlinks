@@ -631,6 +631,13 @@ const VINDetail = () => {
 
       <Footer />
 
+      <ContributionDetailDrawer
+        contribution={selectedContribution}
+        open={!!selectedContribution}
+        onOpenChange={(open) => { if (!open) setSelectedContribution(null); }}
+        adminActions={selectedContribution && isAdmin ? <AdminActions contributionId={selectedContribution.id} contribution={selectedContribution} /> : undefined}
+      />
+
       <UsernameRequiredDialog open={showUsernameDialog} onComplete={() => { setShowUsernameDialog(false); setUserHasUsername(true); setShowContributionForm(true); }} />
       {currentUserId && (
         <>

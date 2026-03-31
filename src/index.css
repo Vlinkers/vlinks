@@ -7,29 +7,33 @@
 @layer base {
   :root {
     /* VLINKS App — Light, functional, tool-oriented */
-    --background: 210 20% 98%;
-    --foreground: 220 20% 14%;
+    /* #F8FAFC */
+    --background: 210 40% 98%;
+    /* #0F172A */
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 14%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 14%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Functional Blue */
-    --primary: 224 70% 47%;
+    /* Primary #1B4FD8 */
+    --primary: 224 78% 47%;
     --primary-foreground: 0 0% 100%;
+    /* Hover #1741B6 */
+    --primary-hover: 224 78% 40%;
 
-    /* Teal secondary */
     --secondary: 210 16% 93%;
-    --secondary-foreground: 220 20% 25%;
+    --secondary-foreground: 222 47% 11%;
 
     --muted: 210 16% 93%;
-    --muted-foreground: 215 14% 46%;
+    /* #64748B */
+    --muted-foreground: 215 16% 47%;
 
-    /* Blue accent */
-    --accent: 224 70% 95%;
-    --accent-foreground: 224 70% 40%;
+    /* Blue accent #EEF2FF */
+    --accent: 226 100% 97%;
+    --accent-foreground: 224 78% 40%;
 
     /* Status Colors */
     --success: 152 69% 38%;
@@ -46,22 +50,23 @@
 
     --border: 214 20% 88%;
     --input: 214 20% 88%;
-    --ring: 224 70% 47%;
+    --ring: 224 78% 47%;
 
     --radius: 0.5rem;
 
-    /* Shadows — light & subtle */
-    --shadow-card: 0 1px 3px hsl(220 20% 14% / 0.06), 0 1px 2px hsl(220 20% 14% / 0.04);
-    --shadow-elevated: 0 4px 12px hsl(220 20% 14% / 0.08), 0 2px 4px hsl(220 20% 14% / 0.04);
+    /* Shadows */
+    --shadow-card: 0 1px 3px hsl(222 47% 11% / 0.06), 0 1px 2px hsl(222 47% 11% / 0.04);
+    --shadow-elevated: 0 4px 12px hsl(222 47% 11% / 0.08), 0 2px 4px hsl(222 47% 11% / 0.04);
+    --shadow-primary: 0 2px 8px hsl(224 78% 47% / 0.25);
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 20% 14%;
-    --sidebar-primary: 224 70% 47%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 224 78% 47%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 224 70% 95%;
-    --sidebar-accent-foreground: 224 70% 40%;
+    --sidebar-accent: 226 100% 97%;
+    --sidebar-accent-foreground: 224 78% 40%;
     --sidebar-border: 214 20% 88%;
-    --sidebar-ring: 224 70% 47%;
+    --sidebar-ring: 224 78% 47%;
   }
 }
 

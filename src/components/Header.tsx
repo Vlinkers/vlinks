@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const Header = ({ hideSearch = false }: { hideSearch?: boolean }) => {
+const Header = ({ hideSearch = false, transparent = false }: { hideSearch?: boolean; transparent?: boolean }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [vinSearch, setVinSearch] = useState("");
   const { user, signOut } = useAuth();
@@ -36,12 +36,14 @@ const Header = ({ hideSearch = false }: { hideSearch?: boolean }) => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-card border-b border-border h-14">
+    <header className={`fixed top-0 left-0 right-0 z-50 h-14 transition-colors duration-300 ${
+      transparent ? "bg-transparent border-b border-white/10" : "bg-card border-b border-border"
+    }`}>
       <div className="h-full max-w-7xl mx-auto px-4 flex items-center gap-3">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0">
           <img src={vlinksIcon} alt="VLINKS" className="h-7 w-auto" />
-          <span className="font-display font-bold text-lg text-foreground hidden sm:block">VLINKS</span>
+          <span className={`font-display font-bold text-lg hidden sm:block ${transparent ? "text-white" : "text-foreground"}`}>VLINKS</span>
         </Link>
 
         {/* VIN Search — hidden on homepage when hero is visible */}
@@ -73,7 +75,7 @@ const Header = ({ hideSearch = false }: { hideSearch?: boolean }) => {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2">
+                <Button variant="ghost" size="sm" className={`gap-2 ${transparent ? "text-white hover:bg-white/10" : ""}`}>
                   <User className="w-4 h-4" />
                   <span className="hidden lg:inline">Mon compte</span>
                 </Button>
@@ -101,7 +103,7 @@ const Header = ({ hideSearch = false }: { hideSearch?: boolean }) => {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button variant="ghost" size="sm" asChild>
+            <Button variant="ghost" size="sm" asChild className={transparent ? "text-white hover:bg-white/10" : ""}>
               <Link to="/auth">Connexion</Link>
             </Button>
           )}
@@ -109,7 +111,7 @@ const Header = ({ hideSearch = false }: { hideSearch?: boolean }) => {
 
         {/* Mobile toggle */}
         <button
-          className="md:hidden p-2 text-foreground ml-auto"
+          className={`md:hidden p-2 ml-auto ${transparent ? "text-white" : "text-foreground"}`}
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="Menu"
         >

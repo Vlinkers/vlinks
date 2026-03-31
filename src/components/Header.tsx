@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const Header = ({ hideSearch = false }: { hideSearch?: boolean }) => {
+const Header = ({ hideSearch = false, transparent = false }: { hideSearch?: boolean; transparent?: boolean }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [vinSearch, setVinSearch] = useState("");
   const { user, signOut } = useAuth();

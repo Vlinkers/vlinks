@@ -488,11 +488,17 @@ const VINDetail = () => {
 
           {/* ═══ CONTRIBUTION LIST ═══ */}
           {filteredContributions.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {filteredContributions.map(c => {
                 const Icon = getContributionIcon(c.type);
+                const thumbPhotos = c.photos.slice(0, 3);
+                const extraPhotos = c.photos.length - 3;
                 return (
-                  <div key={c.id} className="rounded-xl bg-card border border-border shadow-sm p-4 hover:border-primary/20 transition-all">
+                  <button
+                    key={c.id}
+                    onClick={() => setSelectedContribution(c)}
+                    className="w-full text-left rounded-xl bg-card border border-border shadow-sm p-4 hover:bg-slate-50 hover:border-primary/20 transition-all cursor-pointer"
+                  >
                     <div className="flex items-start gap-3">
                       {/* Colored icon */}
                       <div className={`w-10 h-10 rounded-lg ${getIconBgColor(c.type)} flex items-center justify-center flex-shrink-0 mt-0.5`}>
@@ -540,11 +546,29 @@ const VINDetail = () => {
                           )}
                         </div>
 
-                        {/* Body text */}
-                        <ContributionCard contribution={c} adminActions={<AdminActions contributionId={c.id} contribution={c} />} renderMode="body-only" />
+                        {/* Photo thumbnails */}
+                        {c.hasPhotos && thumbPhotos.length > 0 && (
+                          <div className="flex items-center gap-1.5 mt-2.5">
+                            {thumbPhotos.map((photo, i) => (
+                              <div key={photo.id} className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0 border border-border">
+                                <img
+                                  src={photo.url}
+                                  alt={photo.caption || "Photo"}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                                {i === 2 && extraPhotos > 0 && (
+                                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                    <span className="text-white text-xs font-bold">+{extraPhotos}</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>

@@ -65,9 +65,11 @@ interface ContributionCardProps {
   contribution: PublicContribution;
   adminActions?: React.ReactNode;
   compact?: boolean;
+  /** When "body-only", skip the header/title and only render body text + media + admin actions */
+  renderMode?: "full" | "body-only";
 }
 
-export function ContributionCard({ contribution, adminActions, compact }: ContributionCardProps) {
+export function ContributionCard({ contribution, adminActions, compact, renderMode = "full" }: ContributionCardProps) {
   const [expanded, setExpanded] = useState(false);
   const Icon = getContributionIcon(contribution.type);
 

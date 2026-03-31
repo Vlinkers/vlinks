@@ -122,6 +122,7 @@ const VINDetail = () => {
   const [isEndingOwnership, setIsEndingOwnership] = useState(false);
   const [filterCategory, setFilterCategory] = useState<FilterCategory>("all");
   const [editingContribution, setEditingContribution] = useState<PublicContribution | null>(null);
+  const [selectedContribution, setSelectedContribution] = useState<PublicContribution | null>(null);
 
   useEffect(() => {
     const check = async () => {

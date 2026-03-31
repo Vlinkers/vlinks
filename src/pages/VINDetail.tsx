@@ -3,15 +3,13 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ContributionForm } from "@/components/ContributionForm";
 import { OwnerClaimForm } from "@/components/OwnerClaimForm";
 import { UsernameRequiredDialog } from "@/components/UsernameRequiredDialog";
 import { PDFDownloadDialog } from "@/components/PDFDownloadDialog";
 import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { useVINDecode } from "@/hooks/useVINDecode";
-import { VehicleIdentificationCard } from "@/components/VehicleIdentificationCard";
-import { ContributionCard, getContributionLabel } from "@/components/ContributionCard";
+import { ContributionCard, getContributionLabel, getContributionIcon, getContributionBadgeVariant } from "@/components/ContributionCard";
 import { AdminEditContribution } from "@/components/AdminEditContribution";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { useVINFollow } from "@/hooks/useVINFollow";
@@ -19,7 +17,7 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { 
   Shield, AlertTriangle, CheckCircle, FileText, ChevronRight, Clock, Camera,
   FileSearch, Eye, EyeOff, Plus, Loader2, User, Users, FileDown, Star, Trash2,
-  ExternalLink, File, ChevronDown, Pencil, Calendar
+  ExternalLink, File, ChevronDown, Pencil, Calendar, MapPin
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +46,60 @@ function SignalProofs({ contributionIds, allContributions }: { contributionIds: 
   );
 }
 
+// ── Icon background color per contribution type ──
+const getIconBgColor = (type: ContributionType): string => {
+  switch (type) {
+    case "inspection_report":
+    case "vehicle_history":
+    case "mechanic_conversation":
+      return "bg-[#DCFCE7]"; // green
+    case "observation":
+    case "for_sale":
+    case "price_change":
+      return "bg-[#FEF3C7]"; // amber
+    case "purchase_decision":
+      return "bg-[#FEE2E2]"; // red
+    case "photo_evidence":
+      return "bg-[#F3E8FF]"; // violet
+    case "owner_exchange":
+    case "ownership_change":
+    default:
+      return "bg-[#F1F5F9]"; // gray
+  }
+};
+
+const getIconColor = (type: ContributionType): string => {
+  switch (type) {
+    case "inspection_report":
+    case "vehicle_history":
+    case "mechanic_conversation":
+      return "text-[#15803D]";
+    case "observation":
+    case "for_sale":
+    case "price_change":
+      return "text-[#92400E]";
+    case "purchase_decision":
+      return "text-[#B91C1C]";
+    case "photo_evidence":
+      return "text-[#7E22CE]";
+    case "owner_exchange":
+    case "ownership_change":
+    default:
+      return "text-[#475569]";
+  }
+};
+
+// ── Filter categories ──
+type FilterCategory = "all" | "reports" | "photos" | "signals" | "documents";
+
+const FILTER_TABS: { key: FilterCategory; label: string; emoji: string; types: ContributionType[] }[] = [
+  { key: "all", label: "Toutes", emoji: "", types: [] },
+  { key: "reports", label: "Rapports", emoji: "📋", types: ["inspection_report", "vehicle_history", "mechanic_conversation"] },
+  { key: "photos", label: "Photos", emoji: "📸", types: ["photo_evidence"] },
+  { key: "signals", label: "Signalements", emoji: "⚠️", types: ["observation", "purchase_decision", "for_sale", "price_change"] },
+  { key: "documents", label: "Documents", emoji: "📄", types: ["owner_exchange", "ownership_change"] },
+];
+
 const VINDetail = () => {
   const { vin } = useParams();
   const navigate = useNavigate();
@@ -67,9 +119,8 @@ const VINDetail = () => {
   const [userHasUsername, setUserHasUsername] = useState(true);
   const [showUsernameDialog, setShowUsernameDialog] = useState(false);
   const [isEndingOwnership, setIsEndingOwnership] = useState(false);
-  const [filterType, setFilterType] = useState<ContributionType | "all">("all");
+  const [filterCategory, setFilterCategory] = useState<FilterCategory>("all");
   const [editingContribution, setEditingContribution] = useState<PublicContribution | null>(null);
-  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     const check = async () => {
@@ -209,15 +260,11 @@ const VINDetail = () => {
         <Header />
         <main className="pt-20 pb-16">
           <div className="max-w-4xl mx-auto px-4">
-            {/* Breadcrumb */}
             <nav className="flex items-center gap-2 text-xs text-muted-foreground py-4">
               <Link to="/" className="hover:text-foreground transition-colors">Accueil</Link>
               <ChevronRight className="w-3 h-3" />
               <span className="vin-code">{vin}</span>
             </nav>
-
-            <VehicleIdentificationCard vin={vin || ""} vinDecode={vinDecode} isLoading={isDecodingVIN} />
-            
             <div className="p-8 rounded-xl bg-card border border-border shadow-sm text-center">
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <FileText className="w-6 h-6 text-primary" />
@@ -250,73 +297,138 @@ const VINDetail = () => {
   const totalDocs = contributions.reduce((acc, c) => acc + c.documentCount, 0);
   const allPhotos = contributions.flatMap(c => c.photos);
   const allDocuments = contributions.flatMap(c => c.documents);
-  const filteredContributions = filterType === "all" ? contributions : contributions.filter(c => c.type === filterType);
 
-  const allContributionTypes: { type: ContributionType | "all"; label: string; count: number }[] = [
-    { type: "all", label: "Tout", count: contributions.length },
-    ...["inspection_report","vehicle_history","owner_exchange","mechanic_conversation","photo_evidence","observation","purchase_decision","ownership_change","for_sale","price_change"]
-      .map(t => ({ type: t as ContributionType, label: getContributionLabel(t as ContributionType), count: contributions.filter(c => c.type === t).length }))
-      .filter(t => t.count > 0),
-  ];
+  // Filter contributions by category
+  const activeFilter = FILTER_TABS.find(f => f.key === filterCategory)!;
+  const filteredContributions = filterCategory === "all"
+    ? contributions
+    : contributions.filter(c => activeFilter.types.includes(c.type));
 
+  // Counts per filter tab
+  const filterCounts: Record<FilterCategory, number> = {
+    all: contributions.length,
+    reports: contributions.filter(c => FILTER_TABS[1].types.includes(c.type)).length,
+    photos: contributions.filter(c => FILTER_TABS[2].types.includes(c.type)).length,
+    signals: contributions.filter(c => FILTER_TABS[3].types.includes(c.type)).length,
+    documents: contributions.filter(c => FILTER_TABS[4].types.includes(c.type)).length,
+  };
 
-
-  const statTiles = [
-    { icon: FileText, value: contributions.length, label: "Contributions", color: "text-primary", targetTab: "timeline" },
-    { icon: FileSearch, value: totalDocs, label: "Documents", color: "text-primary", targetTab: "documents" },
-    { icon: Camera, value: totalPhotos, label: "Photos", color: "text-primary", targetTab: "photos" },
-    { icon: AlertTriangle, value: observedSignals.length, label: "Signaux", color: "text-warning", targetTab: "overview-signals" },
-  ];
+  const isVinValid = vinDecode?.is_valid !== false;
 
   return (
     <div className="min-h-screen bg-muted/30 flex flex-col">
       <Header />
-      <main className="pt-16 pb-12 flex-1">
-        <div className="max-w-5xl mx-auto px-4">
-          {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-xs text-muted-foreground py-4">
-            <Link to="/" className="hover:text-foreground transition-colors">Accueil</Link>
-            <ChevronRight className="w-3 h-3" />
-            <span className="vin-code">{vin}</span>
-          </nav>
+      <main className="pt-16 flex-1">
 
-          {/* A. Vehicle Header */}
-          <VehicleIdentificationCard
-            vin={vin || ""}
-            vinDecode={vinDecode}
-            isLoading={isDecodingVIN}
-            lastUpdated={data.lastUpdated}
-            showClaimBanner={!isCheckingOwner && !!currentUserId && ownerVerificationStatus === 'none'}
-            onClaimClick={() => setShowOwnerForm(true)}
-          />
+        {/* ═══ DARK HERO BANNER ═══ */}
+        <div className="bg-[#0F172A] w-full">
+          <div className="max-w-5xl mx-auto px-4 py-8 md:py-10">
+            {/* Breadcrumb */}
+            <nav className="flex items-center gap-2 text-xs text-[#64748B] mb-5">
+              <Link to="/" className="hover:text-white transition-colors">Accueil</Link>
+              <ChevronRight className="w-3 h-3" />
+              <span className="text-[#94A3B8]">Dossier</span>
+            </nav>
 
-          {/* Action bar */}
-          <div className="flex flex-wrap items-center gap-2 mb-5">
-            <Button onClick={handleContributeClick} className="shadow-sm">
-              <Plus className="w-4 h-4 mr-1.5" />
-              Ajouter une contribution
-            </Button>
-            {data.totalContributions > 0 && (
-              <Button variant="outline" onClick={() => setShowPDFDialog(true)} className="bg-card">
-                <FileDown className="w-4 h-4 mr-1.5" />
-                Rapport PDF
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+              {/* ── Left column ── */}
+              <div className="space-y-3">
+                <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#64748B]">
+                  DOSSIER VÉHICULE
+                </p>
+                <h1 className="font-display text-2xl md:text-3xl font-bold text-white leading-tight">
+                  {vehicleName || "Véhicule inconnu"}
+                </h1>
+                <p className="font-mono text-[15px] text-[#60A5FA] tracking-[0.08em]">
+                  {vin}
+                </p>
+
+                {/* Badges row */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <Badge variant="outline" className="bg-white/5 border-white/10 text-[#94A3B8] text-xs">
+                    <MapPin className="w-3 h-3 mr-1" />
+                    Québec
+                  </Badge>
+                  {data.contributions.some(c => c.mileageAtIntervention) && (() => {
+                    const latestKm = data.contributions.find(c => c.mileageAtIntervention)?.mileageAtIntervention;
+                    return latestKm ? (
+                      <Badge variant="outline" className="bg-white/5 border-white/10 text-[#94A3B8] text-xs">
+                        {latestKm.toLocaleString()} km
+                      </Badge>
+                    ) : null;
+                  })()}
+                  {isVinValid ? (
+                    <Badge variant="outline" className="bg-[#15803D]/10 border-[#15803D]/30 text-[#4ADE80] text-xs">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      VIN validé
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-[#B91C1C]/10 border-[#B91C1C]/30 text-[#FCA5A5] text-xs">
+                      <AlertTriangle className="w-3 h-3 mr-1" />
+                      VIN invalide
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              {/* ── Right column — counters ── */}
+              <div className="flex items-end gap-6 md:gap-8">
+                {[
+                  { value: contributions.length, label: "Contributions" },
+                  { value: totalDocs, label: "Documents" },
+                  { value: observedSignals.length, label: "Signalements" },
+                ].map((counter, i) => (
+                  <div key={i} className="text-center">
+                    <span className="block text-[32px] font-bold text-white leading-none font-display">
+                      {counter.value}
+                    </span>
+                    <span className="block text-[12px] text-[#94A3B8] mt-1">
+                      {counter.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Action buttons row */}
+            <div className="flex flex-wrap items-center gap-2 mt-6 pt-5 border-t border-white/10">
+              <Button onClick={handleContributeClick} size="sm">
+                <Plus className="w-4 h-4 mr-1.5" />
+                Contribuer
               </Button>
-            )}
-            <Button 
-              variant={isFollowing ? "secondary" : "outline"} 
-              onClick={handleFollowClick} 
-              disabled={isFollowLoading}
-              className="bg-card"
-            >
-              <Star className={`w-4 h-4 mr-1.5 ${isFollowing ? "fill-current text-warning" : ""}`} />
-              {isFollowing ? "Suivi" : "Suivre"}
-            </Button>
-            {isAdmin && (
-              <Button variant="outline" asChild className="bg-card border-primary/30 text-primary hover:bg-primary/5">
-                <Link to="/admin/contributions"><Shield className="w-4 h-4 mr-1.5" /> Modérer</Link>
+              {data.totalContributions > 0 && (
+                <Button variant="outline" size="sm" onClick={() => setShowPDFDialog(true)} className="bg-transparent border-white/20 text-white hover:bg-white/10">
+                  <FileDown className="w-4 h-4 mr-1.5" />
+                  Rapport PDF
+                </Button>
+              )}
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleFollowClick} 
+                disabled={isFollowLoading}
+                className="bg-transparent border-white/20 text-white hover:bg-white/10"
+              >
+                <Star className={`w-4 h-4 mr-1.5 ${isFollowing ? "fill-current text-warning" : ""}`} />
+                {isFollowing ? "Suivi" : "Suivre"}
               </Button>
-            )}
+              {!isCheckingOwner && currentUserId && ownerVerificationStatus === 'none' && (
+                <Button variant="outline" size="sm" onClick={() => setShowOwnerForm(true)} className="bg-transparent border-white/20 text-white hover:bg-white/10">
+                  <Shield className="w-4 h-4 mr-1.5" />
+                  Revendiquer
+                </Button>
+              )}
+              {isAdmin && (
+                <Button variant="outline" size="sm" asChild className="bg-transparent border-primary/40 text-[#60A5FA] hover:bg-primary/10">
+                  <Link to="/admin/contributions"><Shield className="w-4 h-4 mr-1.5" /> Modérer</Link>
+                </Button>
+              )}
+            </div>
           </div>
+        </div>
+
+        {/* ═══ CONTENT ═══ */}
+        <div className="max-w-5xl mx-auto px-4 py-6">
 
           {/* Owner status badges */}
           {!isCheckingOwner && currentUserId && ownerVerificationStatus === 'verified' && (
@@ -347,342 +459,147 @@ const VINDetail = () => {
             </div>
           )}
 
-          {/* B. Stats tiles — more dense and professional */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            {statTiles.map((t, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  if (t.targetTab === "overview-signals") {
-                    setActiveTab("overview");
-                    setTimeout(() => {
-                      document.getElementById("signals-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }, 100);
-                  } else {
-                    setActiveTab(t.targetTab);
-                  }
-                }}
-                className="p-4 rounded-xl bg-card border border-border shadow-sm flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-md transition-all text-left"
-              >
-                <div className={`w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0`}>
-                  <t.icon className={`w-5 h-5 ${t.color}`} />
-                </div>
-                <div className="min-w-0">
-                  <span className="font-display text-xl font-bold text-foreground block leading-none">{t.value}</span>
-                  <span className="text-xs text-muted-foreground">{t.label}</span>
-                </div>
-              </button>
-            ))}
+          {/* ═══ FILTER TABS ═══ */}
+          <div className="flex items-center gap-1 border-b border-border mb-6 overflow-x-auto">
+            {FILTER_TABS.map(tab => {
+              const count = filterCounts[tab.key];
+              const isActive = filterCategory === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setFilterCategory(tab.key)}
+                  className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-all ${
+                    isActive 
+                      ? "border-primary text-primary" 
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                  }`}
+                >
+                  {tab.emoji && <span>{tab.emoji}</span>}
+                  {tab.label}
+                  <span className={`text-xs ${isActive ? "text-primary/70" : "text-muted-foreground/60"}`}>
+                    ({count})
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* C. Tabs — more robust product-like navigation */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <div className="bg-card border border-border rounded-xl p-1.5 mb-5">
-              <TabsList className="w-full justify-start bg-transparent h-auto p-0 gap-1">
-                <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium transition-all">
-                  Aperçu
-                </TabsTrigger>
-                <TabsTrigger value="timeline" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium transition-all">
-                  Chronologie
-                  {contributions.length > 0 && <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-[10px]">{contributions.length}</Badge>}
-                </TabsTrigger>
-                <TabsTrigger value="documents" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium transition-all">
-                  Documents
-                  {totalDocs > 0 && <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-[10px]">{totalDocs}</Badge>}
-                </TabsTrigger>
-                <TabsTrigger value="photos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium transition-all">
-                  Photos
-                  {totalPhotos > 0 && <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-[10px]">{totalPhotos}</Badge>}
-                </TabsTrigger>
-              </TabsList>
-            </div>
-
-            {/* ── Aperçu ── */}
-            <TabsContent value="overview" className="space-y-5 mt-0">
-              {/* Activity summary bar */}
-              {contributions.length > 0 && (() => {
-                const lastDate = contributions[0]?.date;
-                const daysAgo = lastDate ? Math.max(0, Math.floor((Date.now() - new Date(lastDate).getTime()) / 86400000)) : null;
-                const typeCounts = contributions.reduce<Record<string, number>>((acc, c) => { acc[c.type] = (acc[c.type] || 0) + 1; return acc; }, {});
-                const topType = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0];
-
+          {/* ═══ CONTRIBUTION LIST ═══ */}
+          {filteredContributions.length > 0 ? (
+            <div className="space-y-3">
+              {filteredContributions.map(c => {
+                const Icon = getContributionIcon(c.type);
                 return (
-                  <div className="rounded-xl bg-card border border-border shadow-sm p-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
-                    {daysAgo !== null && (
-                      <span className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-primary" />
-                        Dernière activité {daysAgo === 0 ? "aujourd'hui" : `il y a ${daysAgo} jour${daysAgo > 1 ? "s" : ""}`}
-                      </span>
-                    )}
-                    {topType && (
-                      <span className="flex items-center gap-1.5">
-                        <FileText className="w-3.5 h-3.5 text-primary" />
-                        Type le plus fréquent : <span className="text-foreground font-medium">{getContributionLabel(topType[0] as ContributionType)}</span>
-                      </span>
-                    )}
-                    <span className="flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-primary" />
-                      {new Set(contributions.map(c => c.author)).size} contributeur{new Set(contributions.map(c => c.author)).size > 1 ? "s" : ""}
-                    </span>
+                  <div key={c.id} className="rounded-xl bg-card border border-border shadow-sm p-4 hover:border-primary/20 transition-all">
+                    <div className="flex items-start gap-3">
+                      {/* Colored icon */}
+                      <div className={`w-10 h-10 rounded-lg ${getIconBgColor(c.type)} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                        <Icon className={`w-5 h-5 ${getIconColor(c.type)}`} />
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        {/* Title + badge */}
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="text-sm font-semibold text-foreground leading-snug">
+                            {c.title || c.summaryPublic || getContributionLabel(c.type)}
+                          </h3>
+                          <Badge variant={getContributionBadgeVariant(c.type)} className="text-[11px] flex-shrink-0">
+                            {getContributionLabel(c.type)}
+                          </Badge>
+                        </div>
+
+                        {/* Meta line */}
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5 flex-wrap">
+                          <span className="flex items-center gap-1">
+                            <User className="w-3 h-3" />
+                            {c.author}
+                          </span>
+                          <span>·</span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {c.interventionDate || c.date}
+                          </span>
+                          {c.mileageAtIntervention && (
+                            <>
+                              <span>·</span>
+                              <span>{c.mileageAtIntervention.toLocaleString()} km</span>
+                            </>
+                          )}
+                          {(c.hasPhotos || c.hasDocuments) && (
+                            <>
+                              <span>·</span>
+                              <span className="flex items-center gap-1">
+                                {c.hasPhotos && <><Camera className="w-3 h-3" /> {c.photoCount}</>}
+                                {c.hasPhotos && c.hasDocuments && <span className="mx-0.5">/</span>}
+                                {c.hasDocuments && <><File className="w-3 h-3" /> {c.documentCount}</>}
+                              </span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Body text */}
+                        <ContributionCard contribution={c} adminActions={<AdminActions contributionId={c.id} contribution={c} />} renderMode="body-only" />
+                      </div>
+                    </div>
                   </div>
                 );
-              })()}
-
-              <div className="grid gap-5 lg:grid-cols-3">
-                {/* Left column: Signals (primary) + Recent compact */}
-                <div className="lg:col-span-2 space-y-5">
-                  {/* Observed signals — central element */}
-                  <section id="signals-section" className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
-                    <div className="p-4 border-b border-border flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-warning" />
-                      <h3 className="font-display text-sm font-semibold text-foreground">Signaux observés</h3>
-                      {observedSignals.length > 0 && (
-                        <Badge variant="outline" className="ml-auto text-warning border-warning/30 bg-warning/5">
-                          {observedSignals.length}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      {observedSignals.length > 0 ? (
-                        <div className="space-y-2">
-                          {observedSignals.map(signal => {
-                            const lastMonth = signal.lastObserved ? new Date(signal.lastObserved).toLocaleDateString("fr-CA", { month: "short", year: "numeric" }) : null;
-                            const isExpanded = expandedSignalId === signal.id;
-                            return (
-                              <div key={signal.id} className="rounded-lg border border-border overflow-hidden bg-muted/30">
-                                <button onClick={() => setExpandedSignalId(isExpanded ? null : signal.id)} className="w-full flex items-start gap-3 p-3 text-left hover:bg-muted/50 transition-colors">
-                                  <div className="w-6 h-6 rounded-md bg-warning/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                    <AlertTriangle className="w-3.5 h-3.5 text-warning" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <span className="text-sm text-foreground block">{signal.text}</span>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <span className="text-xs text-muted-foreground">{signal.count} source{signal.count > 1 ? "s" : ""}</span>
-                                      {lastMonth && <span className="text-xs text-muted-foreground">· {lastMonth}</span>}
-                                    </div>
-                                  </div>
-                                  <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                                </button>
-                                {isExpanded && <SignalProofs contributionIds={signal.contributionIds} allContributions={contributions} />}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="text-center py-6">
-                          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center mx-auto mb-2">
-                            <Eye className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                          <p className="text-sm text-muted-foreground">Aucun signal observé</p>
-                          <p className="text-xs text-muted-foreground mt-1">Les signaux apparaîtront ici lorsque les contributeurs en rapporteront.</p>
-                        </div>
-                      )}
-                    </div>
-                  </section>
-
-                  {/* Latest 3 contributions — compact */}
-                  {contributions.length > 0 && (
-                    <section className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
-                      <div className="p-4 border-b border-border flex items-center justify-between">
-                        <h3 className="font-display text-sm font-semibold text-foreground">Dernières contributions</h3>
-                      </div>
-                      <div className="divide-y divide-border">
-                        {contributions.slice(0, 3).map(c => (
-                          <div key={c.id} className="p-4">
-                            <ContributionCard contribution={c} compact />
-                          </div>
-                        ))}
-                      </div>
-                      <div className="p-4 border-t border-border">
-                        <Button
-                          variant="outline"
-                          className="w-full"
-                          onClick={() => setActiveTab("timeline")}
-                        >
-                          Voir toute la chronologie
-                          <ChevronRight className="w-4 h-4 ml-1.5" />
-                        </Button>
-                      </div>
-                    </section>
-                  )}
-                </div>
-
-                {/* Right column: Quick access */}
-                <div className="space-y-5">
-                  {/* Recent documents */}
-                  <section className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
-                    <div className="p-4 border-b border-border flex items-center justify-between">
-                      <h3 className="font-display text-sm font-semibold text-foreground">Documents</h3>
-                      {allDocuments.length > 3 && (
-                        <button
-                          onClick={() => setActiveTab("documents")}
-                          className="text-xs text-primary hover:underline"
-                        >
-                          Tout voir
-                        </button>
-                      )}
-                    </div>
-                    <div className="p-3">
-                      {allDocuments.length > 0 ? (
-                        <div className="space-y-2">
-                          {allDocuments.slice(0, 3).map(doc => (
-                            <DocRow key={doc.id} doc={doc} />
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-4">
-                          <p className="text-xs text-muted-foreground">Aucun document</p>
-                        </div>
-                      )}
-                    </div>
-                  </section>
-
-                  {/* Recent photos */}
-                  <section className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
-                    <div className="p-4 border-b border-border flex items-center justify-between">
-                      <h3 className="font-display text-sm font-semibold text-foreground">Photos</h3>
-                      {allPhotos.length > 6 && (
-                        <button
-                          onClick={() => setActiveTab("photos")}
-                          className="text-xs text-primary hover:underline"
-                        >
-                          Tout voir
-                        </button>
-                      )}
-                    </div>
-                    <div className="p-3">
-                      {allPhotos.length > 0 ? (
-                        <PhotoGallery photos={allPhotos.slice(0, 6)} />
-                      ) : (
-                        <div className="text-center py-4">
-                          <p className="text-xs text-muted-foreground">Aucune photo</p>
-                        </div>
-                      )}
-                    </div>
-                  </section>
-                </div>
+              })}
+            </div>
+          ) : (
+            <div className="p-12 rounded-xl bg-card border border-border shadow-sm text-center">
+              <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
+                <FileText className="w-6 h-6 text-muted-foreground" />
               </div>
-
-              {/* Contribute CTA if empty */}
-              {contributions.length === 0 && (
-                <div className="p-8 rounded-xl border-2 border-dashed border-primary/20 bg-primary/5 text-center">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Plus className="w-6 h-6 text-primary" />
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">Aucune contribution pour ce véhicule. Soyez le premier à enrichir ce dossier.</p>
-                  <Button onClick={handleContributeClick}>
-                    <Plus className="w-4 h-4 mr-1.5" /> Ajouter une contribution
-                  </Button>
-                </div>
+              <p className="text-sm text-muted-foreground">
+                {filterCategory === "all" 
+                  ? "Aucune contribution pour ce véhicule." 
+                  : "Aucune contribution pour ce filtre."}
+              </p>
+              {filterCategory === "all" && (
+                <Button className="mt-4" onClick={handleContributeClick}>
+                  <Plus className="w-4 h-4 mr-1.5" /> Ajouter une contribution
+                </Button>
               )}
-            </TabsContent>
+            </div>
+          )}
 
-            {/* ── Chronologie ── */}
-            <TabsContent value="timeline" className="mt-0">
-              <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
-                {/* Filters */}
-                {allContributionTypes.length > 2 && (
-                  <div className="p-4 border-b border-border">
-                    <div className="flex flex-wrap gap-2">
-                      {allContributionTypes.map(t => (
-                        <button 
-                          key={t.type} 
-                          onClick={() => setFilterType(t.type)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                            filterType === t.type 
-                              ? "bg-primary text-primary-foreground border-primary shadow-sm" 
-                              : "bg-background text-muted-foreground border-border hover:border-primary/30 hover:text-foreground"
-                          }`}
-                        >
-                          {t.label} <span className="opacity-70">({t.count})</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Timeline header */}
-                <div className="px-4 pt-3 pb-1">
-                  <p className="text-[11px] text-muted-foreground tracking-wide uppercase">Du plus récent au plus ancien</p>
-                </div>
-
-                {filteredContributions.length > 0 ? (
-                  <div className="p-4 pt-2">
-                    <div className="relative">
-                      {/* Vertical timeline line */}
-                      <div className="absolute left-[7px] top-3 bottom-3 w-px bg-border" />
-                      
-                      <div className="space-y-0">
-                        {filteredContributions.map((c, i) => {
-                          const isHighlight = ["inspection_report", "ownership_change", "for_sale", "vehicle_history"].includes(c.type);
-                          return (
-                            <div key={c.id} className="relative pl-8">
-                              {/* Timeline node */}
-                              <div className={`absolute left-0 top-5 z-10 rounded-full border-2 border-card ${
-                                isHighlight 
-                                  ? "w-[15px] h-[15px] bg-primary" 
-                                  : "w-[11px] h-[11px] bg-muted-foreground/40 ml-0.5"
-                              }`} style={isHighlight ? { left: '-2px' } : { left: '0px' }} />
-                              
-                              <div className={`py-2 ${i < filteredContributions.length - 1 ? '' : ''}`}>
-                                <ContributionCard contribution={c} adminActions={<AdminActions contributionId={c.id} contribution={c} />} />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-12 text-center">
-                    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
-                      <FileText className="w-6 h-6 text-muted-foreground" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">Aucune contribution pour ce filtre.</p>
-                  </div>
-                )}
+          {/* Observed signals section */}
+          {observedSignals.length > 0 && (
+            <section id="signals-section" className="mt-8 rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-border flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-warning" />
+                <h3 className="font-display text-sm font-semibold text-foreground">Signaux observés</h3>
+                <Badge variant="outline" className="ml-auto text-warning border-warning/30 bg-warning/5">
+                  {observedSignals.length}
+                </Badge>
               </div>
-            </TabsContent>
-
-            {/* ── Documents ── */}
-            <TabsContent value="documents" className="mt-0">
-              <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
-                {allDocuments.length > 0 ? (
-                  <div className="p-4 space-y-2">
-                    {allDocuments.map(doc => <DocRow key={doc.id} doc={doc} />)}
-                  </div>
-                ) : (
-                  <div className="p-12 text-center">
-                    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
-                      <FileSearch className="w-6 h-6 text-muted-foreground" />
+              <div className="p-4 space-y-2">
+                {observedSignals.map(signal => {
+                  const lastMonth = signal.lastObserved ? new Date(signal.lastObserved).toLocaleDateString("fr-CA", { month: "short", year: "numeric" }) : null;
+                  const isExpanded = expandedSignalId === signal.id;
+                  return (
+                    <div key={signal.id} className="rounded-lg border border-border overflow-hidden bg-muted/30">
+                      <button onClick={() => setExpandedSignalId(isExpanded ? null : signal.id)} className="w-full flex items-start gap-3 p-3 text-left hover:bg-muted/50 transition-colors">
+                        <div className="w-6 h-6 rounded-md bg-warning/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <AlertTriangle className="w-3.5 h-3.5 text-warning" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm text-foreground block">{signal.text}</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-muted-foreground">{signal.count} source{signal.count > 1 ? "s" : ""}</span>
+                            {lastMonth && <span className="text-xs text-muted-foreground">· {lastMonth}</span>}
+                          </div>
+                        </div>
+                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                      </button>
+                      {isExpanded && <SignalProofs contributionIds={signal.contributionIds} allContributions={contributions} />}
                     </div>
-                    <p className="text-sm text-muted-foreground">Aucun document disponible.</p>
-                    <p className="text-xs text-muted-foreground mt-1">Les documents ajoutés par les contributeurs apparaîtront ici.</p>
-                  </div>
-                )}
+                  );
+                })}
               </div>
-            </TabsContent>
-
-            {/* ── Photos ── */}
-            <TabsContent value="photos" className="mt-0">
-              <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
-                {allPhotos.length > 0 ? (
-                  <div className="p-4">
-                    <PhotoGallery photos={allPhotos} />
-                  </div>
-                ) : (
-                  <div className="p-12 text-center">
-                    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
-                      <Camera className="w-6 h-6 text-muted-foreground" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">Aucune photo disponible.</p>
-                    <p className="text-xs text-muted-foreground mt-1">Les photos ajoutées par les contributeurs apparaîtront ici.</p>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
-
+            </section>
+          )}
         </div>
       </main>
 

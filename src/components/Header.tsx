@@ -111,7 +111,7 @@ const Header = ({ hideSearch = false, transparent = false }: { hideSearch?: bool
 
         {/* Mobile toggle */}
         <button
-          className="md:hidden p-2 text-foreground ml-auto"
+          className={`md:hidden p-2 ml-auto ${transparent ? "text-white" : "text-foreground"}`}
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="Menu"
         >

@@ -125,6 +125,7 @@ const VINDetail = () => {
   const [editingContribution, setEditingContribution] = useState<PublicContribution | null>(null);
   const [selectedContribution, setSelectedContribution] = useState<PublicContribution | null>(null);
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [expandedTextIds, setExpandedTextIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const check = async () => {

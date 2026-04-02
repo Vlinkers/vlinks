@@ -309,36 +309,25 @@ const VINDetail = () => {
     : contributions.filter(c => activeFilter.types.includes(c.type));
 
   // Sort contributions
-  const sortedContributions = useMemo(() => {
-    const sorted = [...filteredContributions].sort((a, b) => {
-      const dateA = new Date(a.interventionDate ?? a.date).getTime();
-      const dateB = new Date(b.interventionDate ?? b.date).getTime();
-      return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
-    });
-    return sorted;
-  }, [filteredContributions, sortOrder]);
+  const sortedContributions = [...filteredContributions].sort((a, b) => {
+    const dateA = new Date(a.interventionDate ?? a.date).getTime();
+    const dateB = new Date(b.interventionDate ?? b.date).getTime();
+    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+  });
 
   // Group contributions by author + date into "episodes"
-  interface Episode {
-    key: string;
-    dateLabel: string;
-    author: string;
-    contributions: typeof sortedContributions;
-  }
-  const episodes = useMemo(() => {
-    const groups: Episode[] = [];
-    for (const c of sortedContributions) {
-      const dateLabel = c.interventionDate || c.date;
-      const key = `${c.author}|${dateLabel}`;
-      const last = groups[groups.length - 1];
-      if (last && last.key === key) {
-        last.contributions.push(c);
-      } else {
-        groups.push({ key, dateLabel, author: c.author, contributions: [c] });
-      }
+  interface Episode { key: string; dateLabel: string; author: string; contributions: PublicContribution[]; }
+  const episodes: Episode[] = [];
+  for (const c of sortedContributions) {
+    const dateLabel = c.interventionDate || c.date;
+    const key = `${c.author}|${dateLabel}`;
+    const last = episodes[episodes.length - 1];
+    if (last && last.key === key) {
+      last.contributions.push(c);
+    } else {
+      episodes.push({ key, dateLabel, author: c.author, contributions: [c] });
     }
-    return groups;
-  }, [sortedContributions]);
+  }
 
   // Counts per filter tab
   const filterCounts: Record<FilterCategory, number> = {

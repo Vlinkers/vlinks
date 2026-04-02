@@ -746,6 +746,10 @@ export function ContributionForm({
                   {w.eventSubType === "current_status" && (
                     <>
                       <FormSection title="Statut actuel">
+                        <div className="grid grid-cols-2 gap-3">
+                          <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
+                          <PriceInput value={w.askingPrice} onChange={(v) => updateW({ askingPrice: v })} label="Prix observé" />
+                        </div>
                         <HolderGrid value={w.holderType} onChange={(v) => updateW({ holderType: w.holderType === v ? "" : v })} />
                         {w.holderType === "concessionnaire" && <Input value={w.dealerName} onChange={(e) => updateW({ dealerName: e.target.value })} placeholder="Nom du concessionnaire" className="bg-card border-border mt-2" />}
                         {w.holderType === "concessionnaire" && <ProvinceSelect value={w.province} onChange={(v) => updateW({ province: v })} />}

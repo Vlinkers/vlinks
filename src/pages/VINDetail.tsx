@@ -124,6 +124,7 @@ const VINDetail = () => {
   const [filterCategory, setFilterCategory] = useState<FilterCategory>("all");
   const [editingContribution, setEditingContribution] = useState<PublicContribution | null>(null);
   const [selectedContribution, setSelectedContribution] = useState<PublicContribution | null>(null);
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   useEffect(() => {
     const check = async () => {

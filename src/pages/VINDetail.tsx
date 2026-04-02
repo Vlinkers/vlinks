@@ -15,6 +15,7 @@ import { AdminEditContribution } from "@/components/AdminEditContribution";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { useVINFollow } from "@/hooks/useVINFollow";
 import { useAdmin } from "@/hooks/useAdmin";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Shield, AlertTriangle, CheckCircle, FileText, ChevronRight, Clock, Camera,
   FileSearch, Eye, EyeOff, Plus, Loader2, User, Users, FileDown, Star, Trash2,

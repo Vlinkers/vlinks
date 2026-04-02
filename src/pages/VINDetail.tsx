@@ -95,7 +95,7 @@ const getIconColor = (type: ContributionType): string => {
 type FilterCategory = "all" | "reports" | "photos" | "signals" | "documents";
 
 const FILTER_TABS: { key: FilterCategory; label: string; emoji: string; types: ContributionType[] }[] = [
-  { key: "all", label: "Toutes", emoji: "", types: [] },
+  { key: "all", label: "Chronologie", emoji: "", types: [] },
   { key: "reports", label: "Rapports", emoji: "📋", types: ["inspection_report", "vehicle_history", "mechanic_conversation"] },
   { key: "photos", label: "Photos", emoji: "📸", types: ["photo_evidence"] },
   { key: "signals", label: "Signalements", emoji: "⚠️", types: ["observation", "purchase_decision", "for_sale", "price_change"] },

@@ -587,7 +587,10 @@ export function ContributionForm({
                       <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
                       <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                     </div>
-                    <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
+                      <PriceInput value={w.askingPrice} onChange={(v) => updateW({ askingPrice: v })} label="Prix observé" />
+                    </div>
                   </FormSection>
                   <FormSection title="Description *">
                     <Textarea value={w.description} onChange={(e) => updateW({ description: e.target.value })}
@@ -613,7 +616,10 @@ export function ContributionForm({
                       <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
                       <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                     </div>
-                    <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
+                      <PriceInput value={w.askingPrice} onChange={(v) => updateW({ askingPrice: v })} label="Prix observé" />
+                    </div>
                   </FormSection>
                   <FormSection title="Description *">
                     <Textarea value={w.description} onChange={(e) => updateW({ description: e.target.value })}
@@ -639,7 +645,10 @@ export function ContributionForm({
                       <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
                       <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                     </div>
-                    <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
+                      <PriceInput value={w.askingPrice} onChange={(v) => updateW({ askingPrice: v })} label="Prix observé" />
+                    </div>
                   </FormSection>
                   <FormSection title="Sujet discuté *">
                     <Textarea value={w.description} onChange={(e) => updateW({ description: e.target.value })}
@@ -682,12 +691,7 @@ export function ContributionForm({
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
-                          <div className="space-y-2">
-                            <Label className="text-xs font-medium text-muted-foreground">
-                              Prix de vente <span className="font-normal">— optionnel</span>
-                            </Label>
-                            <Input value={w.askingPrice} onChange={(e) => updateW({ askingPrice: e.target.value })} placeholder="Ex: 28 990" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border" />
-                          </div>
+                          <PriceInput value={w.askingPrice} onChange={(v) => updateW({ askingPrice: v })} label="Prix de transaction" />
                         </div>
                         <HolderGrid value={w.holderType} onChange={(v) => updateW({ holderType: w.holderType === v ? "" : v })} label="Nouveau détenteur du véhicule" />
                         {w.holderType === "concessionnaire" && <Input value={w.dealerName} onChange={(e) => updateW({ dealerName: e.target.value })} placeholder="Nom du concessionnaire" className="bg-card border-border mt-2" />}
@@ -706,10 +710,7 @@ export function ContributionForm({
                           <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
                           <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                         </div>
-                        <div className="space-y-2">
-                          <Label className="text-xs font-medium text-muted-foreground">Prix demandé ($)</Label>
-                          <Input value={w.askingPrice} onChange={(e) => updateW({ askingPrice: e.target.value })} placeholder="Ex: 36900" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border" />
-                        </div>
+                        <PriceInput value={w.askingPrice} onChange={(v) => updateW({ askingPrice: v })} label="Prix demandé" />
                         <ProvinceSelect value={w.province} onChange={(v) => updateW({ province: v })} />
                         <HolderGrid value={w.holderType} onChange={(v) => updateW({ holderType: w.holderType === v ? "" : v })} />
                         {w.holderType === "concessionnaire" && <Input value={w.dealerName} onChange={(e) => updateW({ dealerName: e.target.value })} placeholder="Nom du concessionnaire" className="bg-card border-border mt-2" />}
@@ -732,14 +733,8 @@ export function ContributionForm({
                           <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-2">
-                            <Label className="text-xs font-medium text-muted-foreground">Ancien prix ($)</Label>
-                            <Input value={w.oldPrice} onChange={(e) => updateW({ oldPrice: e.target.value })} placeholder="39900" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs font-medium text-muted-foreground">Nouveau prix ($)</Label>
-                            <Input value={w.askingPrice} onChange={(e) => updateW({ askingPrice: e.target.value })} placeholder="36900" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border" />
-                          </div>
+                          <PriceInput value={w.oldPrice} onChange={(v) => updateW({ oldPrice: v })} label="Ancien prix" />
+                          <PriceInput value={w.askingPrice} onChange={(v) => updateW({ askingPrice: v })} label="Nouveau prix affiché" />
                         </div>
                       </FormSection>
                       <FormSection title="Contexte *">
@@ -751,6 +746,10 @@ export function ContributionForm({
                   {w.eventSubType === "current_status" && (
                     <>
                       <FormSection title="Statut actuel">
+                        <div className="grid grid-cols-2 gap-3">
+                          <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
+                          <PriceInput value={w.askingPrice} onChange={(v) => updateW({ askingPrice: v })} label="Prix observé" />
+                        </div>
                         <HolderGrid value={w.holderType} onChange={(v) => updateW({ holderType: w.holderType === v ? "" : v })} />
                         {w.holderType === "concessionnaire" && <Input value={w.dealerName} onChange={(e) => updateW({ dealerName: e.target.value })} placeholder="Nom du concessionnaire" className="bg-card border-border mt-2" />}
                         {w.holderType === "concessionnaire" && <ProvinceSelect value={w.province} onChange={(v) => updateW({ province: v })} />}
@@ -967,6 +966,17 @@ function MileageInput({ value, onChange }: { value: string; onChange: (v: string
         Kilométrage <span className="font-normal">— optionnel</span>
       </Label>
       <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder="Ex: 124500" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border" />
+    </div>
+  );
+}
+
+function PriceInput({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs font-medium text-muted-foreground">
+        {label} <span className="font-normal">— optionnel</span>
+      </Label>
+      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder="Ex: 28 990" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border" />
     </div>
   );
 }

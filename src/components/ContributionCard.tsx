@@ -147,6 +147,12 @@ export function ContributionCard({ contribution, adminActions, compact, renderMo
                 <span>{contribution.mileageAtIntervention.toLocaleString()} km</span>
               </>
             )}
+            {contribution.askingPrice && contribution.type !== "ownership_change" && contribution.type !== "for_sale" && contribution.type !== "price_change" && (
+              <>
+                <span>·</span>
+                <span>{contribution.askingPrice.toLocaleString()} $</span>
+              </>
+            )}
             {contribution.province && contribution.type !== "ownership_change" && (
               <>
                 <span>·</span>

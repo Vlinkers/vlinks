@@ -710,10 +710,7 @@ export function ContributionForm({
                           <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
                           <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                         </div>
-                        <div className="space-y-2">
-                          <Label className="text-xs font-medium text-muted-foreground">Prix demandé ($)</Label>
-                          <Input value={w.askingPrice} onChange={(e) => updateW({ askingPrice: e.target.value })} placeholder="Ex: 36900" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border" />
-                        </div>
+                        <PriceInput value={w.askingPrice} onChange={(v) => updateW({ askingPrice: v })} label="Prix demandé" />
                         <ProvinceSelect value={w.province} onChange={(v) => updateW({ province: v })} />
                         <HolderGrid value={w.holderType} onChange={(v) => updateW({ holderType: w.holderType === v ? "" : v })} />
                         {w.holderType === "concessionnaire" && <Input value={w.dealerName} onChange={(e) => updateW({ dealerName: e.target.value })} placeholder="Nom du concessionnaire" className="bg-card border-border mt-2" />}

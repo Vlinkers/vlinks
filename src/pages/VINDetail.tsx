@@ -372,6 +372,31 @@ const VINDetail = () => {
                     </Badge>
                   )}
                 </div>
+
+                {/* ── Vehicle specs grid ── */}
+                {isDecodingVIN && (
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {[1,2,3,4].map(i => (
+                      <Skeleton key={i} className="h-10 w-28 rounded-md bg-white/5" />
+                    ))}
+                  </div>
+                )}
+                {vinDecode?.is_valid && (
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {[
+                      { label: "Motorisation", value: vinDecode.engine },
+                      { label: "Carrosserie", value: vinDecode.body_class },
+                      { label: "Transmission", value: vinDecode.drive_type },
+                      { label: "Carburant", value: vinDecode.fuel_type },
+                      { label: "Finition", value: vinDecode.trim },
+                    ].filter(s => s.value).map((spec) => (
+                      <div key={spec.label} className="bg-[#1E293B] rounded-md px-3 py-1.5">
+                        <span className="block text-[11px] text-[#64748B]">{spec.label}</span>
+                        <span className="block text-[13px] font-semibold text-white">{spec.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* ── Right column — counters ── */}

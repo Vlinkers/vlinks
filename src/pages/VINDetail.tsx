@@ -13,13 +13,17 @@ import { getContributionLabel, getContributionIcon, getContributionBadgeVariant 
 import { ContributionDetailDrawer } from "@/components/ContributionDetailDrawer";
 import { AdminEditContribution } from "@/components/AdminEditContribution";
 import { PhotoGallery } from "@/components/PhotoGallery";
+import { EmptyVINPage } from "@/components/EmptyVINPage";
 import { useVINFollow } from "@/hooks/useVINFollow";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { 
   Shield, AlertTriangle, CheckCircle, FileText, ChevronRight, Clock, Camera,
   FileSearch, Eye, EyeOff, Plus, Loader2, User, Users, FileDown, Star, Trash2,
-  ExternalLink, File, ChevronDown, Pencil, Calendar, MapPin, ArrowUpDown, ArrowDown, ArrowUp
+  ExternalLink, File, ChevronDown, Pencil, Calendar, MapPin, ArrowUpDown, ArrowDown, ArrowUp,
+  MessageSquare, Search
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -258,41 +262,19 @@ const VINDetail = () => {
     );
   }
 
-  // VIN not found
+  // ── Empty VIN — conversion-optimized page ──
   if (!data) {
     return (
-      <div className="min-h-screen bg-muted/30">
-        <Header />
-        <main className="pt-20 pb-16">
-          <div className="max-w-4xl mx-auto px-4">
-            <nav className="flex items-center gap-2 text-xs text-muted-foreground py-4">
-              <Link to="/" className="hover:text-foreground transition-colors">Accueil</Link>
-              <ChevronRight className="w-3 h-3" />
-              <span className="vin-code">{vin}</span>
-            </nav>
-            <div className="p-8 rounded-xl bg-card border border-border shadow-sm text-center">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <FileText className="w-6 h-6 text-primary" />
-              </div>
-              <h2 className="font-display text-lg font-bold text-foreground mb-2">Ce VIN n'a pas encore de dossier</h2>
-              <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-                Soyez le premier à contribuer. Chaque information utile peut aider le prochain acheteur.
-              </p>
-              <Button size="lg" onClick={handleContributeClick}>
-                <Plus className="w-4 h-4 mr-2" />
-                {currentUserId ? "Ajouter une contribution" : "Se connecter pour contribuer"}
-              </Button>
-            </div>
-          </div>
-        </main>
-        <Footer />
-        {currentUserId && (
-          <>
-            <ContributionForm vinId={null} vin={vin || ""} open={showContributionForm} onOpenChange={setShowContributionForm} />
-            <OwnerClaimForm vinId={null} vin={vin || ""} open={showOwnerForm} onOpenChange={setShowOwnerForm} />
-          </>
-        )}
-      </div>
+      <EmptyVINPage
+        vin={vin || ""}
+        vinDecode={vinDecode}
+        currentUserId={currentUserId}
+        handleContributeClick={handleContributeClick}
+        showContributionForm={showContributionForm}
+        setShowContributionForm={setShowContributionForm}
+        showOwnerForm={showOwnerForm}
+        setShowOwnerForm={setShowOwnerForm}
+      />
     );
   }
 

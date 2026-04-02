@@ -285,6 +285,7 @@ function renderTextContent(
         {holderLabel && <p>Vendu par : <span className="text-foreground/80">{holderLabel}</span></p>}
         {contribution.province && <p>Province : <span className="text-foreground/80">{contribution.province}</span></p>}
         {contribution.mileageAtIntervention && <p>Kilométrage : <span className="text-foreground/80">{contribution.mileageAtIntervention.toLocaleString()} km</span></p>}
+        {contribution.askingPrice && <p>Prix de vente : <span className="text-foreground/80 font-medium">{contribution.askingPrice.toLocaleString()} $</span></p>}
         {displayText && <p className="italic whitespace-pre-line mt-1">{displayText}</p>}
       </div>
     );

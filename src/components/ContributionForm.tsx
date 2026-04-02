@@ -995,7 +995,7 @@ function ProvinceSelect({ value, onChange }: { value: string; onChange: (v: stri
     <div className="space-y-2">
       <Label className="text-xs font-medium text-muted-foreground">Province <span className="font-normal">— optionnel</span></Label>
       <Select onValueChange={onChange} value={sanitizeSelectValue(value, "__placeholder__")}>
-        <SelectTrigger className="bg-card border-border h-10"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+        <SelectTrigger className="bg-card border-border h-10"><SelectValue placeholder="Sélectionner une province" /></SelectTrigger>
         <SelectContent position="popper" className="max-h-60">
           {provinces.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
         </SelectContent>

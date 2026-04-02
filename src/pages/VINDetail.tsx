@@ -125,6 +125,7 @@ const VINDetail = () => {
   const [editingContribution, setEditingContribution] = useState<PublicContribution | null>(null);
   const [selectedContribution, setSelectedContribution] = useState<PublicContribution | null>(null);
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [expandedTextIds, setExpandedTextIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const check = async () => {
@@ -668,24 +669,32 @@ const VINDetail = () => {
                           const thumbPhotos = c.photos.slice(0, 3);
                           const extraPhotos = c.photos.length - 3;
                           return (
-                            <button
+                            <div
                               key={c.id}
-                              onClick={() => setSelectedContribution(c)}
-                              className="w-full text-left rounded-xl bg-card border border-border shadow-sm p-4 hover:bg-muted/30 hover:border-primary/20 transition-all cursor-pointer"
+                              className="w-full text-left rounded-xl bg-card border border-border shadow-sm p-4 hover:border-primary/20 transition-all"
                             >
                               <div className="flex items-start gap-3">
-                                <div className={`w-10 h-10 rounded-lg ${getIconBgColor(c.type)} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                                {/* Icon — opens drawer */}
+                                <button
+                                  onClick={() => setSelectedContribution(c)}
+                                  className={`w-10 h-10 rounded-lg ${getIconBgColor(c.type)} flex items-center justify-center flex-shrink-0 mt-0.5 cursor-pointer hover:opacity-80 transition-opacity`}
+                                >
                                   <Icon className={`w-5 h-5 ${getIconColor(c.type)}`} />
-                                </div>
+                                </button>
                                 <div className="flex-1 min-w-0">
+                                  {/* Title — opens drawer */}
                                   <div className="flex items-start justify-between gap-2">
-                                    <h3 className="text-sm font-semibold text-foreground leading-snug">
+                                    <button
+                                      onClick={() => setSelectedContribution(c)}
+                                      className="text-sm font-semibold text-foreground leading-snug hover:text-primary transition-colors text-left cursor-pointer"
+                                    >
                                       {c.title || c.summaryPublic || getContributionLabel(c.type)}
-                                    </h3>
+                                    </button>
                                     <Badge variant={getContributionBadgeVariant(c.type)} className="text-[11px] flex-shrink-0">
                                       {getContributionLabel(c.type)}
                                     </Badge>
                                   </div>
+                                  {/* Meta */}
                                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5 flex-wrap">
                                     {c.mileageAtIntervention && (
                                       <span>{c.mileageAtIntervention.toLocaleString()} km</span>
@@ -707,6 +716,30 @@ const VINDetail = () => {
                                       </>
                                     )}
                                   </div>
+                                  {/* Body text with expand */}
+                                  {(() => {
+                                    const bodyText = c.details || c.summaryPublic || "";
+                                    // Don't show body if it's identical to the title
+                                    const displayTitle = c.title || c.summaryPublic || "";
+                                    if (!bodyText || bodyText === displayTitle) return null;
+                                    const isLong = bodyText.length > 200;
+                                    const isExpanded = expandedTextIds.has(c.id);
+                                    const shownText = isLong && !isExpanded ? bodyText.slice(0, 200) + "…" : bodyText;
+                                    return (
+                                      <div className="mt-2">
+                                        <p className="text-sm text-foreground/80 whitespace-pre-line leading-relaxed">{shownText}</p>
+                                        {isLong && !isExpanded && (
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setExpandedTextIds(prev => new Set(prev).add(c.id)); }}
+                                            className="text-xs text-primary font-medium mt-1 hover:underline cursor-pointer"
+                                          >
+                                            Lire la suite
+                                          </button>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
+                                  {/* Photo thumbnails */}
                                   {c.hasPhotos && thumbPhotos.length > 0 && (
                                     <div className="flex items-center gap-1.5 mt-2.5">
                                       {thumbPhotos.map((photo, i) => (
@@ -723,7 +756,7 @@ const VINDetail = () => {
                                   )}
                                 </div>
                               </div>
-                            </button>
+                            </div>
                           );
                         })}
                       </div>

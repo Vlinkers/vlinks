@@ -616,7 +616,10 @@ export function ContributionForm({
                       <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
                       <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                     </div>
-                    <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
+                      <PriceInput value={w.askingPrice} onChange={(v) => updateW({ askingPrice: v })} label="Prix observé" />
+                    </div>
                   </FormSection>
                   <FormSection title="Description *">
                     <Textarea value={w.description} onChange={(e) => updateW({ description: e.target.value })}

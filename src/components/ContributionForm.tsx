@@ -691,12 +691,7 @@ export function ContributionForm({
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
-                          <div className="space-y-2">
-                            <Label className="text-xs font-medium text-muted-foreground">
-                              Prix de vente <span className="font-normal">— optionnel</span>
-                            </Label>
-                            <Input value={w.askingPrice} onChange={(e) => updateW({ askingPrice: e.target.value })} placeholder="Ex: 28 990" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border" />
-                          </div>
+                          <PriceInput value={w.askingPrice} onChange={(v) => updateW({ askingPrice: v })} label="Prix de transaction" />
                         </div>
                         <HolderGrid value={w.holderType} onChange={(v) => updateW({ holderType: w.holderType === v ? "" : v })} label="Nouveau détenteur du véhicule" />
                         {w.holderType === "concessionnaire" && <Input value={w.dealerName} onChange={(e) => updateW({ dealerName: e.target.value })} placeholder="Nom du concessionnaire" className="bg-card border-border mt-2" />}

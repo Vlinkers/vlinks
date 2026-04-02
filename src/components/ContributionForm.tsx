@@ -733,14 +733,8 @@ export function ContributionForm({
                           <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-2">
-                            <Label className="text-xs font-medium text-muted-foreground">Ancien prix ($)</Label>
-                            <Input value={w.oldPrice} onChange={(e) => updateW({ oldPrice: e.target.value })} placeholder="39900" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs font-medium text-muted-foreground">Nouveau prix ($)</Label>
-                            <Input value={w.askingPrice} onChange={(e) => updateW({ askingPrice: e.target.value })} placeholder="36900" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border" />
-                          </div>
+                          <PriceInput value={w.oldPrice} onChange={(v) => updateW({ oldPrice: v })} label="Ancien prix" />
+                          <PriceInput value={w.askingPrice} onChange={(v) => updateW({ askingPrice: v })} label="Nouveau prix affiché" />
                         </div>
                       </FormSection>
                       <FormSection title="Contexte *">

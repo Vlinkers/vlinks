@@ -963,7 +963,7 @@ function MileageInput({ value, onChange }: { value: string; onChange: (v: string
   );
 }
 
-function HolderGrid({ value, onChange }: { value: string; onChange: (v: HolderType) => void }) {
+function HolderGrid({ value, onChange, label }: { value: string; onChange: (v: HolderType) => void; label?: string }) {
   const options: { key: HolderType; label: string }[] = [
     { key: "concessionnaire", label: "Concessionnaire" },
     { key: "depot_vente", label: "Dépôt-vente" },
@@ -972,7 +972,7 @@ function HolderGrid({ value, onChange }: { value: string; onChange: (v: HolderTy
   ];
   return (
     <div className="space-y-2">
-      <Label className="text-xs font-medium text-muted-foreground">Détenteur du véhicule</Label>
+      <Label className="text-xs font-medium text-muted-foreground">{label || "Détenteur du véhicule"}</Label>
       <div className="grid grid-cols-2 gap-2">
         {options.map((o) => (
           <ChipButton key={o.key} selected={value === o.key} onClick={() => onChange(o.key)} label={o.label} />

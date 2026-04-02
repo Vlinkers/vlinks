@@ -424,20 +424,28 @@ const VINDetail = () => {
 
               {/* ── Right column — counters ── */}
               <div className="flex items-end gap-6 md:gap-8">
-                {[
-                  { value: contributions.length, label: "Contributions" },
-                  { value: totalDocs, label: "Documents" },
-                  { value: observedSignals.length, label: "Signalements" },
-                ].map((counter, i) => (
-                  <div key={i} className="text-center">
-                    <span className="block text-[32px] font-bold text-white leading-none font-display">
-                      {counter.value}
-                    </span>
-                    <span className="block text-[12px] text-[#94A3B8] mt-1">
-                      {counter.label}
-                    </span>
+                <div className="text-center">
+                  <span className="block text-[32px] font-bold text-white leading-none font-display">{contributions.length}</span>
+                  <span className="block text-[12px] text-[#94A3B8] mt-1">Contributions</span>
+                </div>
+                <div className="text-center group relative">
+                  <span className="block text-[32px] font-bold text-white leading-none font-display">{data.uniqueContributors}</span>
+                  <span className="block text-[12px] text-[#94A3B8] mt-1 flex items-center justify-center gap-1 cursor-help">
+                    <Users className="w-3 h-3" />
+                    Vlinkers
+                  </span>
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-foreground text-background text-[11px] rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                    Nombre de personnes différentes ayant examiné et documenté ce véhicule
                   </div>
-                ))}
+                </div>
+                <div className="text-center">
+                  <span className="block text-[32px] font-bold text-white leading-none font-display">{totalDocs}</span>
+                  <span className="block text-[12px] text-[#94A3B8] mt-1">Documents</span>
+                </div>
+                <div className="text-center">
+                  <span className="block text-[32px] font-bold text-white leading-none font-display">{observedSignals.length}</span>
+                  <span className="block text-[12px] text-[#94A3B8] mt-1">Signalements</span>
+                </div>
               </div>
             </div>
 

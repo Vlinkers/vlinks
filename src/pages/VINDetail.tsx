@@ -509,6 +509,88 @@ const VINDetail = () => {
             </div>
           )}
 
+          {/* ═══ VERDICT DU DOSSIER ═══ */}
+          {(() => {
+            const NEGATIVE_KEYWORDS = ["abandon", "ne pas acheter", "ppi négatif", "failed", "échec", "refusé", "déconseillé"];
+            const inspectionContribs = contributions.filter(c => c.type === "inspection_report");
+            const hasNegative = inspectionContribs.some(c => {
+              const text = [c.title, c.summaryPublic, c.details].filter(Boolean).join(" ").toLowerCase();
+              return NEGATIVE_KEYWORDS.some(kw => text.includes(kw));
+            });
+            const hasInspection = inspectionContribs.length > 0;
+
+            let bgClass = "bg-muted/50 border-border";
+            let iconClass = "text-muted-foreground";
+            let textClass = "text-muted-foreground";
+            let icon = "📋";
+            let message = "Dossier en cours de construction";
+
+            if (hasInspection && hasNegative) {
+              bgClass = "bg-destructive/5 border-destructive/20";
+              iconClass = "text-destructive";
+              textClass = "text-destructive";
+              icon = "🚨";
+              message = "Achat abandonné suite à inspection";
+            } else if (hasInspection) {
+              bgClass = "bg-success/5 border-success/20";
+              iconClass = "text-success";
+              textClass = "text-success";
+              icon = "✅";
+              message = "Inspection(s) au dossier — aucun signal négatif";
+            }
+
+            return (
+              <div className={`mb-5 p-4 rounded-xl border flex items-center gap-3 ${bgClass}`}>
+                <span className="text-xl flex-shrink-0">{icon}</span>
+                <div>
+                  <span className={`text-sm font-semibold block ${textClass}`}>{message}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {hasInspection
+                      ? `${inspectionContribs.length} rapport${inspectionContribs.length > 1 ? "s" : ""} d'inspection au dossier`
+                      : "Aucun rapport d'inspection soumis pour le moment"}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* ═══ SIGNAUX OBSERVÉS ═══ */}
+          {observedSignals.length > 0 && (
+            <section id="signals-section" className="mb-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-border flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-warning" />
+                <h3 className="font-display text-sm font-semibold text-foreground">Signaux observés</h3>
+                <Badge variant="outline" className="ml-auto text-warning border-warning/30 bg-warning/5">
+                  {observedSignals.length}
+                </Badge>
+              </div>
+              <div className="p-4 space-y-2">
+                {observedSignals.map(signal => {
+                  const lastMonth = signal.lastObserved ? new Date(signal.lastObserved).toLocaleDateString("fr-CA", { month: "short", year: "numeric" }) : null;
+                  const isExpanded = expandedSignalId === signal.id;
+                  return (
+                    <div key={signal.id} className="rounded-lg border border-border overflow-hidden bg-muted/30">
+                      <button onClick={() => setExpandedSignalId(isExpanded ? null : signal.id)} className="w-full flex items-start gap-3 p-3 text-left hover:bg-muted/50 transition-colors">
+                        <div className="w-6 h-6 rounded-md bg-warning/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <AlertTriangle className="w-3.5 h-3.5 text-warning" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm text-foreground block">{signal.text}</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-muted-foreground">{signal.count} source{signal.count > 1 ? "s" : ""}</span>
+                            {lastMonth && <span className="text-xs text-muted-foreground">· {lastMonth}</span>}
+                          </div>
+                        </div>
+                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                      </button>
+                      {isExpanded && <SignalProofs contributionIds={signal.contributionIds} allContributions={contributions} />}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
           {/* ═══ FILTER TABS + SORT TOGGLE ═══ */}
           <div className="flex items-center justify-between border-b border-border mb-6">
             <div className="flex items-center gap-1 overflow-x-auto">
@@ -668,42 +750,8 @@ const VINDetail = () => {
             </div>
           )}
 
-          {/* Observed signals section */}
-          {observedSignals.length > 0 && (
-            <section id="signals-section" className="mt-8 rounded-xl bg-card border border-border shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-border flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-warning" />
-                <h3 className="font-display text-sm font-semibold text-foreground">Signaux observés</h3>
-                <Badge variant="outline" className="ml-auto text-warning border-warning/30 bg-warning/5">
-                  {observedSignals.length}
-                </Badge>
-              </div>
-              <div className="p-4 space-y-2">
-                {observedSignals.map(signal => {
-                  const lastMonth = signal.lastObserved ? new Date(signal.lastObserved).toLocaleDateString("fr-CA", { month: "short", year: "numeric" }) : null;
-                  const isExpanded = expandedSignalId === signal.id;
-                  return (
-                    <div key={signal.id} className="rounded-lg border border-border overflow-hidden bg-muted/30">
-                      <button onClick={() => setExpandedSignalId(isExpanded ? null : signal.id)} className="w-full flex items-start gap-3 p-3 text-left hover:bg-muted/50 transition-colors">
-                        <div className="w-6 h-6 rounded-md bg-warning/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <AlertTriangle className="w-3.5 h-3.5 text-warning" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-sm text-foreground block">{signal.text}</span>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-muted-foreground">{signal.count} source{signal.count > 1 ? "s" : ""}</span>
-                            {lastMonth && <span className="text-xs text-muted-foreground">· {lastMonth}</span>}
-                          </div>
-                        </div>
-                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                      </button>
-                      {isExpanded && <SignalProofs contributionIds={signal.contributionIds} allContributions={contributions} />}
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          )}
+
+
         </div>
       </main>
 

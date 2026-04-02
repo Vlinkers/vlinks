@@ -750,42 +750,8 @@ const VINDetail = () => {
             </div>
           )}
 
-          {/* Observed signals section */}
-          {observedSignals.length > 0 && (
-            <section id="signals-section" className="mt-8 rounded-xl bg-card border border-border shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-border flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-warning" />
-                <h3 className="font-display text-sm font-semibold text-foreground">Signaux observés</h3>
-                <Badge variant="outline" className="ml-auto text-warning border-warning/30 bg-warning/5">
-                  {observedSignals.length}
-                </Badge>
-              </div>
-              <div className="p-4 space-y-2">
-                {observedSignals.map(signal => {
-                  const lastMonth = signal.lastObserved ? new Date(signal.lastObserved).toLocaleDateString("fr-CA", { month: "short", year: "numeric" }) : null;
-                  const isExpanded = expandedSignalId === signal.id;
-                  return (
-                    <div key={signal.id} className="rounded-lg border border-border overflow-hidden bg-muted/30">
-                      <button onClick={() => setExpandedSignalId(isExpanded ? null : signal.id)} className="w-full flex items-start gap-3 p-3 text-left hover:bg-muted/50 transition-colors">
-                        <div className="w-6 h-6 rounded-md bg-warning/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <AlertTriangle className="w-3.5 h-3.5 text-warning" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-sm text-foreground block">{signal.text}</span>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-muted-foreground">{signal.count} source{signal.count > 1 ? "s" : ""}</span>
-                            {lastMonth && <span className="text-xs text-muted-foreground">· {lastMonth}</span>}
-                          </div>
-                        </div>
-                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                      </button>
-                      {isExpanded && <SignalProofs contributionIds={signal.contributionIds} allContributions={contributions} />}
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          )}
+
+
         </div>
       </main>
 

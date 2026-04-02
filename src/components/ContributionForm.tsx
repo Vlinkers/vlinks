@@ -680,8 +680,16 @@ export function ContributionForm({
                           <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
                           <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                         </div>
-                        <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
-                        <HolderGrid value={w.holderType} onChange={(v) => updateW({ holderType: w.holderType === v ? "" : v })} />
+                        <div className="grid grid-cols-2 gap-3">
+                          <MileageInput value={w.mileage} onChange={(v) => updateW({ mileage: v })} />
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium text-muted-foreground">
+                              Prix de vente <span className="font-normal">— optionnel</span>
+                            </Label>
+                            <Input value={w.askingPrice} onChange={(e) => updateW({ askingPrice: e.target.value })} placeholder="Ex: 28 990" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border" />
+                          </div>
+                        </div>
+                        <HolderGrid value={w.holderType} onChange={(v) => updateW({ holderType: w.holderType === v ? "" : v })} label="Nouveau détenteur du véhicule" />
                         {w.holderType === "concessionnaire" && <Input value={w.dealerName} onChange={(e) => updateW({ dealerName: e.target.value })} placeholder="Nom du concessionnaire" className="bg-card border-border mt-2" />}
                         <ProvinceSelect value={w.province} onChange={(v) => updateW({ province: v })} />
                       </FormSection>
@@ -963,7 +971,7 @@ function MileageInput({ value, onChange }: { value: string; onChange: (v: string
   );
 }
 
-function HolderGrid({ value, onChange }: { value: string; onChange: (v: HolderType) => void }) {
+function HolderGrid({ value, onChange, label }: { value: string; onChange: (v: HolderType) => void; label?: string }) {
   const options: { key: HolderType; label: string }[] = [
     { key: "concessionnaire", label: "Concessionnaire" },
     { key: "depot_vente", label: "Dépôt-vente" },
@@ -972,7 +980,7 @@ function HolderGrid({ value, onChange }: { value: string; onChange: (v: HolderTy
   ];
   return (
     <div className="space-y-2">
-      <Label className="text-xs font-medium text-muted-foreground">Détenteur du véhicule</Label>
+      <Label className="text-xs font-medium text-muted-foreground">{label || "Détenteur du véhicule"}</Label>
       <div className="grid grid-cols-2 gap-2">
         {options.map((o) => (
           <ChipButton key={o.key} selected={value === o.key} onClick={() => onChange(o.key)} label={o.label} />
@@ -987,7 +995,7 @@ function ProvinceSelect({ value, onChange }: { value: string; onChange: (v: stri
     <div className="space-y-2">
       <Label className="text-xs font-medium text-muted-foreground">Province <span className="font-normal">— optionnel</span></Label>
       <Select onValueChange={onChange} value={sanitizeSelectValue(value, "__placeholder__")}>
-        <SelectTrigger className="bg-card border-border h-10"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+        <SelectTrigger className="bg-card border-border h-10"><SelectValue placeholder="Sélectionner une province" /></SelectTrigger>
         <SelectContent position="popper" className="max-h-60">
           {provinces.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
         </SelectContent>

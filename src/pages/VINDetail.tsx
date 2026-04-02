@@ -13,6 +13,7 @@ import { getContributionLabel, getContributionIcon, getContributionBadgeVariant 
 import { ContributionDetailDrawer } from "@/components/ContributionDetailDrawer";
 import { AdminEditContribution } from "@/components/AdminEditContribution";
 import { PhotoGallery } from "@/components/PhotoGallery";
+import { EmptyVINPage } from "@/components/EmptyVINPage";
 import { useVINFollow } from "@/hooks/useVINFollow";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Skeleton } from "@/components/ui/skeleton";

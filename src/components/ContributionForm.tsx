@@ -970,6 +970,17 @@ function MileageInput({ value, onChange }: { value: string; onChange: (v: string
   );
 }
 
+function PriceInput({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs font-medium text-muted-foreground">
+        {label} <span className="font-normal">— optionnel</span>
+      </Label>
+      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder="Ex: 28 990" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border" />
+    </div>
+  );
+}
+
 function HolderGrid({ value, onChange, label }: { value: string; onChange: (v: HolderType) => void; label?: string }) {
   const options: { key: HolderType; label: string }[] = [
     { key: "concessionnaire", label: "Concessionnaire" },

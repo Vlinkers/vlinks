@@ -757,9 +757,21 @@ const VINDetail = () => {
                                         return getContributionLabel(c.type);
                                       })()}
                                     </button>
-                                    <Badge variant={getContributionBadgeVariant(c.type)} className="text-[11px] flex-shrink-0">
-                                      {getContributionLabel(c.type)}
-                                    </Badge>
+                                    <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap">
+                                      <Badge variant={getContributionBadgeVariant(c.type)} className="text-[11px]">
+                                        {getContributionLabel(c.type)}
+                                      </Badge>
+                                      {(c.hasDocuments || c.hasPhotos) && (
+                                        <Badge variant="outline" className="text-[10px] bg-success/5 border-success/20 text-success">
+                                          📎 Pièce jointe
+                                        </Badge>
+                                      )}
+                                      {(authorContribCount.get(c.authorPublicId || c.author) || 0) >= 2 && (
+                                        <Badge variant="outline" className="text-[10px] bg-primary/5 border-primary/20 text-primary">
+                                          ✓ Vlinker actif
+                                        </Badge>
+                                      )}
+                                    </div>
                                   </div>
                                   {/* Meta */}
                                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5 flex-wrap">

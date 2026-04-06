@@ -474,7 +474,38 @@ const VINDetail = () => {
               >
                 <Star className={`w-4 h-4 mr-1.5 ${isFollowing ? "fill-current text-warning" : ""}`} />
                 {isFollowing ? "Suivi" : "Suivre"}
-              </Button>
+               </Button>
+              {/* Share button */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="bg-transparent border-white/20 text-white hover:bg-white/10" onClick={async (e) => {
+                    if (navigator.share) {
+                      e.preventDefault();
+                      await handleShare();
+                    }
+                  }}>
+                    <Share2 className="w-4 h-4 mr-1.5" />
+                    Partager
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-2" align="start">
+                  <button
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.href);
+                      toast({ title: "Lien copié", description: "Le lien a été copié dans le presse-papier." });
+                    }}
+                  >
+                    <Link2 className="w-4 h-4" /> Copier le lien
+                  </button>
+                  <a
+                    href={`mailto:?subject=${encodeURIComponent(seoTitle)}&body=${encodeURIComponent(window.location.href)}`}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
+                  >
+                    <Mail className="w-4 h-4" /> Partager par email
+                  </a>
+                </PopoverContent>
+              </Popover>
               {!isCheckingOwner && currentUserId && ownerVerificationStatus === 'none' && (
                 <Button variant="outline" size="sm" onClick={() => setShowOwnerForm(true)} className="bg-transparent border-white/20 text-white hover:bg-white/10">
                   <Shield className="w-4 h-4 mr-1.5" />

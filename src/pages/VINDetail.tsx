@@ -866,6 +866,12 @@ const VINDetail = () => {
         onSaved={() => { setEditingContribution(null); refetch(); }}
         logAction={logAction}
       />
+      <PhotoLightbox
+        photos={lightboxPhotos}
+        initialIndex={lightboxIndex}
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+      />
     </div>
   );
 };

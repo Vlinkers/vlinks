@@ -16,6 +16,8 @@ import { AdminEditContribution } from "@/components/AdminEditContribution";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { EmptyVINPage } from "@/components/EmptyVINPage";
 import { useVINFollow } from "@/hooks/useVINFollow";
+import { CompletenessScore } from "@/components/CompletenessScore";
+import { VINPageFooter } from "@/components/VINPageFooter";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -530,6 +532,13 @@ const VINDetail = () => {
         {/* ═══ CONTENT ═══ */}
         <div className="max-w-5xl mx-auto px-4 py-6">
 
+          {/* ═══ COMPLETENESS SCORE ═══ */}
+          <CompletenessScore
+            contributions={contributions}
+            onAddType={(type) => {
+              setShowContributionForm(true);
+            }}
+          />
           {/* Owner status badges */}
           {!isCheckingOwner && currentUserId && ownerVerificationStatus === 'verified' && (
             <div className="mb-5 p-4 rounded-xl bg-success/5 border border-success/20 flex items-center justify-between">

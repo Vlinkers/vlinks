@@ -793,14 +793,18 @@ const VINDetail = () => {
                                   {c.hasPhotos && thumbPhotos.length > 0 && (
                                     <div className="flex items-center gap-1.5 mt-2.5">
                                       {thumbPhotos.map((photo, i) => (
-                                        <div key={photo.id} className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0 border border-border">
+                                        <button
+                                          key={photo.id}
+                                          onClick={() => openLightbox(c.photos, i)}
+                                          className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0 border border-border cursor-pointer hover:opacity-90 transition-opacity"
+                                        >
                                           <img src={photo.url} alt={photo.caption || "Photo"} className="w-full h-full object-cover" loading="lazy" />
                                           {i === 2 && extraPhotos > 0 && (
                                             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                                               <span className="text-white text-xs font-bold">+{extraPhotos}</span>
                                             </div>
                                           )}
-                                        </div>
+                                        </button>
                                       ))}
                                     </div>
                                   )}

@@ -228,6 +228,10 @@ const VINDetail = () => {
     ? [vinDecode.model_year, vinDecode.make, vinDecode.model, vinDecode.trim].filter(Boolean).join(' ')
     : data ? [data.year, data.make, data.model].filter(Boolean).join(' ') : "";
 
+  const seoTitle = vehicleName
+    ? `${vehicleName} · Dossier VIN`
+    : `${vin} · Dossier VIN`;
+
   // Loading
   if (isLoading) {
     return (

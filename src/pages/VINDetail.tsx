@@ -336,7 +336,13 @@ const VINDetail = () => {
     }
   }
 
-  // Counts per filter tab
+  // Count contributions per author for "Vlinker actif" badge
+  const authorContribCount = new Map<string, number>();
+  for (const c of contributions) {
+    const key = c.authorPublicId || c.author;
+    authorContribCount.set(key, (authorContribCount.get(key) || 0) + 1);
+  }
+
   const filterCounts = FILTER_TABS.reduce((acc, tab) => {
     acc[tab.key] = tab.key === "all" ? contributions.length : contributions.filter(c => tab.types.includes(c.type)).length;
     return acc;

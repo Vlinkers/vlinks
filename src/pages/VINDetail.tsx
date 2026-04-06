@@ -1,5 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
+import SEO from "@/components/SEO";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -227,6 +228,10 @@ const VINDetail = () => {
     ? [vinDecode.model_year, vinDecode.make, vinDecode.model, vinDecode.trim].filter(Boolean).join(' ')
     : data ? [data.year, data.make, data.model].filter(Boolean).join(' ') : "";
 
+  const seoTitle = vehicleName
+    ? `${vehicleName} · Dossier VIN`
+    : `${vin} · Dossier VIN`;
+
   // Loading
   if (isLoading) {
     return (
@@ -325,6 +330,7 @@ const VINDetail = () => {
     <div className="min-h-screen bg-muted/30 flex flex-col">
       <Header />
       <main className="pt-16 flex-1">
+        <SEO title={seoTitle} description={vehicleName ? `Dossier VIN complet pour ${vehicleName}. Historique, inspections, signalements et photos contributifs.` : `Dossier VIN pour ${vin} sur VLINKS.`} />
 
         {/* ═══ DARK HERO BANNER ═══ */}
         <div className="bg-[#0F172A] w-full">
@@ -333,7 +339,7 @@ const VINDetail = () => {
             <nav className="flex items-center gap-2 text-xs text-[#64748B] mb-5">
               <Link to="/" className="hover:text-white transition-colors">Accueil</Link>
               <ChevronRight className="w-3 h-3" />
-              <span className="text-[#94A3B8]">Dossier</span>
+              <span className="text-[#94A3B8]">{vehicleName || vin}</span>
             </nav>
 
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">

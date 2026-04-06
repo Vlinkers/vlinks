@@ -877,6 +877,7 @@ const VINDetail = () => {
         open={!!selectedContribution}
         onOpenChange={(open) => { if (!open) setSelectedContribution(null); }}
         adminActions={selectedContribution && isAdmin ? <AdminActions contributionId={selectedContribution.id} contribution={selectedContribution} /> : undefined}
+        isActiveVlinker={selectedContribution ? (authorContribCount.get(selectedContribution.authorPublicId || selectedContribution.author) || 0) >= 2 : false}
       />
 
       <UsernameRequiredDialog open={showUsernameDialog} onComplete={() => { setShowUsernameDialog(false); setUserHasUsername(true); setShowContributionForm(true); }} />

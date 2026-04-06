@@ -1,5 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
+import SEO from "@/components/SEO";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -333,7 +334,7 @@ const VINDetail = () => {
             <nav className="flex items-center gap-2 text-xs text-[#64748B] mb-5">
               <Link to="/" className="hover:text-white transition-colors">Accueil</Link>
               <ChevronRight className="w-3 h-3" />
-              <span className="text-[#94A3B8]">Dossier</span>
+              <span className="text-[#94A3B8]">{vehicleName || vin}</span>
             </nav>
 
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">

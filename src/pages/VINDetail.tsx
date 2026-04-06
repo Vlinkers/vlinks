@@ -330,6 +330,7 @@ const VINDetail = () => {
     <div className="min-h-screen bg-muted/30 flex flex-col">
       <Header />
       <main className="pt-16 flex-1">
+        <SEO title={seoTitle} description={vehicleName ? `Dossier VIN complet pour ${vehicleName}. Historique, inspections, signalements et photos contributifs.` : `Dossier VIN pour ${vin} sur VLINKS.`} />
 
         {/* ═══ DARK HERO BANNER ═══ */}
         <div className="bg-[#0F172A] w-full">

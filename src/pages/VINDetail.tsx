@@ -142,14 +142,6 @@ const VINDetail = () => {
     setLightboxIndex(index);
     setLightboxOpen(true);
   }, []);
-
-  const handleShare = useCallback(async () => {
-    const url = window.location.href;
-    const title = vehicleName ? `${vehicleName} · Dossier VIN` : `${vin} · Dossier VIN`;
-    if (navigator.share) {
-      try { await navigator.share({ title, url }); } catch {}
-    }
-  }, [vehicleName, vin]);
   const [expandedTextIds, setExpandedTextIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {

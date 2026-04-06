@@ -879,6 +879,13 @@ const VINDetail = () => {
         </div>
       </main>
 
+      <VINPageFooter
+        make={vinDecode?.make || data?.make}
+        model={vinDecode?.model || data?.model}
+        currentVin={vin || ""}
+        onContribute={handleContributeClick}
+      />
+
       <Footer />
 
       <ContributionDetailDrawer

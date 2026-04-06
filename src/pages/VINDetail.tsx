@@ -557,30 +557,44 @@ const VINDetail = () => {
           {(() => {
             const NEGATIVE_KEYWORDS = ["abandon", "ne pas acheter", "ppi négatif", "failed", "échec", "refusé", "déconseillé"];
             const inspectionContribs = contributions.filter(c => c.type === "inspection_report");
+            const historyContribs = contributions.filter(c => c.type === "vehicle_history");
             const hasNegative = inspectionContribs.some(c => {
               const text = [c.title, c.summaryPublic, c.details].filter(Boolean).join(" ").toLowerCase();
               return NEGATIVE_KEYWORDS.some(kw => text.includes(kw));
             });
             const hasInspection = inspectionContribs.length > 0;
+            const hasDocumentedHistory = historyContribs.some(c => c.hasDocuments || c.hasPhotos);
 
             let bgClass = "bg-muted/50 border-border";
-            let iconClass = "text-muted-foreground";
             let textClass = "text-muted-foreground";
             let icon = "📋";
             let message = "Dossier en cours de construction";
+            let subtitle = "Aucun rapport d'inspection soumis pour le moment";
 
             if (hasInspection && hasNegative) {
               bgClass = "bg-destructive/5 border-destructive/20";
-              iconClass = "text-destructive";
               textClass = "text-destructive";
               icon = "🚨";
               message = "Achat abandonné suite à inspection";
+              subtitle = `${inspectionContribs.length} rapport${inspectionContribs.length > 1 ? "s" : ""} d'inspection au dossier`;
+            } else if (hasInspection && hasDocumentedHistory) {
+              bgClass = "bg-success/5 border-success/20";
+              textClass = "text-success";
+              icon = "✅";
+              message = "Dossier solide — Entretien vérifié + inspection réalisée";
+              subtitle = `${inspectionContribs.length} rapport${inspectionContribs.length > 1 ? "s" : ""} + historique documenté`;
             } else if (hasInspection) {
               bgClass = "bg-success/5 border-success/20";
-              iconClass = "text-success";
               textClass = "text-success";
               icon = "✅";
               message = "Inspection(s) au dossier — aucun signal négatif";
+              subtitle = `${inspectionContribs.length} rapport${inspectionContribs.length > 1 ? "s" : ""} d'inspection au dossier`;
+            } else if (hasDocumentedHistory) {
+              bgClass = "bg-success/5 border-success/20";
+              textClass = "text-success";
+              icon = "✅";
+              message = "Historique d'entretien documenté — Des preuves de maintenance ont été partagées par la communauté.";
+              subtitle = `${historyContribs.length} entrée${historyContribs.length > 1 ? "s" : ""} d'historique avec pièces jointes`;
             }
 
             return (
@@ -588,11 +602,7 @@ const VINDetail = () => {
                 <span className="text-xl flex-shrink-0">{icon}</span>
                 <div>
                   <span className={`text-sm font-semibold block ${textClass}`}>{message}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {hasInspection
-                      ? `${inspectionContribs.length} rapport${inspectionContribs.length > 1 ? "s" : ""} d'inspection au dossier`
-                      : "Aucun rapport d'inspection soumis pour le moment"}
-                  </span>
+                  <span className="text-xs text-muted-foreground">{subtitle}</span>
                 </div>
               </div>
             );

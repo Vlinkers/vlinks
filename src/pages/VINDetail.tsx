@@ -96,11 +96,12 @@ const getIconColor = (type: ContributionType): string => {
 };
 
 // ── Filter categories ──
-type FilterCategory = "all" | "reports" | "photos" | "signals" | "documents";
+type FilterCategory = "all" | "reports" | "history" | "photos" | "signals" | "documents";
 
 const FILTER_TABS: { key: FilterCategory; label: string; emoji: string; types: ContributionType[] }[] = [
   { key: "all", label: "Chronologie", emoji: "", types: [] },
-  { key: "reports", label: "Rapports", emoji: "📋", types: ["inspection_report", "vehicle_history", "mechanic_conversation"] },
+  { key: "reports", label: "Rapports", emoji: "📋", types: ["inspection_report", "mechanic_conversation"] },
+  { key: "history", label: "Historique", emoji: "📂", types: ["vehicle_history"] },
   { key: "photos", label: "Photos", emoji: "📸", types: ["photo_evidence"] },
   { key: "signals", label: "Signalements", emoji: "⚠️", types: ["observation", "purchase_decision", "for_sale", "price_change"] },
   { key: "documents", label: "Documents", emoji: "📄", types: ["owner_exchange", "ownership_change"] },
@@ -313,13 +314,10 @@ const VINDetail = () => {
   }
 
   // Counts per filter tab
-  const filterCounts: Record<FilterCategory, number> = {
-    all: contributions.length,
-    reports: contributions.filter(c => FILTER_TABS[1].types.includes(c.type)).length,
-    photos: contributions.filter(c => FILTER_TABS[2].types.includes(c.type)).length,
-    signals: contributions.filter(c => FILTER_TABS[3].types.includes(c.type)).length,
-    documents: contributions.filter(c => FILTER_TABS[4].types.includes(c.type)).length,
-  };
+  const filterCounts = FILTER_TABS.reduce((acc, tab) => {
+    acc[tab.key] = tab.key === "all" ? contributions.length : contributions.filter(c => tab.types.includes(c.type)).length;
+    return acc;
+  }, {} as Record<FilterCategory, number>);
 
   const isVinValid = vinDecode?.is_valid !== false;
 
@@ -412,9 +410,9 @@ const VINDetail = () => {
                 </div>
                 <div className="text-center group relative">
                   <span className="block text-[32px] font-bold text-white leading-none font-display">{data.uniqueContributors}</span>
-                  <span className="block text-[12px] text-[#94A3B8] mt-1 flex items-center justify-center gap-1 cursor-help">
+                   <span className="block text-[12px] text-[#94A3B8] mt-1 flex items-center justify-center gap-1 cursor-help">
                     <Users className="w-3 h-3" />
-                    Vlinkers
+                    {data.uniqueContributors === 1 ? "Vlinker" : "Vlinkers"}
                   </span>
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-foreground text-background text-[11px] rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
                     Nombre de personnes différentes ayant examiné et documenté ce véhicule
@@ -674,11 +672,19 @@ const VINDetail = () => {
                                 <div className="flex-1 min-w-0">
                                   {/* Title — opens drawer */}
                                   <div className="flex items-start justify-between gap-2">
-                                    <button
+                                     <button
                                       onClick={() => setSelectedContribution(c)}
                                       className="text-sm font-semibold text-foreground leading-snug hover:text-primary transition-colors text-left cursor-pointer"
                                     >
-                                      {c.title || c.summaryPublic || getContributionLabel(c.type)}
+                                      {(() => {
+                                        const bodyText = c.details || c.summaryPublic || "";
+                                        // If title is empty or title is just the start of the body text, don't show it as title
+                                        if (c.title && c.title !== c.summaryPublic && !bodyText.startsWith(c.title)) {
+                                          return c.title;
+                                        }
+                                        // No distinct title — use contribution type label
+                                        return getContributionLabel(c.type);
+                                      })()}
                                     </button>
                                     <Badge variant={getContributionBadgeVariant(c.type)} className="text-[11px] flex-shrink-0">
                                       {getContributionLabel(c.type)}
@@ -707,11 +713,10 @@ const VINDetail = () => {
                                     )}
                                   </div>
                                   {/* Body text with expand */}
-                                  {(() => {
+                                   {(() => {
+                                    // Show the most complete text as body
                                     const bodyText = c.details || c.summaryPublic || "";
-                                    // Don't show body if it's identical to the title
-                                    const displayTitle = c.title || c.summaryPublic || "";
-                                    if (!bodyText || bodyText === displayTitle) return null;
+                                    if (!bodyText) return null;
                                     const isLong = bodyText.length > 200;
                                     const isExpanded = expandedTextIds.has(c.id);
                                     const shownText = isLong && !isExpanded ? bodyText.slice(0, 200) + "…" : bodyText;

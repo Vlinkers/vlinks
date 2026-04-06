@@ -24,9 +24,11 @@ import {
   Shield, AlertTriangle, CheckCircle, FileText, ChevronRight, Clock, Camera,
   FileSearch, Eye, EyeOff, Plus, Loader2, User, Users, FileDown, Star, Trash2,
   ExternalLink, File, ChevronDown, Pencil, Calendar, MapPin, ArrowUpDown, ArrowDown, ArrowUp,
-  MessageSquare, Search
+  MessageSquare, Search, Share2, Link2, Mail
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { PhotoLightbox } from "@/components/PhotoLightbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { PublicContribution, ContributionDocument } from "@/hooks/useVINData";
@@ -131,6 +133,15 @@ const VINDetail = () => {
   const [editingContribution, setEditingContribution] = useState<PublicContribution | null>(null);
   const [selectedContribution, setSelectedContribution] = useState<PublicContribution | null>(null);
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [lightboxPhotos, setLightboxPhotos] = useState<{ id: string; url: string; caption?: string | null }[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  const openLightbox = useCallback((photos: { id: string; url: string; caption?: string | null }[], index: number) => {
+    setLightboxPhotos(photos);
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  }, []);
   const [expandedTextIds, setExpandedTextIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -232,7 +243,14 @@ const VINDetail = () => {
     ? `${vehicleName} · Dossier VIN`
     : `${vin} · Dossier VIN`;
 
-  // Loading
+  const handleShare = useCallback(async () => {
+    const url = window.location.href;
+    const title = seoTitle;
+    if (navigator.share) {
+      try { await navigator.share({ title, url }); } catch {}
+    }
+  }, [seoTitle]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-muted/30">
@@ -456,7 +474,38 @@ const VINDetail = () => {
               >
                 <Star className={`w-4 h-4 mr-1.5 ${isFollowing ? "fill-current text-warning" : ""}`} />
                 {isFollowing ? "Suivi" : "Suivre"}
-              </Button>
+               </Button>
+              {/* Share button */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="bg-transparent border-white/20 text-white hover:bg-white/10" onClick={async (e) => {
+                    if (navigator.share) {
+                      e.preventDefault();
+                      await handleShare();
+                    }
+                  }}>
+                    <Share2 className="w-4 h-4 mr-1.5" />
+                    Partager
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-2" align="start">
+                  <button
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.href);
+                      toast({ title: "Lien copié", description: "Le lien a été copié dans le presse-papier." });
+                    }}
+                  >
+                    <Link2 className="w-4 h-4" /> Copier le lien
+                  </button>
+                  <a
+                    href={`mailto:?subject=${encodeURIComponent(seoTitle)}&body=${encodeURIComponent(window.location.href)}`}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
+                  >
+                    <Mail className="w-4 h-4" /> Partager par email
+                  </a>
+                </PopoverContent>
+              </Popover>
               {!isCheckingOwner && currentUserId && ownerVerificationStatus === 'none' && (
                 <Button variant="outline" size="sm" onClick={() => setShowOwnerForm(true)} className="bg-transparent border-white/20 text-white hover:bg-white/10">
                   <Shield className="w-4 h-4 mr-1.5" />
@@ -744,14 +793,18 @@ const VINDetail = () => {
                                   {c.hasPhotos && thumbPhotos.length > 0 && (
                                     <div className="flex items-center gap-1.5 mt-2.5">
                                       {thumbPhotos.map((photo, i) => (
-                                        <div key={photo.id} className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0 border border-border">
+                                        <button
+                                          key={photo.id}
+                                          onClick={() => openLightbox(c.photos, i)}
+                                          className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0 border border-border cursor-pointer hover:opacity-90 transition-opacity"
+                                        >
                                           <img src={photo.url} alt={photo.caption || "Photo"} className="w-full h-full object-cover" loading="lazy" />
                                           {i === 2 && extraPhotos > 0 && (
                                             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                                               <span className="text-white text-xs font-bold">+{extraPhotos}</span>
                                             </div>
                                           )}
-                                        </div>
+                                        </button>
                                       ))}
                                     </div>
                                   )}
@@ -812,6 +865,12 @@ const VINDetail = () => {
         onOpenChange={(open) => { if (!open) setEditingContribution(null); }}
         onSaved={() => { setEditingContribution(null); refetch(); }}
         logAction={logAction}
+      />
+      <PhotoLightbox
+        photos={lightboxPhotos}
+        initialIndex={lightboxIndex}
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
       />
     </div>
   );

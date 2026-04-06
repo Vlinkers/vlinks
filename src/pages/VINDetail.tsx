@@ -133,6 +133,23 @@ const VINDetail = () => {
   const [editingContribution, setEditingContribution] = useState<PublicContribution | null>(null);
   const [selectedContribution, setSelectedContribution] = useState<PublicContribution | null>(null);
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [lightboxPhotos, setLightboxPhotos] = useState<{ id: string; url: string; caption?: string | null }[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  const openLightbox = useCallback((photos: { id: string; url: string; caption?: string | null }[], index: number) => {
+    setLightboxPhotos(photos);
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  }, []);
+
+  const handleShare = useCallback(async () => {
+    const url = window.location.href;
+    const title = vehicleName ? `${vehicleName} · Dossier VIN` : `${vin} · Dossier VIN`;
+    if (navigator.share) {
+      try { await navigator.share({ title, url }); } catch {}
+    }
+  }, [vehicleName, vin]);
   const [expandedTextIds, setExpandedTextIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {

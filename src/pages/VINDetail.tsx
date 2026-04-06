@@ -243,7 +243,14 @@ const VINDetail = () => {
     ? `${vehicleName} · Dossier VIN`
     : `${vin} · Dossier VIN`;
 
-  // Loading
+  const handleShare = useCallback(async () => {
+    const url = window.location.href;
+    const title = seoTitle;
+    if (navigator.share) {
+      try { await navigator.share({ title, url }); } catch {}
+    }
+  }, [seoTitle]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-muted/30">

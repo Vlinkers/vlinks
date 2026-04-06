@@ -24,9 +24,11 @@ import {
   Shield, AlertTriangle, CheckCircle, FileText, ChevronRight, Clock, Camera,
   FileSearch, Eye, EyeOff, Plus, Loader2, User, Users, FileDown, Star, Trash2,
   ExternalLink, File, ChevronDown, Pencil, Calendar, MapPin, ArrowUpDown, ArrowDown, ArrowUp,
-  MessageSquare, Search
+  MessageSquare, Search, Share2, Link2, Mail
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { PhotoLightbox } from "@/components/PhotoLightbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { PublicContribution, ContributionDocument } from "@/hooks/useVINData";

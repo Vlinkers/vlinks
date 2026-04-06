@@ -20,6 +20,8 @@ const Header = ({ hideSearch = false, transparent = false }: { hideSearch?: bool
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isVINPage = location.pathname.startsWith("/vin/");
 
   const handleSignOut = async () => {
     await signOut();

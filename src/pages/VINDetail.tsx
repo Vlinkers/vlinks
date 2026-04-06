@@ -651,7 +651,7 @@ const VINDetail = () => {
                           </span>
                           <span className="text-xs text-muted-foreground">
                             — {episode.author}
-                            {episode.contributions.length > 1 && ` · ${episode.contributions.length} entrées`}
+                            {episode.contributions.length > 1 && ` · ${episode.contributions.length} contributions`}
                           </span>
                         </div>
                       </div>

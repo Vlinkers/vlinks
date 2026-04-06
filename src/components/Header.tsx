@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Menu, X, LogOut, User, Search, Shield, Plus } from "lucide-react";
@@ -20,6 +20,8 @@ const Header = ({ hideSearch = false, transparent = false }: { hideSearch?: bool
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isVINPage = location.pathname.startsWith("/vin/");
 
   const handleSignOut = async () => {
     await signOut();
@@ -68,10 +70,12 @@ const Header = ({ hideSearch = false, transparent = false }: { hideSearch?: bool
 
         {/* Right actions */}
         <div className="hidden md:flex items-center gap-2 ml-auto">
-          <Button variant="default" size="sm" onClick={() => navigate(user ? "/" : "/auth")}>
-            <Plus className="w-4 h-4 mr-1" />
-            Contribuer
-          </Button>
+          {!isVINPage && (
+            <Button variant="default" size="sm" onClick={() => navigate(user ? "/" : "/auth")}>
+              <Plus className="w-4 h-4 mr-1" />
+              Contribuer
+            </Button>
+          )}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

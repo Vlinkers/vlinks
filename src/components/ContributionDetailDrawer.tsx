@@ -140,15 +140,10 @@ export function ContributionDetailDrawer({ contribution, open, onOpenChange, adm
 }
 
 function DrawerDocRow({ doc }: { doc: ContributionDocument }) {
-  const handleOpen = useCallback(async () => {
+  const handleOpen = useCallback(() => {
     if (!doc.filePath) return;
-    const { data, error } = await supabase.storage.from("vin-documents").createSignedUrl(doc.filePath, 3600);
-    if (error || !data?.signedUrl) {
-      const { data: pub } = supabase.storage.from("vin-documents").getPublicUrl(doc.filePath);
-      if (pub?.publicUrl) window.open(pub.publicUrl, "_blank");
-      return;
-    }
-    window.open(data.signedUrl, "_blank");
+    const { data } = supabase.storage.from("vin-documents").getPublicUrl(doc.filePath);
+    if (data?.publicUrl) window.open(data.publicUrl, "_blank");
   }, [doc.filePath]);
 
   return (

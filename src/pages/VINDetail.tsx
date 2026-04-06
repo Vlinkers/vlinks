@@ -336,7 +336,13 @@ const VINDetail = () => {
     }
   }
 
-  // Counts per filter tab
+  // Count contributions per author for "Vlinker actif" badge
+  const authorContribCount = new Map<string, number>();
+  for (const c of contributions) {
+    const key = c.authorPublicId || c.author;
+    authorContribCount.set(key, (authorContribCount.get(key) || 0) + 1);
+  }
+
   const filterCounts = FILTER_TABS.reduce((acc, tab) => {
     acc[tab.key] = tab.key === "all" ? contributions.length : contributions.filter(c => tab.types.includes(c.type)).length;
     return acc;
@@ -557,30 +563,44 @@ const VINDetail = () => {
           {(() => {
             const NEGATIVE_KEYWORDS = ["abandon", "ne pas acheter", "ppi négatif", "failed", "échec", "refusé", "déconseillé"];
             const inspectionContribs = contributions.filter(c => c.type === "inspection_report");
+            const historyContribs = contributions.filter(c => c.type === "vehicle_history");
             const hasNegative = inspectionContribs.some(c => {
               const text = [c.title, c.summaryPublic, c.details].filter(Boolean).join(" ").toLowerCase();
               return NEGATIVE_KEYWORDS.some(kw => text.includes(kw));
             });
             const hasInspection = inspectionContribs.length > 0;
+            const hasDocumentedHistory = historyContribs.some(c => c.hasDocuments || c.hasPhotos);
 
             let bgClass = "bg-muted/50 border-border";
-            let iconClass = "text-muted-foreground";
             let textClass = "text-muted-foreground";
             let icon = "📋";
             let message = "Dossier en cours de construction";
+            let subtitle = "Aucun rapport d'inspection soumis pour le moment";
 
             if (hasInspection && hasNegative) {
               bgClass = "bg-destructive/5 border-destructive/20";
-              iconClass = "text-destructive";
               textClass = "text-destructive";
               icon = "🚨";
               message = "Achat abandonné suite à inspection";
+              subtitle = `${inspectionContribs.length} rapport${inspectionContribs.length > 1 ? "s" : ""} d'inspection au dossier`;
+            } else if (hasInspection && hasDocumentedHistory) {
+              bgClass = "bg-success/5 border-success/20";
+              textClass = "text-success";
+              icon = "✅";
+              message = "Dossier solide — Entretien vérifié + inspection réalisée";
+              subtitle = `${inspectionContribs.length} rapport${inspectionContribs.length > 1 ? "s" : ""} + historique documenté`;
             } else if (hasInspection) {
               bgClass = "bg-success/5 border-success/20";
-              iconClass = "text-success";
               textClass = "text-success";
               icon = "✅";
               message = "Inspection(s) au dossier — aucun signal négatif";
+              subtitle = `${inspectionContribs.length} rapport${inspectionContribs.length > 1 ? "s" : ""} d'inspection au dossier`;
+            } else if (hasDocumentedHistory) {
+              bgClass = "bg-success/5 border-success/20";
+              textClass = "text-success";
+              icon = "✅";
+              message = "Historique d'entretien documenté — Des preuves de maintenance ont été partagées par la communauté.";
+              subtitle = `${historyContribs.length} entrée${historyContribs.length > 1 ? "s" : ""} d'historique avec pièces jointes`;
             }
 
             return (
@@ -588,11 +608,7 @@ const VINDetail = () => {
                 <span className="text-xl flex-shrink-0">{icon}</span>
                 <div>
                   <span className={`text-sm font-semibold block ${textClass}`}>{message}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {hasInspection
-                      ? `${inspectionContribs.length} rapport${inspectionContribs.length > 1 ? "s" : ""} d'inspection au dossier`
-                      : "Aucun rapport d'inspection soumis pour le moment"}
-                  </span>
+                  <span className="text-xs text-muted-foreground">{subtitle}</span>
                 </div>
               </div>
             );
@@ -741,9 +757,21 @@ const VINDetail = () => {
                                         return getContributionLabel(c.type);
                                       })()}
                                     </button>
-                                    <Badge variant={getContributionBadgeVariant(c.type)} className="text-[11px] flex-shrink-0">
-                                      {getContributionLabel(c.type)}
-                                    </Badge>
+                                    <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap">
+                                      <Badge variant={getContributionBadgeVariant(c.type)} className="text-[11px]">
+                                        {getContributionLabel(c.type)}
+                                      </Badge>
+                                      {(c.hasDocuments || c.hasPhotos) && (
+                                        <Badge variant="outline" className="text-[10px] bg-success/5 border-success/20 text-success">
+                                          📎 Pièce jointe
+                                        </Badge>
+                                      )}
+                                      {(authorContribCount.get(c.authorPublicId || c.author) || 0) >= 2 && (
+                                        <Badge variant="outline" className="text-[10px] bg-primary/5 border-primary/20 text-primary">
+                                          ✓ Vlinker actif
+                                        </Badge>
+                                      )}
+                                    </div>
                                   </div>
                                   {/* Meta */}
                                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5 flex-wrap">
@@ -849,6 +877,7 @@ const VINDetail = () => {
         open={!!selectedContribution}
         onOpenChange={(open) => { if (!open) setSelectedContribution(null); }}
         adminActions={selectedContribution && isAdmin ? <AdminActions contributionId={selectedContribution.id} contribution={selectedContribution} /> : undefined}
+        isActiveVlinker={selectedContribution ? (authorContribCount.get(selectedContribution.authorPublicId || selectedContribution.author) || 0) >= 2 : false}
       />
 
       <UsernameRequiredDialog open={showUsernameDialog} onComplete={() => { setShowUsernameDialog(false); setUserHasUsername(true); setShowContributionForm(true); }} />

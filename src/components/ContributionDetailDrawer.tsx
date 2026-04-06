@@ -12,9 +12,10 @@ interface ContributionDetailDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   adminActions?: React.ReactNode;
+  isActiveVlinker?: boolean;
 }
 
-export function ContributionDetailDrawer({ contribution, open, onOpenChange, adminActions }: ContributionDetailDrawerProps) {
+export function ContributionDetailDrawer({ contribution, open, onOpenChange, adminActions, isActiveVlinker }: ContributionDetailDrawerProps) {
   // Close on browser back
   useEffect(() => {
     if (!open) return;
@@ -56,6 +57,16 @@ export function ContributionDetailDrawer({ contribution, open, onOpenChange, adm
               <Badge variant="outline" className="text-xs bg-success/5 text-success border-success/20">
                 <CheckCircle className="w-3 h-3 mr-1" />
                 Vérifié
+              </Badge>
+            )}
+            {(contribution.hasDocuments || contribution.hasPhotos) && (
+              <Badge variant="outline" className="text-[10px] bg-success/5 border-success/20 text-success">
+                📎 Pièce jointe
+              </Badge>
+            )}
+            {isActiveVlinker && (
+              <Badge variant="outline" className="text-[10px] bg-primary/5 border-primary/20 text-primary">
+                ✓ Vlinker actif
               </Badge>
             )}
           </div>

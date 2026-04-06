@@ -15,7 +15,7 @@ interface ContributionDetailDrawerProps {
   isActiveVlinker?: boolean;
 }
 
-export function ContributionDetailDrawer({ contribution, open, onOpenChange, adminActions }: ContributionDetailDrawerProps) {
+export function ContributionDetailDrawer({ contribution, open, onOpenChange, adminActions, isActiveVlinker }: ContributionDetailDrawerProps) {
   // Close on browser back
   useEffect(() => {
     if (!open) return;

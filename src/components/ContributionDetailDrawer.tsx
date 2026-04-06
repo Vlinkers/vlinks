@@ -12,6 +12,7 @@ interface ContributionDetailDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   adminActions?: React.ReactNode;
+  isActiveVlinker?: boolean;
 }
 
 export function ContributionDetailDrawer({ contribution, open, onOpenChange, adminActions }: ContributionDetailDrawerProps) {

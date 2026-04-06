@@ -70,10 +70,12 @@ const Header = ({ hideSearch = false, transparent = false }: { hideSearch?: bool
 
         {/* Right actions */}
         <div className="hidden md:flex items-center gap-2 ml-auto">
-          <Button variant="default" size="sm" onClick={() => navigate(user ? "/" : "/auth")}>
-            <Plus className="w-4 h-4 mr-1" />
-            Contribuer
-          </Button>
+          {!isVINPage && (
+            <Button variant="default" size="sm" onClick={() => navigate(user ? "/" : "/auth")}>
+              <Plus className="w-4 h-4 mr-1" />
+              Contribuer
+            </Button>
+          )}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

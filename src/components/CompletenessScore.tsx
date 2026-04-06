@@ -17,7 +17,7 @@ interface ScoreCriterion {
 }
 
 export function CompletenessScore({ contributions, onAddType }: CompletenessScoreProps) {
-  const hasPhotoEvidence = contributions.some(c => c.type === "photo_evidence" || (c.hasPhotos && c.type !== "photo_evidence"));
+  const hasPhotoEvidence = contributions.some(c => c.type === "photo_evidence" || c.hasPhotos);
   const hasInspection = contributions.some(c => c.type === "inspection_report" || c.type === "mechanic_conversation");
   const hasHistory = contributions.some(c => c.type === "vehicle_history");
   const hasPhotos = contributions.some(c => c.hasPhotos || c.type === "photo_evidence");

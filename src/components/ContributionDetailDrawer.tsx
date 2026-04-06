@@ -59,6 +59,16 @@ export function ContributionDetailDrawer({ contribution, open, onOpenChange, adm
                 Vérifié
               </Badge>
             )}
+            {(contribution.hasDocuments || contribution.hasPhotos) && (
+              <Badge variant="outline" className="text-[10px] bg-success/5 border-success/20 text-success">
+                📎 Pièce jointe
+              </Badge>
+            )}
+            {isActiveVlinker && (
+              <Badge variant="outline" className="text-[10px] bg-primary/5 border-primary/20 text-primary">
+                ✓ Vlinker actif
+              </Badge>
+            )}
           </div>
           <SheetTitle className="text-lg font-display font-bold text-foreground text-left">
             {title}

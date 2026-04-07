@@ -95,7 +95,8 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       dealer_name,
       asking_price,
       listing_url,
-      old_price
+      old_price,
+      vin_contribution_id
     `)
     .eq("vin_id", vinRecord.id) as any)
     .eq("status", "approved")
@@ -112,41 +113,29 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
 
   if (contribError) throw contribError;
 
-  // Fetch all vin_contributions for this VIN to map photos/documents
-  const { data: vinContribs } = await supabase
-    .from("vin_contributions")
-    .select("id, user_id, contribution_type, created_at")
-    .eq("vin_id", vinRecord.id);
+  // Collect vin_contribution_ids directly from public_contributions
+  const vcIds = (contributions || [])
+    .map((c: any) => c.vin_contribution_id)
+    .filter(Boolean) as string[];
 
-  // Build a mapping from public_contribution to vin_contribution by matching user_id + type + approximate time
-  const contribIds = (vinContribs || []).map(vc => vc.id);
-
-  // Fetch all photos for these contributions (public bucket, anyone can view)
+  // Fetch all photos for these contributions
   let allPhotos: any[] = [];
-  if (contribIds.length > 0) {
+  if (vcIds.length > 0) {
     const { data: photos } = await supabase
       .from("contribution_photos")
       .select("id, contribution_id, file_name, file_path, caption")
-      .in("contribution_id", contribIds);
+      .in("contribution_id", vcIds);
     allPhotos = photos || [];
   }
 
-  // Fetch document metadata (RLS allows owner/admin only, so this may return empty for public users)
+  // Fetch document metadata
   let allDocuments: any[] = [];
-  if (contribIds.length > 0) {
+  if (vcIds.length > 0) {
     const { data: docs } = await supabase
       .from("contribution_documents")
       .select("id, contribution_id, file_name, file_path, file_type, file_size, description")
-      .in("contribution_id", contribIds);
+      .in("contribution_id", vcIds);
     allDocuments = docs || [];
-  }
-
-  // Map vin_contributions by user_id+type+time for matching
-  const vinContribMap = new Map<string, string>(); // key -> vin_contribution id
-  for (const vc of (vinContribs || [])) {
-    // Create a key from user_id + contribution_type + created_at (truncated to minute)
-    const key = `${vc.user_id}|${vc.contribution_type}|${new Date(vc.created_at).toISOString().slice(0, 16)}`;
-    vinContribMap.set(key, vc.id);
   }
 
   // Group photos and documents by contribution_id
@@ -165,9 +154,8 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
   }
 
   const transformedContributions: PublicContribution[] = (contributions || []).map((c: any) => {
-    // Try to find matching vin_contribution
-    const key = `${c.user_id}|${c.contribution_type}|${new Date(c.created_at).toISOString().slice(0, 16)}`;
-    const vcId = vinContribMap.get(key);
+    // Use direct FK reference
+    const vcId = c.vin_contribution_id;
 
     const photos: ContributionPhoto[] = vcId
       ? (photosByContrib.get(vcId) || []).map((p: any) => ({

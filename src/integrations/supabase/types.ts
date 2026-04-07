@@ -395,6 +395,7 @@ export type Database = {
           title: string | null
           updated_at: string
           user_id: string
+          vin_contribution_id: string | null
           vin_id: string
         }
         Insert: {
@@ -420,6 +421,7 @@ export type Database = {
           title?: string | null
           updated_at?: string
           user_id: string
+          vin_contribution_id?: string | null
           vin_id: string
         }
         Update: {
@@ -445,9 +447,17 @@ export type Database = {
           title?: string | null
           updated_at?: string
           user_id?: string
+          vin_contribution_id?: string | null
           vin_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "public_contributions_vin_contribution_id_fkey"
+            columns: ["vin_contribution_id"]
+            isOneToOne: false
+            referencedRelation: "vin_contributions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "public_contributions_vin_id_fkey"
             columns: ["vin_id"]

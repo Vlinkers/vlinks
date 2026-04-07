@@ -154,9 +154,8 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
   }
 
   const transformedContributions: PublicContribution[] = (contributions || []).map((c: any) => {
-    // Try to find matching vin_contribution
-    const key = `${c.user_id}|${c.contribution_type}|${new Date(c.created_at).toISOString().slice(0, 16)}`;
-    const vcId = vinContribMap.get(key);
+    // Use direct FK reference
+    const vcId = c.vin_contribution_id;
 
     const photos: ContributionPhoto[] = vcId
       ? (photosByContrib.get(vcId) || []).map((p: any) => ({

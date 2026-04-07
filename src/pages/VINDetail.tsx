@@ -109,7 +109,7 @@ const FILTER_TABS: { key: FilterCategory; label: string; emoji: string; types: C
   { key: "history", label: "Historique", emoji: "📂", types: ["vehicle_history"] },
   { key: "photos", label: "Photos", emoji: "📸", types: ["photo_evidence"] },
   { key: "signals", label: "Signalements", emoji: "⚠️", types: ["observation", "purchase_decision", "for_sale", "price_change"] },
-  { key: "documents", label: "Documents", emoji: "📄", types: ["owner_exchange", "ownership_change"] },
+  { key: "documents", label: "Échanges", emoji: "💬", types: ["owner_exchange", "ownership_change"] },
 ];
 
 const VINDetail = () => {

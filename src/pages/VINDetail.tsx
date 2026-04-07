@@ -947,6 +947,16 @@ const VINDetail = () => {
         open={lightboxOpen}
         onClose={() => setLightboxOpen(false)}
       />
+      {isAdmin && data && (
+        <FeaturedPhotoModal
+          open={showFeaturedPhotoModal}
+          onOpenChange={setShowFeaturedPhotoModal}
+          vinId={data.id}
+          vinCode={data.vin}
+          currentFeaturedUrl={data.featuredPhotoUrl}
+          onSaved={() => refetch()}
+        />
+      )}
     </div>
   );
 };

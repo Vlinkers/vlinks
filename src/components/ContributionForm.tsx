@@ -84,6 +84,7 @@ interface WizardState {
   documentSubType: DocumentSubType | null;
   exchangeSubType: ExchangeSubType | null;
   eventSubType: EventSubType | null;
+  dateDay: string;
   dateMonth: string;
   dateYear: string;
   mileage: string;
@@ -100,7 +101,7 @@ interface WizardState {
 
 const initialWizardState: WizardState = {
   profile: null, category: null, documentSubType: null, exchangeSubType: null,
-  eventSubType: null, dateMonth: "", dateYear: "", mileage: "", description: "",
+  eventSubType: null, dateDay: "", dateMonth: "", dateYear: "", mileage: "", description: "",
   holderType: "", dealerName: "", province: "", askingPrice: "", oldPrice: "",
   listingUrl: "", evidenceType: null, isAnonymous: false,
 };
@@ -251,7 +252,9 @@ export function ContributionForm({
     let interventionDate: string | null = null;
     if (w.dateYear) {
       const monthIndex = w.dateMonth ? months.indexOf(w.dateMonth) + 1 : 1;
-      interventionDate = `${w.dateYear}-${String(monthIndex).padStart(2, "0")}-01`;
+      const day = w.dateDay ? parseInt(w.dateDay, 10) : 1;
+      const validDay = day >= 1 && day <= 31 ? day : 1;
+      interventionDate = `${w.dateYear}-${String(monthIndex).padStart(2, "0")}-${String(validDay).padStart(2, "0")}`;
     }
     const askingPrice = w.askingPrice ? parseInt(w.askingPrice.replace(/\s/g, ""), 10) : null;
     const validAskingPrice = askingPrice && !isNaN(askingPrice) ? askingPrice : null;
@@ -584,7 +587,8 @@ export function ContributionForm({
               {w.category === "observation" && (
                 <>
                   <FormSection title="Contexte de l'observation">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      <DateField label="Jour" type="day" value={w.dateDay} onChange={(v) => updateW({ dateDay: v })} />
                       <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
                       <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                     </div>
@@ -613,7 +617,8 @@ export function ContributionForm({
                     </div>
                   </FormSection>
                   <FormSection title="Contexte">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      <DateField label="Jour" type="day" value={w.dateDay} onChange={(v) => updateW({ dateDay: v })} />
                       <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
                       <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                     </div>
@@ -642,7 +647,8 @@ export function ContributionForm({
                     </div>
                   </FormSection>
                   <FormSection title="Contexte">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      <DateField label="Jour" type="day" value={w.dateDay} onChange={(v) => updateW({ dateDay: v })} />
                       <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
                       <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                     </div>
@@ -686,7 +692,8 @@ export function ContributionForm({
                   {w.eventSubType === "ownership_change" && (
                     <>
                       <FormSection title="Contexte">
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-3 gap-3">
+                          <DateField label="Jour" type="day" value={w.dateDay} onChange={(v) => updateW({ dateDay: v })} />
                           <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
                           <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                         </div>
@@ -707,7 +714,8 @@ export function ContributionForm({
                   {w.eventSubType === "for_sale" && (
                     <>
                       <FormSection title="Détails de la mise en vente">
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-3 gap-3">
+                          <DateField label="Jour" type="day" value={w.dateDay} onChange={(v) => updateW({ dateDay: v })} />
                           <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
                           <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                         </div>
@@ -729,7 +737,8 @@ export function ContributionForm({
                   {w.eventSubType === "price_change" && (
                     <>
                       <FormSection title="Modification de prix">
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-3 gap-3">
+                          <DateField label="Jour" type="day" value={w.dateDay} onChange={(v) => updateW({ dateDay: v })} />
                           <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
                           <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                         </div>
@@ -942,8 +951,17 @@ function ChipButton({ selected, onClick, label }: { selected: boolean; onClick: 
 }
 
 function DateField({ label, type, value, onChange, yearOptions }: {
-  label: string; type: "month" | "year"; value: string; onChange: (v: string) => void; yearOptions?: string[];
+  label: string; type: "day" | "month" | "year"; value: string; onChange: (v: string) => void; yearOptions?: string[];
 }) {
+  if (type === "day") {
+    return (
+      <div className="space-y-2">
+        <Label className="text-xs font-medium text-muted-foreground">{label} <span className="font-normal">— optionnel</span></Label>
+        <Input value={value} onChange={(e) => { const v = e.target.value.replace(/\D/g, "").slice(0, 2); onChange(v); }}
+          placeholder="Jour" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border h-10" />
+      </div>
+    );
+  }
   return (
     <div className="space-y-2">
       <Label className="text-xs font-medium text-muted-foreground">{label}</Label>

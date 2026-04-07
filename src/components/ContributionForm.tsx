@@ -946,8 +946,17 @@ function ChipButton({ selected, onClick, label }: { selected: boolean; onClick: 
 }
 
 function DateField({ label, type, value, onChange, yearOptions }: {
-  label: string; type: "month" | "year"; value: string; onChange: (v: string) => void; yearOptions?: string[];
+  label: string; type: "day" | "month" | "year"; value: string; onChange: (v: string) => void; yearOptions?: string[];
 }) {
+  if (type === "day") {
+    return (
+      <div className="space-y-2">
+        <Label className="text-xs font-medium text-muted-foreground">{label} <span className="font-normal">— optionnel</span></Label>
+        <Input value={value} onChange={(e) => { const v = e.target.value.replace(/\D/g, "").slice(0, 2); onChange(v); }}
+          placeholder="Jour" inputMode="numeric" pattern="[0-9]*" className="bg-card border-border h-10" />
+      </div>
+    );
+  }
   return (
     <div className="space-y-2">
       <Label className="text-xs font-medium text-muted-foreground">{label}</Label>

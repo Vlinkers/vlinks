@@ -692,7 +692,8 @@ export function ContributionForm({
                   {w.eventSubType === "ownership_change" && (
                     <>
                       <FormSection title="Contexte">
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-3 gap-3">
+                          <DateField label="Jour" type="day" value={w.dateDay} onChange={(v) => updateW({ dateDay: v })} />
                           <DateField label="Mois" type="month" value={w.dateMonth} onChange={(v) => updateW({ dateMonth: v })} />
                           <DateField label="Année" type="year" value={w.dateYear} onChange={(v) => updateW({ dateYear: v })} yearOptions={yearOptions} />
                         </div>

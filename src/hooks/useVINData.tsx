@@ -95,7 +95,8 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
       dealer_name,
       asking_price,
       listing_url,
-      old_price
+      old_price,
+      vin_contribution_id
     `)
     .eq("vin_id", vinRecord.id) as any)
     .eq("status", "approved")

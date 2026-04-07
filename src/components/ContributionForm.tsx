@@ -285,6 +285,7 @@ export function ContributionForm({
       mileage_at_intervention: validMileage, intervention_date: interventionDate,
       province, holder_type: holderType, dealer_name: dealerName,
       asking_price: validAskingPrice, old_price: validOldPrice, listing_url: listingUrl,
+      vin_contribution_id: contribution.id,
     } as any);
 
     const uploadPromises: Promise<void>[] = [];

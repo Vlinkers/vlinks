@@ -14,6 +14,7 @@ import { getContributionLabel, getContributionIcon, getContributionBadgeVariant 
 import { ContributionDetailDrawer } from "@/components/ContributionDetailDrawer";
 import { AdminEditContribution } from "@/components/AdminEditContribution";
 import { PhotoGallery } from "@/components/PhotoGallery";
+import { FeaturedPhotoModal } from "@/components/admin/FeaturedPhotoModal";
 import { EmptyVINPage } from "@/components/EmptyVINPage";
 import { useVINFollow } from "@/hooks/useVINFollow";
 import { CompletenessScore } from "@/components/CompletenessScore";
@@ -146,6 +147,7 @@ const VINDetail = () => {
   const [lightboxPhotos, setLightboxPhotos] = useState<{ id: string; url: string; caption?: string | null }[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [showFeaturedPhotoModal, setShowFeaturedPhotoModal] = useState(false);
 
   const openLightbox = useCallback((photos: { id: string; url: string; caption?: string | null }[], index: number) => {
     setLightboxPhotos(photos);
@@ -544,9 +546,14 @@ const VINDetail = () => {
                 </Button>
               )}
               {isAdmin && (
-                <Button variant="outline" size="sm" asChild className="bg-transparent border-primary/40 text-[#60A5FA] hover:bg-primary/10">
-                  <Link to="/admin/contributions"><Shield className="w-4 h-4 mr-1.5" /> Modérer</Link>
-                </Button>
+                <>
+                  <Button variant="outline" size="sm" asChild className="bg-transparent border-primary/40 text-[#60A5FA] hover:bg-primary/10">
+                    <Link to="/admin/contributions"><Shield className="w-4 h-4 mr-1.5" /> Modérer</Link>
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setShowFeaturedPhotoModal(true)} className="bg-transparent border-primary/40 text-[#60A5FA] hover:bg-primary/10">
+                    <Camera className="w-4 h-4 mr-1.5" /> Photo vedette
+                  </Button>
+                </>
               )}
             </div>
           </div>

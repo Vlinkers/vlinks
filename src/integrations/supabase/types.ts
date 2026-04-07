@@ -754,6 +754,7 @@ export type Database = {
         Row: {
           contributions_count: number | null
           created_at: string
+          featured_photo_url: string | null
           id: string
           make: string | null
           model: string | null
@@ -765,6 +766,7 @@ export type Database = {
         Insert: {
           contributions_count?: number | null
           created_at?: string
+          featured_photo_url?: string | null
           id?: string
           make?: string | null
           model?: string | null
@@ -776,6 +778,7 @@ export type Database = {
         Update: {
           contributions_count?: number | null
           created_at?: string
+          featured_photo_url?: string | null
           id?: string
           make?: string | null
           model?: string | null

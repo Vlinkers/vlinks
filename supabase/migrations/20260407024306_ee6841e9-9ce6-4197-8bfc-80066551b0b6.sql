@@ -1,0 +1,1 @@
+ALTER TABLE public.vins ADD COLUMN featured_photo_url text;

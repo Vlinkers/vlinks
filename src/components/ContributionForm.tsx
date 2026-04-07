@@ -84,6 +84,7 @@ interface WizardState {
   documentSubType: DocumentSubType | null;
   exchangeSubType: ExchangeSubType | null;
   eventSubType: EventSubType | null;
+  dateDay: string;
   dateMonth: string;
   dateYear: string;
   mileage: string;
@@ -100,7 +101,7 @@ interface WizardState {
 
 const initialWizardState: WizardState = {
   profile: null, category: null, documentSubType: null, exchangeSubType: null,
-  eventSubType: null, dateMonth: "", dateYear: "", mileage: "", description: "",
+  eventSubType: null, dateDay: "", dateMonth: "", dateYear: "", mileage: "", description: "",
   holderType: "", dealerName: "", province: "", askingPrice: "", oldPrice: "",
   listingUrl: "", evidenceType: null, isAnonymous: false,
 };
@@ -251,7 +252,9 @@ export function ContributionForm({
     let interventionDate: string | null = null;
     if (w.dateYear) {
       const monthIndex = w.dateMonth ? months.indexOf(w.dateMonth) + 1 : 1;
-      interventionDate = `${w.dateYear}-${String(monthIndex).padStart(2, "0")}-01`;
+      const day = w.dateDay ? parseInt(w.dateDay, 10) : 1;
+      const validDay = day >= 1 && day <= 31 ? day : 1;
+      interventionDate = `${w.dateYear}-${String(monthIndex).padStart(2, "0")}-${String(validDay).padStart(2, "0")}`;
     }
     const askingPrice = w.askingPrice ? parseInt(w.askingPrice.replace(/\s/g, ""), 10) : null;
     const validAskingPrice = askingPrice && !isNaN(askingPrice) ? askingPrice : null;

@@ -305,8 +305,7 @@ export function ContributionForm({
       uploadPromises.push(
         supabase.storage.from("vin-photos").upload(filePath, photo).then(async ({ error: uploadError }) => {
           if (!uploadError) {
-            const { data: urlData } = supabase.storage.from("vin-photos").getPublicUrl(filePath);
-            await supabase.from("contribution_photos").insert({ contribution_id: contribution.id, file_name: photo.name, file_path: urlData.publicUrl });
+            await supabase.from("contribution_photos").insert({ contribution_id: contribution.id, file_name: photo.name, file_path: filePath });
           }
         })
       );

@@ -112,6 +112,14 @@ const FILTER_TABS: { key: FilterCategory; label: string; emoji: string; types: C
   { key: "documents", label: "Échanges", emoji: "💬", types: ["owner_exchange", "ownership_change"] },
 ];
 
+const matchesFilterCategory = (contribution: PublicContribution, category: FilterCategory) => {
+  if (category === "all") return true;
+  if (category === "photos") return contribution.hasPhotos;
+
+  const activeTab = FILTER_TABS.find((tab) => tab.key === category);
+  return activeTab ? activeTab.types.includes(contribution.type) : false;
+};
+
 const VINDetail = () => {
   const { vin } = useParams();
   const navigate = useNavigate();
@@ -312,10 +320,9 @@ const VINDetail = () => {
   const allDocuments = contributions.flatMap(c => c.documents);
 
   // Filter contributions by category
-  const activeFilter = FILTER_TABS.find(f => f.key === filterCategory)!;
-  const filteredContributions = filterCategory === "all"
-    ? contributions
-    : contributions.filter(c => activeFilter.types.includes(c.type));
+  const filteredContributions = contributions.filter((contribution) =>
+    matchesFilterCategory(contribution, filterCategory)
+  );
 
   // Sort contributions
   const sortedContributions = [...filteredContributions].sort((a, b) => {
@@ -346,7 +353,13 @@ const VINDetail = () => {
   }
 
   const filterCounts = FILTER_TABS.reduce((acc, tab) => {
-    acc[tab.key] = tab.key === "all" ? contributions.length : contributions.filter(c => tab.types.includes(c.type)).length;
+    if (tab.key === "all") {
+      acc[tab.key] = contributions.length;
+    } else if (tab.key === "photos") {
+      acc[tab.key] = totalPhotos;
+    } else {
+      acc[tab.key] = contributions.filter((contribution) => matchesFilterCategory(contribution, tab.key)).length;
+    }
     return acc;
   }, {} as Record<FilterCategory, number>);
 

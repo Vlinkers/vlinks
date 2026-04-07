@@ -159,12 +159,13 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
     const vcId = c.vin_contribution_id;
 
     const photos: ContributionPhoto[] = vcId
-      ? (photosByContrib.get(vcId) || []).map((p: any) => ({
-          id: p.id,
-          url: p.file_path,
-          caption: p.caption,
-          fileName: p.file_name,
-        }))
+      ? (photosByContrib.get(vcId) || []).map((p: any) => {
+          // Handle both full URLs (legacy) and relative paths (new)
+          const url = p.file_path.startsWith("http")
+            ? p.file_path
+            : supabase.storage.from("vin-photos").getPublicUrl(p.file_path).data.publicUrl;
+          return { id: p.id, url, caption: p.caption, fileName: p.file_name };
+        })
       : [];
 
     const documents: ContributionDocument[] = vcId

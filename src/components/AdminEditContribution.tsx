@@ -318,7 +318,7 @@ export function AdminEditContribution({ contribution, open, onOpenChange, onSave
                     {photos.map(p => (
                       <div key={p.id} className="relative group rounded-lg overflow-hidden border border-border bg-muted aspect-square">
                         <img
-                          src={supabase.storage.from("vin-photos").getPublicUrl(p.url).data.publicUrl}
+                          src={p.url.startsWith("http") ? p.url : supabase.storage.from("vin-photos").getPublicUrl(p.url).data.publicUrl}
                           alt={p.fileName}
                           className="w-full h-full object-cover"
                           onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}

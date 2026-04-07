@@ -42,8 +42,11 @@ export function FeaturedPhotoModal({ open, onOpenChange, vinId, vinCode, current
         .in("contribution_id", vcIds);
 
       const mapped = (photoRows || []).map((p) => {
-        const { data: urlData } = supabase.storage.from("vin-photos").getPublicUrl(p.file_path);
-        return { id: p.id, url: urlData.publicUrl, caption: p.caption };
+        // file_path stores full URLs for photos — use directly if it starts with http
+        const url = p.file_path.startsWith("http")
+          ? p.file_path
+          : supabase.storage.from("vin-photos").getPublicUrl(p.file_path).data.publicUrl;
+        return { id: p.id, url, caption: p.caption };
       });
       setPhotos(mapped);
       setLoading(false);

@@ -372,8 +372,18 @@ const VINDetail = () => {
         <SEO title={seoTitle} description={vehicleName ? `Dossier VIN complet pour ${vehicleName}. Historique, inspections, signalements et photos contributifs.` : `Dossier VIN pour ${vin} sur VLINKS.`} />
 
         {/* ═══ DARK HERO BANNER ═══ */}
-        <div className="bg-[#0F172A] w-full">
-          <div className="max-w-5xl mx-auto px-4 py-8 md:py-10">
+        <div className="bg-[#0F172A] w-full relative overflow-hidden">
+          {data.featuredPhotoUrl && (
+            <>
+              <img
+                src={data.featuredPhotoUrl}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-[rgba(0,0,0,0.55)]" />
+            </>
+          )}
+          <div className="relative z-10 max-w-5xl mx-auto px-4 py-8 md:py-10">
             {/* Breadcrumb */}
             <nav className="flex items-center gap-2 text-xs text-[#64748B] mb-5">
               <Link to="/" className="hover:text-white transition-colors">Accueil</Link>

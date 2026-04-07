@@ -14,6 +14,7 @@ import { getContributionLabel, getContributionIcon, getContributionBadgeVariant 
 import { ContributionDetailDrawer } from "@/components/ContributionDetailDrawer";
 import { AdminEditContribution } from "@/components/AdminEditContribution";
 import { PhotoGallery } from "@/components/PhotoGallery";
+import { FeaturedPhotoModal } from "@/components/admin/FeaturedPhotoModal";
 import { EmptyVINPage } from "@/components/EmptyVINPage";
 import { useVINFollow } from "@/hooks/useVINFollow";
 import { CompletenessScore } from "@/components/CompletenessScore";
@@ -146,6 +147,7 @@ const VINDetail = () => {
   const [lightboxPhotos, setLightboxPhotos] = useState<{ id: string; url: string; caption?: string | null }[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [showFeaturedPhotoModal, setShowFeaturedPhotoModal] = useState(false);
 
   const openLightbox = useCallback((photos: { id: string; url: string; caption?: string | null }[], index: number) => {
     setLightboxPhotos(photos);
@@ -372,8 +374,18 @@ const VINDetail = () => {
         <SEO title={seoTitle} description={vehicleName ? `Dossier VIN complet pour ${vehicleName}. Historique, inspections, signalements et photos contributifs.` : `Dossier VIN pour ${vin} sur VLINKS.`} />
 
         {/* ═══ DARK HERO BANNER ═══ */}
-        <div className="bg-[#0F172A] w-full">
-          <div className="max-w-5xl mx-auto px-4 py-8 md:py-10">
+        <div className="bg-[#0F172A] w-full relative overflow-hidden">
+          {data.featuredPhotoUrl && (
+            <>
+              <img
+                src={data.featuredPhotoUrl}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-[rgba(0,0,0,0.55)]" />
+            </>
+          )}
+          <div className="relative z-10 max-w-5xl mx-auto px-4 py-8 md:py-10">
             {/* Breadcrumb */}
             <nav className="flex items-center gap-2 text-xs text-[#64748B] mb-5">
               <Link to="/" className="hover:text-white transition-colors">Accueil</Link>
@@ -534,9 +546,14 @@ const VINDetail = () => {
                 </Button>
               )}
               {isAdmin && (
-                <Button variant="outline" size="sm" asChild className="bg-transparent border-primary/40 text-[#60A5FA] hover:bg-primary/10">
-                  <Link to="/admin/contributions"><Shield className="w-4 h-4 mr-1.5" /> Modérer</Link>
-                </Button>
+                <>
+                  <Button variant="outline" size="sm" asChild className="bg-transparent border-primary/40 text-[#60A5FA] hover:bg-primary/10">
+                    <Link to="/admin/contributions"><Shield className="w-4 h-4 mr-1.5" /> Modérer</Link>
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setShowFeaturedPhotoModal(true)} className="bg-transparent border-primary/40 text-[#60A5FA] hover:bg-primary/10">
+                    <Camera className="w-4 h-4 mr-1.5" /> Photo vedette
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -930,6 +947,16 @@ const VINDetail = () => {
         open={lightboxOpen}
         onClose={() => setLightboxOpen(false)}
       />
+      {isAdmin && data && (
+        <FeaturedPhotoModal
+          open={showFeaturedPhotoModal}
+          onOpenChange={setShowFeaturedPhotoModal}
+          vinId={data.id}
+          vinCode={data.vin}
+          currentFeaturedUrl={data.featuredPhotoUrl}
+          onSaved={() => refetch()}
+        />
+      )}
     </div>
   );
 };

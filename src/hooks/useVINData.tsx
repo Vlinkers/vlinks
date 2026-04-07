@@ -61,6 +61,7 @@ export interface VINData {
   uniqueContributors: number;
   lastUpdated: string;
   contributions: PublicContribution[];
+  featuredPhotoUrl: string | null;
 }
 
 async function fetchVINData(vin: string): Promise<VINData | null> {
@@ -239,6 +240,7 @@ async function fetchVINData(vin: string): Promise<VINData | null> {
     uniqueContributors,
     lastUpdated,
     contributions: validContributions,
+    featuredPhotoUrl: (vinRecord as any).featured_photo_url || null,
   };
 }
 

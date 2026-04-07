@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Search, ExternalLink, Loader2, Trash2 } from "lucide-react";
+import { Search, ExternalLink, Loader2, Trash2, Image } from "lucide-react";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useToast } from "@/hooks/use-toast";
+import { FeaturedPhotoModal } from "@/components/admin/FeaturedPhotoModal";
 
 interface VINRow {
   id: string;
@@ -17,6 +18,7 @@ interface VINRow {
   trust_score: number | null;
   contributions_count: number | null;
   created_at: string;
+  featured_photo_url: string | null;
 }
 
 export default function AdminVINs() {
@@ -25,6 +27,7 @@ export default function AdminVINs() {
   const [vins, setVins] = useState<VINRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [featuredModal, setFeaturedModal] = useState<{ vinId: string; vinCode: string; currentUrl: string | null } | null>(null);
 
   const fetchVINs = async () => {
     setLoading(true);
@@ -33,7 +36,7 @@ export default function AdminVINs() {
       .select("*")
       .order("created_at", { ascending: false })
       .limit(200);
-    setVins(data || []);
+    setVins((data as any[]) || []);
     setLoading(false);
   };
 
@@ -91,6 +94,9 @@ export default function AdminVINs() {
                   <td className="px-4 py-3 text-muted-foreground">{new Date(v.created_at).toLocaleDateString("fr-CA")}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => setFeaturedModal({ vinId: v.id, vinCode: v.vin, currentUrl: v.featured_photo_url })} title="Photo mise en avant">
+                        <Image className={`w-4 h-4 ${v.featured_photo_url ? "text-primary" : ""}`} />
+                      </Button>
                       <Button size="sm" variant="ghost" asChild>
                         <Link to={`/vin/${v.vin}`}><ExternalLink className="w-4 h-4" /></Link>
                       </Button>
@@ -107,6 +113,17 @@ export default function AdminVINs() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {featuredModal && (
+        <FeaturedPhotoModal
+          open={!!featuredModal}
+          onOpenChange={(open) => { if (!open) setFeaturedModal(null); }}
+          vinId={featuredModal.vinId}
+          vinCode={featuredModal.vinCode}
+          currentFeaturedUrl={featuredModal.currentUrl}
+          onSaved={() => { setFeaturedModal(null); fetchVINs(); }}
+        />
       )}
     </AdminLayout>
   );

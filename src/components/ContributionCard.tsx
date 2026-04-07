@@ -73,22 +73,26 @@ export function ContributionCard({ contribution, adminActions, compact, renderMo
   const [expanded, setExpanded] = useState(false);
   const Icon = getContributionIcon(contribution.type);
 
-  const title = contribution.title || "";
-  const summary = contribution.summaryPublic || "";
-  const details = contribution.details || "";
+  const title = (contribution.title || "").trim();
+  const summary = (contribution.summaryPublic || "").trim();
+  const details = (contribution.details || "").trim();
 
-  // Dedup: pick the display title (title first, fallback to summary)
-  const displayTitle = title || summary;
+  // Primary body text: prefer details, fallback to summary
+  const bodyText = details || summary || "";
 
-  // Body = details if different from title, else summary if different from title, else nothing
-  const bodyText = details && details !== displayTitle
-    ? details
-    : summary && summary !== displayTitle
-    ? summary
-    : "";
+  // Only show a separate title if it's a real distinct title — not a prefix of the body
+  const isTitleDistinct = title.length > 0
+    && title !== bodyText
+    && !bodyText.startsWith(title);
+  const displayTitle = isTitleDistinct ? title : "";
 
-  const isLongText = bodyText.length > TEXT_TRUNCATE_LENGTH;
-  const displayText = expanded ? bodyText : bodyText.slice(0, TEXT_TRUNCATE_LENGTH);
+  // If we're showing the title as heading, don't repeat it in the body
+  const finalBody = displayTitle && bodyText.startsWith(displayTitle)
+    ? bodyText.slice(displayTitle.length).trimStart()
+    : bodyText;
+
+  const isLongText = finalBody.length > TEXT_TRUNCATE_LENGTH;
+  const displayText = expanded ? finalBody : finalBody.slice(0, TEXT_TRUNCATE_LENGTH);
 
   // Body-only mode: skip header/title wrapper, render content + media + admin only
   if (renderMode === "body-only") {

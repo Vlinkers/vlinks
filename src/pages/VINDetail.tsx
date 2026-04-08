@@ -21,6 +21,8 @@ import { CompletenessScore } from "@/components/CompletenessScore";
 import { VINPageFooter } from "@/components/VINPageFooter";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FunctionalSidebar, type SidebarItem } from "@/components/FunctionalSidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { 
@@ -567,8 +569,33 @@ const VINDetail = () => {
           </div>
         </div>
 
-        {/* ═══ CONTENT ═══ */}
-        <div className="max-w-5xl mx-auto px-4 py-6">
+        {/* ═══ CONTENT WITH SIDEBAR ═══ */}
+        <div className="flex flex-1 min-h-[calc(100vh-56px)]">
+          <FunctionalSidebar
+            sectionLabel="Dossier"
+            items={(() => {
+              const sidebarItems: SidebarItem[] = [
+                { key: "all", label: "Chronologie", icon: <Clock className="w-4 h-4" />, count: contributions.length },
+                { key: "reports", label: "Rapports", icon: <FileSearch className="w-4 h-4" />, count: filterCounts.reports },
+                { key: "history", label: "Historique", icon: <FileText className="w-4 h-4" />, count: filterCounts.history },
+                { key: "photos", label: "Photos", icon: <Camera className="w-4 h-4" />, count: totalPhotos },
+                { key: "documents", label: "Échanges", icon: <MessageSquare className="w-4 h-4" />, count: filterCounts.documents },
+                { key: "signals", label: "Signalements", icon: <AlertTriangle className="w-4 h-4" />, count: filterCounts.signals },
+                { key: "sep", label: "", icon: null, separator: true },
+                { key: "pdf", label: "Rapport PDF", icon: <FileDown className="w-4 h-4" /> },
+              ];
+              return sidebarItems;
+            })()}
+            activeKey={filterCategory}
+            onSelect={(key) => {
+              if (key === "pdf") {
+                setShowPDFDialog(true);
+              } else {
+                setFilterCategory(key as FilterCategory);
+              }
+            }}
+          />
+          <div className="flex-1 min-w-0 px-4 md:px-6 py-6 pb-20 md:pb-6">
 
           {/* ═══ COMPLETENESS SCORE ═══ */}
           <CompletenessScore
@@ -698,31 +725,8 @@ const VINDetail = () => {
             </section>
           )}
 
-          {/* ═══ FILTER TABS + SORT TOGGLE ═══ */}
-          <div className="flex items-center justify-between border-b border-border mb-6">
-            <div className="flex items-center gap-1 overflow-x-auto">
-              {FILTER_TABS.map(tab => {
-                const count = filterCounts[tab.key];
-                const isActive = filterCategory === tab.key;
-                return (
-                  <button
-                    key={tab.key}
-                    onClick={() => setFilterCategory(tab.key)}
-                    className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-all ${
-                      isActive 
-                        ? "border-primary text-primary" 
-                        : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-                    }`}
-                  >
-                    {tab.emoji && <span>{tab.emoji}</span>}
-                    {tab.label}
-                    <span className={`text-xs ${isActive ? "text-primary/70" : "text-muted-foreground/60"}`}>
-                      ({count})
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+          {/* Sort toggle */}
+          <div className="flex items-center justify-end mb-4">
             <button
               onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
               className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors flex-shrink-0"
@@ -914,6 +918,7 @@ const VINDetail = () => {
 
 
 
+        </div>
         </div>
       </main>
 

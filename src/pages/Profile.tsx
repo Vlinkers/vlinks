@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FunctionalSidebar, type SidebarItem } from "@/components/FunctionalSidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -91,6 +91,8 @@ const STATUS_LABELS: Record<string, { fr: string; en: string; variant: "warning"
   hidden: { fr: "Masquée", en: "Hidden", variant: "secondary" },
 };
 
+type ProfileTab = "profile" | "contributions" | "followed" | "claims";
+
 const Profile = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { t, language } = useLanguage();
@@ -113,6 +115,7 @@ const Profile = () => {
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterVin, setFilterVin] = useState("");
+  const [activeTab, setActiveTab] = useState<ProfileTab>("profile");
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -430,36 +433,25 @@ const Profile = () => {
         title={language === "fr" ? "Mon profil | VLINKS" : "My Profile | VLINKS"}
         description={language === "fr" ? "Gérez votre profil et vos contributions VLINKS" : "Manage your VLINKS profile and contributions"}
       />
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         <Header />
-        <main className="container mx-auto px-4 pt-24 pb-16">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl font-display font-bold mb-8">
-              {language === "fr" ? "Mon profil" : "My Profile"}
-            </h1>
+        <div className="flex flex-1 pt-14">
+          <FunctionalSidebar
+            sectionLabel="Mon espace"
+            items={[
+              { key: "profile", label: language === "fr" ? "Mon profil" : "Profile", icon: <User className="w-4 h-4" /> },
+              { key: "contributions", label: "Contributions", icon: <FileText className="w-4 h-4" />, count: contributions.length },
+              { key: "followed", label: language === "fr" ? "VINs suivis" : "Followed", icon: <Star className="w-4 h-4" />, count: followedVINs.length },
+              { key: "claims", label: language === "fr" ? "Mes VINs" : "My VINs", icon: <Car className="w-4 h-4" />, count: ownerClaims.length },
+            ]}
+            activeKey={activeTab}
+            onSelect={(key) => setActiveTab(key as ProfileTab)}
+          />
+          <main className="flex-1 min-w-0 px-4 md:px-8 py-8 pb-20 md:pb-8">
+            <div className="max-w-3xl">
 
-            <Tabs defaultValue="profile" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-4 max-w-2xl">
-                <TabsTrigger value="profile" className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  {language === "fr" ? "Profil" : "Profile"}
-                </TabsTrigger>
-                <TabsTrigger value="contributions" className="flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  {language === "fr" ? "Contributions" : "Contributions"}
-                </TabsTrigger>
-                <TabsTrigger value="followed" className="flex items-center gap-2">
-                  <Star className="w-4 h-4" />
-                  {language === "fr" ? "VIN suivis" : "Followed"}
-                </TabsTrigger>
-                <TabsTrigger value="claims" className="flex items-center gap-2">
-                  <Car className="w-4 h-4" />
-                  {language === "fr" ? "Mes VIN" : "My VINs"}
-                </TabsTrigger>
-              </TabsList>
-
-              {/* Profile Tab */}
-              <TabsContent value="profile" className="space-y-6">
+              {activeTab === "profile" && (
+                <div className="space-y-6">
                 <Card>
                   <CardHeader>
                     <CardTitle>{language === "fr" ? "Informations du compte" : "Account Information"}</CardTitle>
@@ -470,77 +462,46 @@ const Profile = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Email (read-only) */}
                     <div className="space-y-2">
                       <Label>{language === "fr" ? "Email" : "Email"}</Label>
-                      <Input 
-                        value={user.email || ""} 
-                        disabled 
-                        className="bg-muted/50"
-                      />
+                      <Input value={user.email || ""} disabled className="bg-muted/50" />
                       <p className="text-xs text-muted-foreground">
-                        {language === "fr" 
-                          ? "L'email ne peut pas être modifié" 
-                          : "Email cannot be changed"}
+                        {language === "fr" ? "L'email ne peut pas être modifié" : "Email cannot be changed"}
                       </p>
                     </div>
-
-                    {/* Username (editable) */}
                     <div className="space-y-2">
                       <Label>{language === "fr" ? "Pseudonyme" : "Username"}</Label>
                       <div className="flex gap-2">
                         <Input 
                           value={username}
-                          onChange={(e) => {
-                            setUsername(e.target.value);
-                            validateUsername(e.target.value);
-                          }}
+                          onChange={(e) => { setUsername(e.target.value); validateUsername(e.target.value); }}
                           placeholder={language === "fr" ? "Votre pseudonyme" : "Your username"}
                           className={usernameError ? "border-destructive" : ""}
                         />
-                        <Button 
-                          onClick={handleSaveUsername}
-                          disabled={saving || !!usernameError || username === profile?.username}
-                        >
-                          {saving ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            language === "fr" ? "Sauvegarder" : "Save"
-                          )}
+                        <Button onClick={handleSaveUsername} disabled={saving || !!usernameError || username === profile?.username}>
+                          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : (language === "fr" ? "Sauvegarder" : "Save")}
                         </Button>
                       </div>
                       {usernameError && (
-                        <p className="text-xs text-destructive flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" />
-                          {usernameError}
-                        </p>
+                        <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{usernameError}</p>
                       )}
                       <p className="text-xs text-muted-foreground">
-                        {language === "fr" 
-                          ? "3-20 caractères, lettres, chiffres et underscores uniquement" 
-                          : "3-20 characters, letters, numbers, and underscores only"}
+                        {language === "fr" ? "3-20 caractères, lettres, chiffres et underscores uniquement" : "3-20 characters, letters, numbers, and underscores only"}
                       </p>
                     </div>
-
-                    {/* Registration date */}
                     {profile?.created_at && (
                       <div className="space-y-2">
                         <Label>{language === "fr" ? "Membre depuis" : "Member since"}</Label>
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Calendar className="w-4 h-4" />
-                          {new Date(profile.created_at).toLocaleDateString(
-                            language === "fr" ? "fr-CA" : "en-CA",
-                            { year: "numeric", month: "long", day: "numeric" }
-                          )}
+                          {new Date(profile.created_at).toLocaleDateString(language === "fr" ? "fr-CA" : "en-CA", { year: "numeric", month: "long", day: "numeric" })}
                         </div>
                       </div>
                     )}
-
-                    {/* Stats */}
                     <div className="grid grid-cols-3 gap-4 pt-4 border-t">
                       <div className="text-center">
                         <div className="text-2xl font-bold text-primary">{profile?.points || 0}</div>
-                        <div className="text-xs text-muted-foreground">{language === "fr" ? "Points" : "Points"}</div>
+                        <div className="text-xs text-muted-foreground">Points</div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-primary">{profile?.level || 1}</div>
@@ -548,74 +509,44 @@ const Profile = () => {
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-primary">{profile?.contributions_count || 0}</div>
-                        <div className="text-xs text-muted-foreground">{language === "fr" ? "Contributions" : "Contributions"}</div>
+                        <div className="text-xs text-muted-foreground">Contributions</div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Logout Button */}
-                <Button 
-                  variant="outline" 
-                  className="w-full text-destructive hover:bg-destructive/10"
-                  onClick={handleSignOut}
-                >
+                <Button variant="outline" className="w-full text-destructive hover:bg-destructive/10" onClick={handleSignOut}>
                   <LogOut className="w-4 h-4 mr-2" />
                   {language === "fr" ? "Se déconnecter" : "Sign Out"}
                 </Button>
-              </TabsContent>
+                </div>
+              )}
 
-              {/* Contributions Tab */}
-              <TabsContent value="contributions" className="space-y-6">
+              {activeTab === "contributions" && (
                 <Card>
                   <CardHeader>
                     <CardTitle>{language === "fr" ? "Mes contributions" : "My Contributions"}</CardTitle>
-                    <CardDescription>
-                      {language === "fr" 
-                        ? "Consultez et gérez vos contributions" 
-                        : "View and manage your contributions"}
-                    </CardDescription>
+                    <CardDescription>{language === "fr" ? "Consultez et gérez vos contributions" : "View and manage your contributions"}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {/* Filters */}
                     <div className="flex flex-col sm:flex-row gap-3">
                       <div className="flex-1">
-                        <Input 
-                          placeholder={language === "fr" ? "Filtrer par VIN..." : "Filter by VIN..."}
-                          value={filterVin}
-                          onChange={(e) => setFilterVin(e.target.value.toUpperCase())}
-                          className="font-mono"
-                        />
+                        <Input placeholder={language === "fr" ? "Filtrer par VIN..." : "Filter by VIN..."} value={filterVin} onChange={(e) => setFilterVin(e.target.value.toUpperCase())} className="font-mono" />
                       </div>
                       <Select value={filterStatus} onValueChange={setFilterStatus}>
-                        <SelectTrigger className="w-full sm:w-44">
-                          <SelectValue placeholder={language === "fr" ? "Statut" : "Status"} />
-                        </SelectTrigger>
+                        <SelectTrigger className="w-full sm:w-44"><SelectValue placeholder={language === "fr" ? "Statut" : "Status"} /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">{language === "fr" ? "Tous les statuts" : "All statuses"}</SelectItem>
-                          {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                            <SelectItem key={key} value={key}>
-                              {language === "fr" ? label.fr : label.en}
-                            </SelectItem>
-                          ))}
+                          {Object.entries(STATUS_LABELS).map(([key, label]) => (<SelectItem key={key} value={key}>{language === "fr" ? label.fr : label.en}</SelectItem>))}
                         </SelectContent>
                       </Select>
                       <Select value={filterType} onValueChange={setFilterType}>
-                        <SelectTrigger className="w-full sm:w-48">
-                          <SelectValue placeholder={language === "fr" ? "Type" : "Type"} />
-                        </SelectTrigger>
+                        <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder={language === "fr" ? "Type" : "Type"} /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">{language === "fr" ? "Tous les types" : "All types"}</SelectItem>
-                          {Object.entries(CONTRIBUTION_TYPE_LABELS).map(([key, label]) => (
-                            <SelectItem key={key} value={key}>
-                              {language === "fr" ? label.fr : label.en}
-                            </SelectItem>
-                          ))}
+                          {Object.entries(CONTRIBUTION_TYPE_LABELS).map(([key, label]) => (<SelectItem key={key} value={key}>{language === "fr" ? label.fr : label.en}</SelectItem>))}
                         </SelectContent>
                       </Select>
                     </div>
-
-                    {/* Contributions List */}
                     {filteredContributions.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
                         <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -624,56 +555,23 @@ const Profile = () => {
                     ) : (
                       <div className="space-y-3">
                         {filteredContributions.map((contribution) => (
-                          <div 
-                            key={contribution.id}
-                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                          >
+                          <div key={contribution.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
                             <div className="flex-1 space-y-1.5">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <code className="vin-code">{contribution.vin}</code>
-                                <Badge variant="outline" className="text-xs">
-                                  {CONTRIBUTION_TYPE_LABELS[contribution.contribution_type]?.[language] || contribution.contribution_type}
-                                </Badge>
-                                {contribution.is_owner_contribution && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    {language === "fr" ? "Propriétaire" : "Owner"}
-                                  </Badge>
-                                )}
+                                <Badge variant="outline" className="text-xs">{CONTRIBUTION_TYPE_LABELS[contribution.contribution_type]?.[language] || contribution.contribution_type}</Badge>
+                                {contribution.is_owner_contribution && <Badge variant="secondary" className="text-xs">{language === "fr" ? "Propriétaire" : "Owner"}</Badge>}
                                 {getStatusBadge(contribution.status)}
                               </div>
-                              {(contribution.title || contribution.summary) && (
-                                <p className="text-sm text-muted-foreground line-clamp-1">
-                                  {contribution.title || contribution.summary}
-                                </p>
-                              )}
+                              {(contribution.title || contribution.summary) && <p className="text-sm text-muted-foreground line-clamp-1">{contribution.title || contribution.summary}</p>}
                               <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3" />
-                                  {new Date(contribution.created_at).toLocaleDateString(
-                                    language === "fr" ? "fr-CA" : "en-CA"
-                                  )}
-                                </span>
+                                <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{new Date(contribution.created_at).toLocaleDateString(language === "fr" ? "fr-CA" : "en-CA")}</span>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigate(`/vin/${contribution.vin}`)}
-                                title={language === "fr" ? "Voir le dossier" : "View dossier"}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => navigate(`/vin/${contribution.vin}`)} title={language === "fr" ? "Voir le dossier" : "View dossier"}><Eye className="w-4 h-4" /></Button>
                               {contribution.status === "pending" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  onClick={() => setDeleteContributionId(contribution.id)}
-                                  title={language === "fr" ? "Retirer" : "Withdraw"}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
+                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleteContributionId(contribution.id)} title={language === "fr" ? "Retirer" : "Withdraw"}><Trash2 className="w-4 h-4" /></Button>
                               )}
                             </div>
                           </div>
@@ -682,70 +580,34 @@ const Profile = () => {
                     )}
                   </CardContent>
                 </Card>
-              </TabsContent>
+              )}
 
-              {/* Followed VINs Tab */}
-              <TabsContent value="followed" className="space-y-6">
+              {activeTab === "followed" && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-primary" />
-                      {language === "fr" ? "VIN suivis" : "Followed VINs"}
-                    </CardTitle>
-                    <CardDescription>
-                      {language === "fr" 
-                        ? "Recevez des notifications quand de nouvelles informations sont ajoutées" 
-                        : "Get notified when new information is added"}
-                    </CardDescription>
+                    <CardTitle className="flex items-center gap-2"><Star className="w-5 h-5 text-primary" />{language === "fr" ? "VIN suivis" : "Followed VINs"}</CardTitle>
+                    <CardDescription>{language === "fr" ? "Recevez des notifications quand de nouvelles informations sont ajoutées" : "Get notified when new information is added"}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {followedVINs.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
                         <Star className="w-12 h-12 mx-auto mb-4 opacity-50" />
                         <p>{language === "fr" ? "Aucun VIN suivi" : "No followed VINs"}</p>
-                        <p className="text-sm mt-2">
-                          {language === "fr" 
-                            ? "Suivez un VIN depuis sa page pour recevoir les mises à jour." 
-                            : "Follow a VIN from its page to get updates."}
-                        </p>
+                        <p className="text-sm mt-2">{language === "fr" ? "Suivez un VIN depuis sa page pour recevoir les mises à jour." : "Follow a VIN from its page to get updates."}</p>
                       </div>
                     ) : (
                       <div className="space-y-3">
                         {followedVINs.map((fv) => (
-                          <div 
-                            key={fv.id}
-                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                          >
+                          <div key={fv.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
                             <div className="flex-1 space-y-1">
                               <code className="vin-code">{fv.vin}</code>
                               <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3" />
-                                  {language === "fr" ? "Suivi depuis " : "Following since "}
-                                  {new Date(fv.created_at).toLocaleDateString(
-                                    language === "fr" ? "fr-CA" : "en-CA"
-                                  )}
-                                </span>
+                                <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{language === "fr" ? "Suivi depuis " : "Following since "}{new Date(fv.created_at).toLocaleDateString(language === "fr" ? "fr-CA" : "en-CA")}</span>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigate(`/vin/${fv.vin}`)}
-                                title={language === "fr" ? "Voir" : "View"}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => handleUnfollow(fv.id)}
-                                title={language === "fr" ? "Ne plus suivre" : "Unfollow"}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => navigate(`/vin/${fv.vin}`)} title={language === "fr" ? "Voir" : "View"}><Eye className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleUnfollow(fv.id)} title={language === "fr" ? "Ne plus suivre" : "Unfollow"}><Trash2 className="w-4 h-4" /></Button>
                             </div>
                           </div>
                         ))}
@@ -753,86 +615,39 @@ const Profile = () => {
                     )}
                   </CardContent>
                 </Card>
-              </TabsContent>
+              )}
 
-              {/* Owner Claims Tab */}
-              <TabsContent value="claims" className="space-y-6">
+              {activeTab === "claims" && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Shield className="w-5 h-5 text-primary" />
-                      {language === "fr" ? "Mes VIN revendiqués" : "My Claimed VINs"}
-                    </CardTitle>
-                    <CardDescription>
-                      {language === "fr" 
-                        ? "Gérez vos revendications de propriété (beta)" 
-                        : "Manage your ownership claims (beta)"}
-                    </CardDescription>
+                    <CardTitle className="flex items-center gap-2"><Shield className="w-5 h-5 text-primary" />{language === "fr" ? "Mes VIN revendiqués" : "My Claimed VINs"}</CardTitle>
+                    <CardDescription>{language === "fr" ? "Gérez vos revendications de propriété (beta)" : "Manage your ownership claims (beta)"}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {ownerClaims.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
                         <Car className="w-12 h-12 mx-auto mb-4 opacity-50" />
                         <p>{language === "fr" ? "Aucun VIN revendiqué" : "No claimed VINs"}</p>
-                        <p className="text-sm mt-2">
-                          {language === "fr" 
-                            ? "Vous pouvez revendiquer un VIN depuis sa page de détails." 
-                            : "You can claim a VIN from its details page."}
-                        </p>
+                        <p className="text-sm mt-2">{language === "fr" ? "Vous pouvez revendiquer un VIN depuis sa page de détails." : "You can claim a VIN from its details page."}</p>
                       </div>
                     ) : (
                       <div className="space-y-3">
                         {ownerClaims.map((claim) => (
-                          <div 
-                            key={claim.id}
-                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                          >
+                          <div key={claim.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
                             <div className="flex-1 space-y-1">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <code className="vin-code">{claim.vin}</code>
-                                {claim.status === "active" ? (
-                                  <Badge variant="verified">
-                                    {language === "fr" ? "Actif" : "Active"}
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="secondary">
-                                    {language === "fr" ? "Révoqué" : "Revoked"}
-                                  </Badge>
-                                )}
-                                {claim.verified_at && (
-                                  <Badge variant="outline" className="text-xs">
-                                    {language === "fr" ? "Vérifié" : "Verified"}
-                                  </Badge>
-                                )}
+                                {claim.status === "active" ? <Badge variant="verified">{language === "fr" ? "Actif" : "Active"}</Badge> : <Badge variant="secondary">{language === "fr" ? "Révoqué" : "Revoked"}</Badge>}
+                                {claim.verified_at && <Badge variant="outline" className="text-xs">{language === "fr" ? "Vérifié" : "Verified"}</Badge>}
                               </div>
                               <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3" />
-                                  {new Date(claim.created_at).toLocaleDateString(
-                                    language === "fr" ? "fr-CA" : "en-CA"
-                                  )}
-                                </span>
+                                <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{new Date(claim.created_at).toLocaleDateString(language === "fr" ? "fr-CA" : "en-CA")}</span>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigate(`/vin/${claim.vin}`)}
-                                title={language === "fr" ? "Voir" : "View"}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => navigate(`/vin/${claim.vin}`)} title={language === "fr" ? "Voir" : "View"}><Eye className="w-4 h-4" /></Button>
                               {claim.status === "active" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  onClick={() => setRevokeClaimId(claim.id)}
-                                  title={language === "fr" ? "Révoquer" : "Revoke"}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
+                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setRevokeClaimId(claim.id)} title={language === "fr" ? "Révoquer" : "Revoke"}><Trash2 className="w-4 h-4" /></Button>
                               )}
                             </div>
                           </div>
@@ -841,10 +656,11 @@ const Profile = () => {
                     )}
                   </CardContent>
                 </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </main>
+              )}
+
+            </div>
+          </main>
+        </div>
         <Footer />
 
         {/* Delete Confirmation Dialog */}

@@ -32,6 +32,7 @@ import {
 import { useState, useEffect, useCallback } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PhotoLightbox } from "@/components/PhotoLightbox";
+import { DocumentViewer } from "@/components/DocumentViewer";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { PublicContribution, ContributionDocument } from "@/hooks/useVINData";
@@ -148,6 +149,13 @@ const VINDetail = () => {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [showFeaturedPhotoModal, setShowFeaturedPhotoModal] = useState(false);
+  const [viewerDoc, setViewerDoc] = useState<ContributionDocument | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
+
+  const openDocViewer = useCallback((doc: ContributionDocument) => {
+    setViewerDoc(doc);
+    setViewerOpen(true);
+  }, []);
 
   const openLightbox = useCallback((photos: { id: string; url: string; caption?: string | null }[], index: number) => {
     setLightboxPhotos(photos);
@@ -957,21 +965,17 @@ const VINDetail = () => {
           onSaved={() => refetch()}
         />
       )}
+
+      <DocumentViewer doc={viewerDoc} open={viewerOpen} onOpenChange={setViewerOpen} />
     </div>
   );
 };
 
 // ── Document row component ──
-function DocRow({ doc }: { doc: ContributionDocument }) {
-  const handleOpen = useCallback(() => {
-    if (!doc.filePath) return;
-    const { data } = supabase.storage.from("vin-documents").getPublicUrl(doc.filePath);
-    if (data?.publicUrl) window.open(data.publicUrl, "_blank");
-  }, [doc.filePath]);
-
+function DocRow({ doc, onOpen }: { doc: ContributionDocument; onOpen: (doc: ContributionDocument) => void }) {
   return (
     <button 
-      onClick={handleOpen} 
+      onClick={() => onOpen(doc)} 
       disabled={!doc.filePath}
       className="w-full flex items-center gap-3 p-3 rounded-lg border border-border bg-background text-left hover:border-primary/30 hover:bg-muted/30 transition-all group"
     >
@@ -986,7 +990,7 @@ function DocRow({ doc }: { doc: ContributionDocument }) {
         </div>
       </div>
       <Badge variant="outline" className="text-[10px] font-mono">{doc.fileType?.split("/").pop()?.toUpperCase() || "DOC"}</Badge>
-      {doc.filePath && <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />}
+      {doc.filePath && <Eye className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />}
     </button>
   );
 }

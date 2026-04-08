@@ -1,13 +1,12 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { PhotoGallery } from "@/components/PhotoGallery";
-import { supabase } from "@/integrations/supabase/client";
+import { DocumentViewer } from "@/components/DocumentViewer";
 import type { PublicContribution, ContributionType, ContributionDocument } from "@/hooks/useVINData";
 import {
   FileSearch, FileText, MessageCircle, Wrench, Camera, Eye, XCircle,
-  Calendar, User, CheckCircle, ChevronDown, ChevronUp, File, ExternalLink
+  Calendar, User, CheckCircle, ChevronDown, ChevronUp, File, RefreshCw, Tag
 } from "lucide-react";
-import { RefreshCw, Tag } from "lucide-react";
 
 const getContributionIcon = (type: ContributionType) => {
   switch (type) {
@@ -206,43 +205,32 @@ export function ContributionCard({ contribution, adminActions, compact, renderMo
 
 
 function DocumentsList({ documents }: { documents: ContributionDocument[] }) {
-  const handleOpenDocument = useCallback(async (doc: ContributionDocument) => {
-    if (!doc.filePath) return;
-    const { data, error } = await supabase.storage
-      .from("vin-documents")
-      .createSignedUrl(doc.filePath, 3600);
-    if (error || !data?.signedUrl) {
-      const { data: publicData } = supabase.storage
-        .from("vin-documents")
-        .getPublicUrl(doc.filePath);
-      if (publicData?.publicUrl) {
-        window.open(publicData.publicUrl, "_blank", "noopener,noreferrer");
-      }
-      return;
-    }
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-  }, []);
+  const [viewerDoc, setViewerDoc] = useState<ContributionDocument | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
 
   return (
-    <div className="mt-3 space-y-1.5">
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Documents</p>
-      {documents.map(doc => (
-        <button
-          key={doc.id}
-          onClick={() => doc.filePath && handleOpenDocument(doc)}
-          disabled={!doc.filePath}
-          className="w-full flex items-center gap-3 p-2.5 rounded-md border border-border text-left hover:bg-muted/50 transition-colors group"
-        >
-          <File className="w-4 h-4 text-primary flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-foreground truncate">{doc.fileName}</p>
-            {doc.fileSize && <p className="text-[10px] text-muted-foreground">{(doc.fileSize / 1024).toFixed(0)} Ko</p>}
-          </div>
-          <Badge variant="outline" className="text-[10px]">{doc.fileType?.split("/").pop()?.toUpperCase() || "DOC"}</Badge>
-          {doc.filePath && <ExternalLink className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary" />}
-        </button>
-      ))}
-    </div>
+    <>
+      <div className="mt-3 space-y-1.5">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Documents</p>
+        {documents.map(doc => (
+          <button
+            key={doc.id}
+            onClick={() => { setViewerDoc(doc); setViewerOpen(true); }}
+            disabled={!doc.filePath}
+            className="w-full flex items-center gap-3 p-2.5 rounded-md border border-border text-left hover:bg-muted/50 transition-colors group"
+          >
+            <File className="w-4 h-4 text-primary flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-foreground truncate">{doc.fileName}</p>
+              {doc.fileSize && <p className="text-[10px] text-muted-foreground">{(doc.fileSize / 1024).toFixed(0)} Ko</p>}
+            </div>
+            <Badge variant="outline" className="text-[10px]">{doc.fileType?.split("/").pop()?.toUpperCase() || "DOC"}</Badge>
+            {doc.filePath && <Eye className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary" />}
+          </button>
+        ))}
+      </div>
+      <DocumentViewer doc={viewerDoc} open={viewerOpen} onOpenChange={setViewerOpen} />
+    </>
   );
 }
 

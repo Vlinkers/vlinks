@@ -114,7 +114,7 @@ const Profile = () => {
   // Filters
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterVin, setFilterVin] = useState("");
+  const [activeTab, setActiveTab] = useState<ProfileTab>("profile");
 
   // Redirect if not authenticated
   useEffect(() => {

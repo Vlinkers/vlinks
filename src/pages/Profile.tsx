@@ -91,6 +91,8 @@ const STATUS_LABELS: Record<string, { fr: string; en: string; variant: "warning"
   hidden: { fr: "Masquée", en: "Hidden", variant: "secondary" },
 };
 
+type ProfileTab = "profile" | "contributions" | "followed" | "claims";
+
 const Profile = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { t, language } = useLanguage();

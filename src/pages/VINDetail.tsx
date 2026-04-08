@@ -21,6 +21,8 @@ import { CompletenessScore } from "@/components/CompletenessScore";
 import { VINPageFooter } from "@/components/VINPageFooter";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FunctionalSidebar, type SidebarItem } from "@/components/FunctionalSidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { 

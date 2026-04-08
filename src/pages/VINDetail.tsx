@@ -569,8 +569,33 @@ const VINDetail = () => {
           </div>
         </div>
 
-        {/* ═══ CONTENT ═══ */}
-        <div className="max-w-5xl mx-auto px-4 py-6">
+        {/* ═══ CONTENT WITH SIDEBAR ═══ */}
+        <div className="flex flex-1 min-h-[calc(100vh-56px)]">
+          <FunctionalSidebar
+            sectionLabel="Dossier"
+            items={(() => {
+              const sidebarItems: SidebarItem[] = [
+                { key: "all", label: "Chronologie", icon: <Clock className="w-4 h-4" />, count: contributions.length },
+                { key: "reports", label: "Rapports", icon: <FileSearch className="w-4 h-4" />, count: filterCounts.reports },
+                { key: "history", label: "Historique", icon: <FileText className="w-4 h-4" />, count: filterCounts.history },
+                { key: "photos", label: "Photos", icon: <Camera className="w-4 h-4" />, count: totalPhotos },
+                { key: "documents", label: "Échanges", icon: <MessageSquare className="w-4 h-4" />, count: filterCounts.documents },
+                { key: "signals", label: "Signalements", icon: <AlertTriangle className="w-4 h-4" />, count: filterCounts.signals },
+                { key: "sep", label: "", icon: null, separator: true },
+                { key: "pdf", label: "Rapport PDF", icon: <FileDown className="w-4 h-4" /> },
+              ];
+              return sidebarItems;
+            })()}
+            activeKey={filterCategory}
+            onSelect={(key) => {
+              if (key === "pdf") {
+                setShowPDFDialog(true);
+              } else {
+                setFilterCategory(key as FilterCategory);
+              }
+            }}
+          />
+          <div className="flex-1 min-w-0 px-4 md:px-6 py-6 pb-20 md:pb-6">
 
           {/* ═══ COMPLETENESS SCORE ═══ */}
           <CompletenessScore

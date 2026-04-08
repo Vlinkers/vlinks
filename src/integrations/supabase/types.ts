@@ -325,6 +325,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          is_premium: boolean
           is_verified: boolean
           level: number
           location: string | null
@@ -342,6 +343,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          is_premium?: boolean
           is_verified?: boolean
           level?: number
           location?: string | null
@@ -359,6 +361,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          is_premium?: boolean
           is_verified?: boolean
           level?: number
           location?: string | null

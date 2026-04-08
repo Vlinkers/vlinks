@@ -1,12 +1,13 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { PhotoGallery } from "@/components/PhotoGallery";
-import { supabase } from "@/integrations/supabase/client";
+import { DocumentViewer } from "@/components/DocumentViewer";
 import type { PublicContribution, ContributionType, ContributionDocument } from "@/hooks/useVINData";
 import {
-  FileSearch, FileText, MessageCircle, Wrench, Camera, Eye, XCircle,
-  Calendar, User, CheckCircle, ChevronDown, ChevronUp, File, ExternalLink
+  FileSearch, FileText, MessageCircle, Wrench, Camera, Eye as EyeIcon, XCircle,
+  Calendar, User, CheckCircle, ChevronDown, ChevronUp, File, Eye
 } from "lucide-react";
+import { RefreshCw, Tag } from "lucide-react";
 import { RefreshCw, Tag } from "lucide-react";
 
 const getContributionIcon = (type: ContributionType) => {

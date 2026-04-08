@@ -919,6 +919,7 @@ const VINDetail = () => {
 
 
         </div>
+        </div>
       </main>
 
       <VINPageFooter

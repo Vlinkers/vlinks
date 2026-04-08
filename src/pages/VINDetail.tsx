@@ -725,31 +725,8 @@ const VINDetail = () => {
             </section>
           )}
 
-          {/* ═══ FILTER TABS + SORT TOGGLE ═══ */}
-          <div className="flex items-center justify-between border-b border-border mb-6">
-            <div className="flex items-center gap-1 overflow-x-auto">
-              {FILTER_TABS.map(tab => {
-                const count = filterCounts[tab.key];
-                const isActive = filterCategory === tab.key;
-                return (
-                  <button
-                    key={tab.key}
-                    onClick={() => setFilterCategory(tab.key)}
-                    className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-all ${
-                      isActive 
-                        ? "border-primary text-primary" 
-                        : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-                    }`}
-                  >
-                    {tab.emoji && <span>{tab.emoji}</span>}
-                    {tab.label}
-                    <span className={`text-xs ${isActive ? "text-primary/70" : "text-muted-foreground/60"}`}>
-                      ({count})
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+          {/* Sort toggle */}
+          <div className="flex items-center justify-end mb-4">
             <button
               onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
               className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors flex-shrink-0"

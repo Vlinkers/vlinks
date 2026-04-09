@@ -570,7 +570,7 @@ const VINDetail = () => {
         </div>
 
         {/* ═══ CONTENT WITH SIDEBAR ═══ */}
-        <div className="flex flex-1 min-h-[calc(100vh-56px)]">
+        <div className="flex flex-1 min-h-[calc(100vh-56px)] pt-6">
           <FunctionalSidebar
             sectionLabel="Dossier"
             items={(() => {

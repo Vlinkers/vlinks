@@ -207,13 +207,77 @@ const VINDetail = () => {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [activeNavTab, setActiveNavTab] = useState<NavTab>("synthese");
   const [faceBOpen, setFaceBOpen] = useState(false);
+  const [evidenceDrawerOpen, setEvidenceDrawerOpen] = useState(false);
+  const [selectedFactForDrawer, setSelectedFactForDrawer] = useState<FactWithEvidence | null>(null);
+  const [selectedEventForDrawer, setSelectedEventForDrawer] = useState<string | null>(null);
 
   // Section refs for scroll tracking
   const syntheseRef = useRef<HTMLDivElement>(null);
   const narrationRef = useRef<HTMLDivElement>(null);
   const plongeeRef = useRef<HTMLDivElement>(null);
+  const communauteRef = useRef<HTMLDivElement>(null);
+  const proprietaireRef = useRef<HTMLDivElement>(null);
   const contribuerRef = useRef<HTMLDivElement>(null);
 
+  // Evidence drawer handler
+  const handleFactClick = useCallback((factId: string) => {
+    if (!dossier) return;
+    for (const ewf of dossier.events) {
+      for (const fw of ewf.facts) {
+        if (fw.fact.id === factId) {
+          setSelectedFactForDrawer(fw);
+          setSelectedEventForDrawer(ewf.event.id);
+          setEvidenceDrawerOpen(true);
+          return;
+        }
+      }
+    }
+  }, [dossier]);
+
+  // Nav tabs with counts
+  const navTabs: NavTabDef[] = useMemo(() => {
+    const evCount = dossier?.stats.totalEvents ?? 0;
+    const evidenceCount = dossier?.events.reduce((sum, e) => sum + e.facts.reduce((s, f) => s + f.evidence.length, 0), 0) ?? 0;
+    return [
+      { key: "synthese", label: "Synthèse", icon: Eye },
+      { key: "narration", label: `Chronologie${evCount ? ` (${evCount})` : ""}`, icon: Clock },
+      { key: "plongee", label: `Preuves${evidenceCount ? ` (${evidenceCount})` : ""}`, icon: FolderOpen },
+      { key: "communaute", label: "Communauté", icon: Users },
+      { key: "proprietaire", label: "Propriétaire", icon: KeyRound },
+      { key: "contribuer", label: "Contribuer", icon: PenTool },
+    ];
+  }, [dossier]);
+
+  // Owner verification for FaceBPanel
+  const [ownerVerification, setOwnerVerification] = useState<any>(null);
+  useEffect(() => {
+    if (!data?.id) return;
+    supabase.from("owner_verifications").select("*").eq("vin_id", data.id).eq("verification_status", "verified").is("ended_at", null).maybeSingle().then(({ data: v }) => setOwnerVerification(v));
+  }, [data?.id]);
+
+  const ownerContributor = useMemo(() => {
+    if (!dossier) return null;
+    return dossier.contributors.find(c => c.role === "owner_verified" || c.role === "owner_unverified") ?? null;
+  }, [dossier]);
+
+  // Sibling facts for evidence drawer
+  const siblingFacts = useMemo(() => {
+    if (!dossier || !selectedEventForDrawer) return [];
+    const ev = dossier.events.find(e => e.event.id === selectedEventForDrawer);
+    return ev?.facts ?? [];
+  }, [dossier, selectedEventForDrawer]);
+
+  // Event for evidence drawer
+  const drawerEvent = useMemo(() => {
+    if (!dossier || !selectedEventForDrawer) return null;
+    return dossier.events.find(e => e.event.id === selectedEventForDrawer)?.event ?? null;
+  }, [dossier, selectedEventForDrawer]);
+
+  // Contributor for drawer
+  const drawerContributor = useMemo(() => {
+    if (!selectedFactForDrawer || !dossier) return null;
+    return dossier.contributors.find(c => c.id === selectedFactForDrawer.fact.contributor_id) ?? null;
+  }, [selectedFactForDrawer, dossier]);
   const openDocViewer = useCallback((doc: ContributionDocument) => {
     setViewerDoc(doc);
     setViewerOpen(true);

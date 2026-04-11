@@ -216,6 +216,7 @@ export type Database = {
           is_verified: boolean | null
           location: string | null
           mileage_at_event: number | null
+          phase_id: string | null
           title: string
           updated_at: string | null
           vin_id: string
@@ -233,6 +234,7 @@ export type Database = {
           is_verified?: boolean | null
           location?: string | null
           mileage_at_event?: number | null
+          phase_id?: string | null
           title: string
           updated_at?: string | null
           vin_id: string
@@ -250,11 +252,19 @@ export type Database = {
           is_verified?: boolean | null
           location?: string | null
           mileage_at_event?: number | null
+          phase_id?: string | null
           title?: string
           updated_at?: string | null
           vin_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "events_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_phases"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "events_vin_id_fkey"
             columns: ["vin_id"]
@@ -846,6 +856,69 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vehicle_phases: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          end_mileage: number | null
+          events_count: number | null
+          id: string
+          location: string | null
+          notes: string | null
+          owner_contributor_id: string | null
+          phase_type: string
+          start_date: string | null
+          start_mileage: number | null
+          updated_at: string | null
+          vin_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_date?: string | null
+          end_mileage?: number | null
+          events_count?: number | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          owner_contributor_id?: string | null
+          phase_type: string
+          start_date?: string | null
+          start_mileage?: number | null
+          updated_at?: string | null
+          vin_id: string
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string | null
+          end_mileage?: number | null
+          events_count?: number | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          owner_contributor_id?: string | null
+          phase_type?: string
+          start_date?: string | null
+          start_mileage?: number | null
+          updated_at?: string | null
+          vin_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_phases_owner_contributor_id_fkey"
+            columns: ["owner_contributor_id"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_phases_vin_id_fkey"
+            columns: ["vin_id"]
+            isOneToOne: false
+            referencedRelation: "vins"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vin_contributions: {
         Row: {

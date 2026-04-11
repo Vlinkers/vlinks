@@ -667,7 +667,7 @@ const VINDetail = () => {
         </div>
 
         {/* ═══ STICKY NAVIGATION TABS ═══ */}
-        <StickyNav activeTab={activeNavTab} onTabClick={handleNavTabClick} />
+        <StickyNav activeTab={activeNavTab} onTabClick={handleNavTabClick} tabs={navTabs} />
 
         {/* ═══ MAIN CONTENT AREA ═══ */}
         <div className="max-w-5xl mx-auto px-4 py-6 space-y-8">

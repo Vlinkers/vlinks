@@ -68,14 +68,19 @@ export interface VinDossier {
 // ── Fetch helpers ───────────────────────────────────────────
 
 async function fetchDossier(vinId: string): Promise<VinDossier | null> {
-  // 1. Parallel top-level queries
-  const [vinRes, decodeRes, eventsRes, contributorsRes, phasesRes, flagsRes] =
+  // 1. Fetch VIN record first (needed for vin_decodes lookup)
+  const vinRes = await supabase.from("vins").select("*").eq("id", vinId).maybeSingle();
+  if (vinRes.error) throw vinRes.error;
+  if (!vinRes.data) return null;
+  const vin = vinRes.data;
+
+  // 2. Parallel queries for all related data
+  const [decodeRes, eventsRes, contributorsRes, phasesRes, flagsRes] =
     await Promise.all([
-      supabase.from("vins").select("*").eq("id", vinId).maybeSingle(),
       supabase
         .from("vin_decodes")
         .select("make, model, model_year, body_class, engine, fuel_type, drive_type, trim")
-        .eq("vin", (await supabase.from("vins").select("vin").eq("id", vinId).single()).data?.vin ?? "")
+        .eq("vin", vin.vin)
         .maybeSingle(),
       supabase
         .from("events")

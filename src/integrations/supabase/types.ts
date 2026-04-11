@@ -558,15 +558,26 @@ export type Database = {
           display_name: string | null
           id: string
           is_premium: boolean
+          is_professional: boolean | null
           is_verified: boolean
           level: number
           location: string | null
           points: number
+          preferred_role: Database["public"]["Enums"]["contributor_role"] | null
+          professional_license: string | null
+          professional_type: string | null
           public_id: string | null
           reviews_count: number
+          tier3_facts_count: number | null
+          total_facts_count: number | null
+          trust_level: string | null
           updated_at: string
           user_id: string
           username: string | null
+          verification_tier:
+            | Database["public"]["Enums"]["owner_verification_tier"]
+            | null
+          vins_contributed_to: number | null
         }
         Insert: {
           avatar_url?: string | null
@@ -576,15 +587,28 @@ export type Database = {
           display_name?: string | null
           id?: string
           is_premium?: boolean
+          is_professional?: boolean | null
           is_verified?: boolean
           level?: number
           location?: string | null
           points?: number
+          preferred_role?:
+            | Database["public"]["Enums"]["contributor_role"]
+            | null
+          professional_license?: string | null
+          professional_type?: string | null
           public_id?: string | null
           reviews_count?: number
+          tier3_facts_count?: number | null
+          total_facts_count?: number | null
+          trust_level?: string | null
           updated_at?: string
           user_id: string
           username?: string | null
+          verification_tier?:
+            | Database["public"]["Enums"]["owner_verification_tier"]
+            | null
+          vins_contributed_to?: number | null
         }
         Update: {
           avatar_url?: string | null
@@ -594,15 +618,28 @@ export type Database = {
           display_name?: string | null
           id?: string
           is_premium?: boolean
+          is_professional?: boolean | null
           is_verified?: boolean
           level?: number
           location?: string | null
           points?: number
+          preferred_role?:
+            | Database["public"]["Enums"]["contributor_role"]
+            | null
+          professional_license?: string | null
+          professional_type?: string | null
           public_id?: string | null
           reviews_count?: number
+          tier3_facts_count?: number | null
+          total_facts_count?: number | null
+          trust_level?: string | null
           updated_at?: string
           user_id?: string
           username?: string | null
+          verification_tier?:
+            | Database["public"]["Enums"]["owner_verification_tier"]
+            | null
+          vins_contributed_to?: number | null
         }
         Relationships: []
       }
@@ -1163,6 +1200,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_trust_level: { Args: { p_user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

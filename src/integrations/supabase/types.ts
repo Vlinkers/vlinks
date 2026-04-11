@@ -152,6 +152,68 @@ export type Database = {
           },
         ]
       }
+      events: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          event_date: string | null
+          event_date_precision: string | null
+          event_type: Database["public"]["Enums"]["event_type"]
+          face_a_count: number | null
+          face_b_count: number | null
+          facts_count: number | null
+          id: string
+          is_verified: boolean | null
+          location: string | null
+          mileage_at_event: number | null
+          title: string
+          updated_at: string | null
+          vin_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          event_date?: string | null
+          event_date_precision?: string | null
+          event_type: Database["public"]["Enums"]["event_type"]
+          face_a_count?: number | null
+          face_b_count?: number | null
+          facts_count?: number | null
+          id?: string
+          is_verified?: boolean | null
+          location?: string | null
+          mileage_at_event?: number | null
+          title: string
+          updated_at?: string | null
+          vin_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          event_date?: string | null
+          event_date_precision?: string | null
+          event_type?: Database["public"]["Enums"]["event_type"]
+          face_a_count?: number | null
+          face_b_count?: number | null
+          facts_count?: number | null
+          id?: string
+          is_verified?: boolean | null
+          location?: string | null
+          mileage_at_event?: number | null
+          title?: string
+          updated_at?: string | null
+          vin_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_vin_id_fkey"
+            columns: ["vin_id"]
+            isOneToOne: false
+            referencedRelation: "vins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           created_at: string

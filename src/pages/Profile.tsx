@@ -13,7 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { User, FileText, LogOut, Calendar, Trash2, Eye, Loader2, AlertCircle, Car, Shield, Star } from "lucide-react";
+import { User, FileText, LogOut, Calendar, Trash2, Eye, Loader2, AlertCircle, Car, Shield, Star, BarChart3 } from "lucide-react";
+import { ContributorActivity } from "@/components/ContributorActivity";
 import { validateUsernameFormat, checkUsernameAvailability } from "@/lib/usernameValidation";
 import {
   AlertDialog,
@@ -91,7 +92,7 @@ const STATUS_LABELS: Record<string, { fr: string; en: string; variant: "warning"
   hidden: { fr: "Masquée", en: "Hidden", variant: "secondary" },
 };
 
-type ProfileTab = "profile" | "contributions" | "followed" | "claims";
+type ProfileTab = "profile" | "activity" | "contributions" | "followed" | "claims";
 
 const Profile = () => {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -440,6 +441,7 @@ const Profile = () => {
             sectionLabel="Mon espace"
             items={[
               { key: "profile", label: language === "fr" ? "Mon profil" : "Profile", icon: <User className="w-4 h-4" /> },
+              { key: "activity", label: language === "fr" ? "Mon activité" : "Activity", icon: <BarChart3 className="w-4 h-4" /> },
               { key: "contributions", label: "Contributions", icon: <FileText className="w-4 h-4" />, count: contributions.length },
               { key: "followed", label: language === "fr" ? "VINs suivis" : "Followed", icon: <Star className="w-4 h-4" />, count: followedVINs.length },
               { key: "claims", label: language === "fr" ? "Mes VINs" : "My VINs", icon: <Car className="w-4 h-4" />, count: ownerClaims.length },
@@ -519,6 +521,10 @@ const Profile = () => {
                   {language === "fr" ? "Se déconnecter" : "Sign Out"}
                 </Button>
                 </div>
+              )}
+
+              {activeTab === "activity" && user && (
+                <ContributorActivity userId={user.id} />
               )}
 
               {activeTab === "contributions" && (

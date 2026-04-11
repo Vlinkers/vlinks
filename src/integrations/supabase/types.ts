@@ -152,6 +152,56 @@ export type Database = {
           },
         ]
       }
+      contributors: {
+        Row: {
+          created_at: string | null
+          credibility_score: number | null
+          display_name: string | null
+          face: Database["public"]["Enums"]["contribution_face"]
+          facts_count: number | null
+          id: string
+          is_anonymous: boolean | null
+          role: Database["public"]["Enums"]["contributor_role"]
+          updated_at: string | null
+          user_id: string | null
+          vin_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          credibility_score?: number | null
+          display_name?: string | null
+          face: Database["public"]["Enums"]["contribution_face"]
+          facts_count?: number | null
+          id?: string
+          is_anonymous?: boolean | null
+          role: Database["public"]["Enums"]["contributor_role"]
+          updated_at?: string | null
+          user_id?: string | null
+          vin_id: string
+        }
+        Update: {
+          created_at?: string | null
+          credibility_score?: number | null
+          display_name?: string | null
+          face?: Database["public"]["Enums"]["contribution_face"]
+          facts_count?: number | null
+          id?: string
+          is_anonymous?: boolean | null
+          role?: Database["public"]["Enums"]["contributor_role"]
+          updated_at?: string | null
+          user_id?: string | null
+          vin_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contributors_vin_id_fkey"
+            columns: ["vin_id"]
+            isOneToOne: false
+            referencedRelation: "vins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string | null
@@ -313,6 +363,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_facts_contributor"
+            columns: ["contributor_id"]
+            isOneToOne: false
+            referencedRelation: "contributors"
             referencedColumns: ["id"]
           },
         ]

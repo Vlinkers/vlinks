@@ -297,6 +297,8 @@ const VINDetail = () => {
       synthese: syntheseRef,
       narration: narrationRef,
       plongee: plongeeRef,
+      communaute: communauteRef,
+      proprietaire: proprietaireRef,
       contribuer: contribuerRef,
     };
     const ref = refs[tab];
@@ -309,11 +311,13 @@ const VINDetail = () => {
 
   // Track active section on scroll
   useEffect(() => {
-    const sectionRefs = [
-      { key: "synthese" as NavTab, ref: syntheseRef },
-      { key: "narration" as NavTab, ref: narrationRef },
-      { key: "plongee" as NavTab, ref: plongeeRef },
-      { key: "contribuer" as NavTab, ref: contribuerRef },
+    const sectionRefs: { key: NavTab; ref: React.RefObject<HTMLDivElement> }[] = [
+      { key: "synthese", ref: syntheseRef },
+      { key: "narration", ref: narrationRef },
+      { key: "plongee", ref: plongeeRef },
+      { key: "communaute", ref: communauteRef },
+      { key: "proprietaire", ref: proprietaireRef },
+      { key: "contribuer", ref: contribuerRef },
     ];
 
     const handleScroll = () => {
@@ -330,6 +334,7 @@ const VINDetail = () => {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
   }, []);
 
   useEffect(() => {

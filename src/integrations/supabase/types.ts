@@ -782,6 +782,65 @@ export type Database = {
           },
         ]
       }
+      red_flags: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          detected_at: string | null
+          flag_type: Database["public"]["Enums"]["red_flag_type"]
+          id: string
+          is_active: boolean | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          supporting_facts: string[] | null
+          title: string
+          updated_at: string | null
+          vin_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          detected_at?: string | null
+          flag_type: Database["public"]["Enums"]["red_flag_type"]
+          id?: string
+          is_active?: boolean | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          supporting_facts?: string[] | null
+          title: string
+          updated_at?: string | null
+          vin_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          detected_at?: string | null
+          flag_type?: Database["public"]["Enums"]["red_flag_type"]
+          id?: string
+          is_active?: boolean | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          supporting_facts?: string[] | null
+          title?: string
+          updated_at?: string | null
+          vin_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "red_flags_vin_id_fkey"
+            columns: ["vin_id"]
+            isOneToOne: false
+            referencedRelation: "vins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signal_contributions: {
         Row: {
           contribution_id: string
@@ -1050,36 +1109,48 @@ export type Database = {
       }
       vins: {
         Row: {
+          community_score: number | null
           contributions_count: number | null
           created_at: string
+          events_count: number | null
           featured_photo_url: string | null
           id: string
           make: string | null
           model: string | null
+          owner_transparency_score: number | null
+          red_flags_count: number | null
           trust_score: number | null
           updated_at: string
           vin: string
           year: number | null
         }
         Insert: {
+          community_score?: number | null
           contributions_count?: number | null
           created_at?: string
+          events_count?: number | null
           featured_photo_url?: string | null
           id?: string
           make?: string | null
           model?: string | null
+          owner_transparency_score?: number | null
+          red_flags_count?: number | null
           trust_score?: number | null
           updated_at?: string
           vin: string
           year?: number | null
         }
         Update: {
+          community_score?: number | null
           contributions_count?: number | null
           created_at?: string
+          events_count?: number | null
           featured_photo_url?: string | null
           id?: string
           make?: string | null
           model?: string | null
+          owner_transparency_score?: number | null
+          red_flags_count?: number | null
           trust_score?: number | null
           updated_at?: string
           vin?: string

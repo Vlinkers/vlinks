@@ -408,14 +408,11 @@ export function EvidenceDrawer({
         <DocumentViewer
           doc={{
             id: selectedDoc.id,
-            file_name: selectedDoc.file_name,
-            file_path: selectedDoc.file_path,
-            file_type: selectedDoc.file_type,
-            file_size: selectedDoc.file_size,
+            fileName: selectedDoc.file_name,
+            filePath: selectedDoc.file_path,
+            fileType: selectedDoc.file_type,
+            fileSize: selectedDoc.file_size,
             description: selectedDoc.description,
-            is_redacted: selectedDoc.is_redacted,
-            contribution_id: selectedDoc.fact_id,
-            created_at: selectedDoc.created_at ?? "",
           }}
           open={docViewerOpen}
           onOpenChange={setDocViewerOpen}

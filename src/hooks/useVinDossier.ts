@@ -100,10 +100,6 @@ async function fetchDossier(vinId: string): Promise<VinDossier | null> {
         .eq("is_active", true),
     ]);
 
-  if (vinRes.error) throw vinRes.error;
-  if (!vinRes.data) return null;
-
-  const vin = vinRes.data;
   const events = eventsRes.data ?? [];
   const contributors = contributorsRes.data ?? [];
   const phases = phasesRes.data ?? [];

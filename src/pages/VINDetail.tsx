@@ -10,6 +10,7 @@ import { UsernameRequiredDialog } from "@/components/UsernameRequiredDialog";
 import { PDFDownloadDialog } from "@/components/PDFDownloadDialog";
 import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { useVINDecode } from "@/hooks/useVINDecode";
+import { useVinDossier } from "@/hooks/useVinDossier";
 import { getContributionLabel, getContributionIcon, getContributionBadgeVariant } from "@/components/ContributionCard";
 import { ContributionDetailDrawer } from "@/components/ContributionDetailDrawer";
 import { AdminEditContribution } from "@/components/AdminEditContribution";
@@ -21,23 +22,23 @@ import { CompletenessScore } from "@/components/CompletenessScore";
 import { VINPageFooter } from "@/components/VINPageFooter";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FunctionalSidebar, type SidebarItem } from "@/components/FunctionalSidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { VinHero } from "@/components/vin/VinHero";
+import { RedFlagsBanner } from "@/components/vin/RedFlagsBanner";
 import { 
   Shield, AlertTriangle, CheckCircle, FileText, ChevronRight, Clock, Camera,
   FileSearch, Eye, EyeOff, Plus, Loader2, User, Users, FileDown, Star, Trash2,
   ExternalLink, File, ChevronDown, Pencil, Calendar, MapPin, ArrowUpDown, ArrowDown, ArrowUp,
-  MessageSquare, Search, Share2, Link2, Mail
+  MessageSquare, Search, Share2, Link2, Mail, BookOpen, FolderOpen, PenTool
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PhotoLightbox } from "@/components/PhotoLightbox";
 import { DocumentViewer } from "@/components/DocumentViewer";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { PublicContribution, ContributionDocument } from "@/hooks/useVINData";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 // ── Signal Proofs ──
 function SignalProofs({ contributionIds, allContributions }: { contributionIds: string[]; allContributions: PublicContribution[] }) {
@@ -67,19 +68,19 @@ const getIconBgColor = (type: ContributionType): string => {
     case "inspection_report":
     case "vehicle_history":
     case "mechanic_conversation":
-      return "bg-[#DCFCE7]"; // green
+      return "bg-[hsl(142,72%,93%)]";
     case "observation":
     case "for_sale":
     case "price_change":
-      return "bg-[#FEF3C7]"; // amber
+      return "bg-[hsl(48,96%,89%)]";
     case "purchase_decision":
-      return "bg-[#FEE2E2]"; // red
+      return "bg-[hsl(0,94%,94%)]";
     case "photo_evidence":
-      return "bg-[#F3E8FF]"; // violet
+      return "bg-[hsl(270,95%,95%)]";
     case "owner_exchange":
     case "ownership_change":
     default:
-      return "bg-[#F1F5F9]"; // gray
+      return "bg-muted";
   }
 };
 
@@ -88,19 +89,19 @@ const getIconColor = (type: ContributionType): string => {
     case "inspection_report":
     case "vehicle_history":
     case "mechanic_conversation":
-      return "text-[#15803D]";
+      return "text-[hsl(152,69%,25%)]";
     case "observation":
     case "for_sale":
     case "price_change":
-      return "text-[#92400E]";
+      return "text-[hsl(26,83%,30%)]";
     case "purchase_decision":
-      return "text-[#B91C1C]";
+      return "text-[hsl(0,72%,36%)]";
     case "photo_evidence":
-      return "text-[#7E22CE]";
+      return "text-[hsl(271,76%,43%)]";
     case "owner_exchange":
     case "ownership_change":
     default:
-      return "text-[#475569]";
+      return "text-muted-foreground";
   }
 };
 
@@ -119,10 +120,48 @@ const FILTER_TABS: { key: FilterCategory; label: string; emoji: string; types: C
 const matchesFilterCategory = (contribution: PublicContribution, category: FilterCategory) => {
   if (category === "all") return true;
   if (category === "photos") return contribution.hasPhotos;
-
   const activeTab = FILTER_TABS.find((tab) => tab.key === category);
   return activeTab ? activeTab.types.includes(contribution.type) : false;
 };
+
+// ── Sticky Nav Tabs ──
+const NAV_TABS = [
+  { key: "synthese", label: "Synthèse", icon: Eye },
+  { key: "narration", label: "Chronologie", icon: Clock },
+  { key: "plongee", label: "Preuves", icon: FolderOpen },
+  { key: "contribuer", label: "Contribuer", icon: PenTool },
+] as const;
+
+type NavTab = typeof NAV_TABS[number]["key"];
+
+function StickyNav({ activeTab, onTabClick }: { activeTab: NavTab; onTabClick: (tab: NavTab) => void }) {
+  return (
+    <div className="sticky top-16 z-30 bg-card/95 backdrop-blur-sm border-b border-border">
+      <div className="max-w-5xl mx-auto px-4">
+        <nav className="flex gap-0 overflow-x-auto scrollbar-none -mb-px">
+          {NAV_TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => onTabClick(tab.key)}
+                className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  isActive
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+    </div>
+  );
+}
 
 const VINDetail = () => {
   const { vin } = useParams();
@@ -132,6 +171,12 @@ const VINDetail = () => {
   const { toast } = useToast();
   const { isAdmin, logAction } = useAdmin();
   const { isFollowing, isLoading: isFollowLoading, toggleFollow } = useVINFollow(vin);
+  const isMobile = useIsMobile();
+
+  // New dossier data layer
+  const { data: dossier, isLoading: isDossierLoading } = useVinDossier(data?.id);
+  const hasDossierData = !!(dossier && dossier.events.length > 0);
+
   const [showContributionForm, setShowContributionForm] = useState(false);
   const [showOwnerForm, setShowOwnerForm] = useState(false);
   const [showPDFDialog, setShowPDFDialog] = useState(false);
@@ -153,6 +198,14 @@ const VINDetail = () => {
   const [showFeaturedPhotoModal, setShowFeaturedPhotoModal] = useState(false);
   const [viewerDoc, setViewerDoc] = useState<ContributionDocument | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [activeNavTab, setActiveNavTab] = useState<NavTab>("synthese");
+  const [faceBOpen, setFaceBOpen] = useState(false);
+
+  // Section refs for scroll tracking
+  const syntheseRef = useRef<HTMLDivElement>(null);
+  const narrationRef = useRef<HTMLDivElement>(null);
+  const plongeeRef = useRef<HTMLDivElement>(null);
+  const contribuerRef = useRef<HTMLDivElement>(null);
 
   const openDocViewer = useCallback((doc: ContributionDocument) => {
     setViewerDoc(doc);
@@ -165,6 +218,48 @@ const VINDetail = () => {
     setLightboxOpen(true);
   }, []);
   const [expandedTextIds, setExpandedTextIds] = useState<Set<string>>(new Set());
+
+  // Scroll to section on tab click
+  const handleNavTabClick = useCallback((tab: NavTab) => {
+    setActiveNavTab(tab);
+    const refs: Record<NavTab, React.RefObject<HTMLDivElement>> = {
+      synthese: syntheseRef,
+      narration: narrationRef,
+      plongee: plongeeRef,
+      contribuer: contribuerRef,
+    };
+    const ref = refs[tab];
+    if (ref?.current) {
+      const yOffset = -120;
+      const y = ref.current.getBoundingClientRect().top + window.scrollY + yOffset;
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
+  }, []);
+
+  // Track active section on scroll
+  useEffect(() => {
+    const sectionRefs = [
+      { key: "synthese" as NavTab, ref: syntheseRef },
+      { key: "narration" as NavTab, ref: narrationRef },
+      { key: "plongee" as NavTab, ref: plongeeRef },
+      { key: "contribuer" as NavTab, ref: contribuerRef },
+    ];
+
+    const handleScroll = () => {
+      const scrollY = window.scrollY + 150;
+      let active: NavTab = "synthese";
+      for (const section of sectionRefs) {
+        if (section.ref.current) {
+          const top = section.ref.current.offsetTop;
+          if (scrollY >= top) active = section.key;
+        }
+      }
+      setActiveNavTab(active);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const check = async () => {
@@ -250,7 +345,7 @@ const VINDetail = () => {
         <Button size="sm" variant="outline" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); handleAdminAction(contributionId, "hide"); }}>
           <EyeOff className="w-3 h-3 mr-1" /> Masquer
         </Button>
-        <Button size="sm" variant="outline" className="h-7 text-xs text-danger hover:bg-danger/5" onClick={(e) => { e.stopPropagation(); handleAdminAction(contributionId, "delete"); }}>
+        <Button size="sm" variant="outline" className="h-7 text-xs text-destructive hover:bg-destructive/5" onClick={(e) => { e.stopPropagation(); handleAdminAction(contributionId, "delete"); }}>
           <Trash2 className="w-3 h-3 mr-1" /> Supprimer
         </Button>
       </div>
@@ -273,6 +368,7 @@ const VINDetail = () => {
     }
   }, [seoTitle]);
 
+  // ── Loading state ──
   if (isLoading) {
     return (
       <div className="min-h-screen bg-muted/30">
@@ -290,7 +386,7 @@ const VINDetail = () => {
     );
   }
 
-  // Error
+  // ── Error state ──
   if (error) {
     return (
       <div className="min-h-screen bg-muted/30">
@@ -298,7 +394,7 @@ const VINDetail = () => {
         <main className="pt-20 pb-16">
           <div className="max-w-5xl mx-auto px-4 flex flex-col items-center justify-center min-h-[50vh]">
             <div className="p-6 rounded-xl bg-card border border-border shadow-sm text-center">
-              <AlertTriangle className="w-6 h-6 text-danger mx-auto mb-3" />
+              <AlertTriangle className="w-6 h-6 text-destructive mx-auto mb-3" />
               <p className="text-sm text-muted-foreground">Erreur de chargement du dossier.</p>
             </div>
           </div>
@@ -328,15 +424,11 @@ const VINDetail = () => {
   const contributions = data.contributions;
   const totalPhotos = contributions.reduce((acc, c) => acc + c.photoCount, 0);
   const totalDocs = contributions.reduce((acc, c) => acc + c.documentCount, 0);
-  const allPhotos = contributions.flatMap(c => c.photos);
-  const allDocuments = contributions.flatMap(c => c.documents);
 
-  // Filter contributions by category
   const filteredContributions = contributions.filter((contribution) =>
     matchesFilterCategory(contribution, filterCategory)
   );
 
-  // Sort contributions
   const sortedContributions = [...filteredContributions].sort((a, b) => {
     const dateA = new Date(a.interventionDate ?? a.date).getTime();
     const dateB = new Date(b.interventionDate ?? b.date).getTime();
@@ -357,7 +449,6 @@ const VINDetail = () => {
     }
   }
 
-  // Count contributions per author for "Vlinker actif" badge
   const authorContribCount = new Map<string, number>();
   for (const c of contributions) {
     const key = c.authorPublicId || c.author;
@@ -365,17 +456,11 @@ const VINDetail = () => {
   }
 
   const filterCounts = FILTER_TABS.reduce((acc, tab) => {
-    if (tab.key === "all") {
-      acc[tab.key] = contributions.length;
-    } else if (tab.key === "photos") {
-      acc[tab.key] = totalPhotos;
-    } else {
-      acc[tab.key] = contributions.filter((contribution) => matchesFilterCategory(contribution, tab.key)).length;
-    }
+    if (tab.key === "all") acc[tab.key] = contributions.length;
+    else if (tab.key === "photos") acc[tab.key] = totalPhotos;
+    else acc[tab.key] = contributions.filter((contribution) => matchesFilterCategory(contribution, tab.key)).length;
     return acc;
   }, {} as Record<FilterCategory, number>);
-
-  const isVinValid = vinDecode?.is_valid !== false;
 
   return (
     <div className="min-h-screen bg-muted/30 flex flex-col">
@@ -383,236 +468,144 @@ const VINDetail = () => {
       <main className="pt-16 flex-1">
         <SEO title={seoTitle} description={vehicleName ? `Dossier VIN complet pour ${vehicleName}. Historique, inspections, signalements et photos contributifs.` : `Dossier VIN pour ${vin} sur VLINKS.`} />
 
-        {/* ═══ DARK HERO BANNER ═══ */}
-        <div className="bg-[#0F172A] w-full relative overflow-hidden">
-          {data.featuredPhotoUrl && (
+        {/* ═══ SPEED 1: HERO — 5-second read ═══ */}
+        <div ref={syntheseRef} id="synthese">
+          {dossier ? (
             <>
-              <img
-                src={data.featuredPhotoUrl}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover"
+              <VinHero dossier={dossier} />
+              <RedFlagsBanner
+                redFlags={dossier.redFlags}
+                onFlagClick={(flagId) => {
+                  const el = document.getElementById("signals-section");
+                  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
               />
-              <div className="absolute inset-0 bg-[rgba(0,0,0,0.55)]" />
             </>
-          )}
-          <div className="relative z-10 max-w-5xl mx-auto px-4 py-8 md:py-10">
-            {/* Breadcrumb */}
-            <nav className="flex items-center gap-2 text-xs text-[#64748B] mb-5">
-              <Link to="/" className="hover:text-white transition-colors">Accueil</Link>
-              <ChevronRight className="w-3 h-3" />
-              <span className="text-[#94A3B8]">{vehicleName || vin}</span>
-            </nav>
-
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-              {/* ── Left column ── */}
-              <div className="space-y-3">
-                <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#64748B]">
-                  DOSSIER VÉHICULE
-                </p>
-                <h1 className="font-display text-2xl md:text-3xl font-bold text-white leading-tight">
-                  {vehicleName || "Véhicule inconnu"}
-                </h1>
-                <p className="font-mono text-[15px] text-[#60A5FA] tracking-[0.08em]">
-                  {vin}
-                </p>
-
-                {/* Badges row */}
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <Badge variant="outline" className="bg-white/5 border-white/10 text-[#94A3B8] text-xs">
-                    <MapPin className="w-3 h-3 mr-1" />
-                    Québec
-                  </Badge>
-                  {data.contributions.some(c => c.mileageAtIntervention) && (() => {
-                    const latestKm = data.contributions.find(c => c.mileageAtIntervention)?.mileageAtIntervention;
-                    return latestKm ? (
-                      <Badge variant="outline" className="bg-white/5 border-white/10 text-[#94A3B8] text-xs">
-                        {latestKm.toLocaleString()} km
-                      </Badge>
-                    ) : null;
-                  })()}
-                  {isVinValid ? (
-                    <Badge variant="outline" className="bg-[#15803D]/10 border-[#15803D]/30 text-[#4ADE80] text-xs">
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                      VIN validé
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-[#B91C1C]/10 border-[#B91C1C]/30 text-[#FCA5A5] text-xs">
-                      <AlertTriangle className="w-3 h-3 mr-1" />
-                      VIN invalide
-                    </Badge>
-                  )}
-                </div>
-
-                {/* ── Vehicle specs grid ── */}
-                {isDecodingVIN && (
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {[1,2,3,4].map(i => (
-                      <Skeleton key={i} className="h-10 w-28 rounded-md bg-white/5" />
-                    ))}
+          ) : (
+            /* Fallback: legacy hero banner */
+            <div className="bg-[hsl(222,47%,11%)] w-full relative overflow-hidden">
+              {data.featuredPhotoUrl && (
+                <>
+                  <img src={data.featuredPhotoUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-[rgba(0,0,0,0.55)]" />
+                </>
+              )}
+              <div className="relative z-10 max-w-5xl mx-auto px-4 py-8 md:py-10">
+                <nav className="flex items-center gap-2 text-xs text-[hsl(215,16%,47%)] mb-5">
+                  <Link to="/" className="hover:text-white transition-colors">Accueil</Link>
+                  <ChevronRight className="w-3 h-3" />
+                  <span className="text-[hsl(215,25%,65%)]">{vehicleName || vin}</span>
+                </nav>
+                <div className="space-y-3">
+                  <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[hsl(215,16%,47%)]">DOSSIER VÉHICULE</p>
+                  <h1 className="font-display text-2xl md:text-3xl font-bold text-white leading-tight">{vehicleName || "Véhicule inconnu"}</h1>
+                  <p className="font-mono text-[15px] text-[hsl(217,91%,68%)] tracking-[0.08em]">{vin}</p>
+                  <div className="flex items-end gap-6 pt-4">
+                    <div className="text-center">
+                      <span className="block text-[32px] font-bold text-white leading-none font-display">{contributions.length}</span>
+                      <span className="block text-[12px] text-[hsl(215,25%,65%)] mt-1">Contributions</span>
+                    </div>
+                    <div className="text-center">
+                      <span className="block text-[32px] font-bold text-white leading-none font-display">{data.uniqueContributors}</span>
+                      <span className="block text-[12px] text-[hsl(215,25%,65%)] mt-1 flex items-center justify-center gap-1"><Users className="w-3 h-3" />{data.uniqueContributors === 1 ? "Vlinker" : "Vlinkers"}</span>
+                    </div>
+                    <div className="text-center">
+                      <span className="block text-[32px] font-bold text-white leading-none font-display">{totalDocs}</span>
+                      <span className="block text-[12px] text-[hsl(215,25%,65%)] mt-1">Documents</span>
+                    </div>
                   </div>
-                )}
-                {vinDecode?.is_valid && (
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {[
-                      { label: "Motorisation", value: vinDecode.engine },
-                      { label: "Carrosserie", value: vinDecode.body_class },
-                      { label: "Transmission", value: vinDecode.drive_type },
-                      { label: "Carburant", value: vinDecode.fuel_type },
-                      { label: "Finition", value: vinDecode.trim },
-                    ].filter(s => s.value).map((spec) => (
-                      <div key={spec.label} className="bg-[#1E293B] rounded-md px-3 py-1.5">
-                        <span className="block text-[11px] text-[#64748B]">{spec.label}</span>
-                        <span className="block text-[13px] font-semibold text-white">{spec.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* ── Right column — counters ── */}
-              <div className="flex items-end gap-6 md:gap-8">
-                <div className="text-center">
-                  <span className="block text-[32px] font-bold text-white leading-none font-display">{contributions.length}</span>
-                  <span className="block text-[12px] text-[#94A3B8] mt-1">Contributions</span>
-                </div>
-                <div className="text-center group relative">
-                  <span className="block text-[32px] font-bold text-white leading-none font-display">{data.uniqueContributors}</span>
-                   <span className="block text-[12px] text-[#94A3B8] mt-1 flex items-center justify-center gap-1 cursor-help">
-                    <Users className="w-3 h-3" />
-                    {data.uniqueContributors === 1 ? "Vlinker" : "Vlinkers"}
-                  </span>
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-foreground text-background text-[11px] rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
-                    Nombre de personnes différentes ayant examiné et documenté ce véhicule
-                  </div>
-                </div>
-                <div className="text-center">
-                  <span className="block text-[32px] font-bold text-white leading-none font-display">{totalDocs}</span>
-                  <span className="block text-[12px] text-[#94A3B8] mt-1">Documents</span>
-                </div>
-                <div className="text-center">
-                  <span className="block text-[32px] font-bold text-white leading-none font-display">{observedSignals.length}</span>
-                  <span className="block text-[12px] text-[#94A3B8] mt-1">Signalements</span>
                 </div>
               </div>
             </div>
+          )}
 
-            {/* Action buttons row */}
-            <div className="flex flex-wrap items-center gap-2 mt-6 pt-5 border-t border-white/10">
-              <Button onClick={handleContributeClick} size="sm">
-                <Plus className="w-4 h-4 mr-1.5" />
-                Contribuer
-              </Button>
-              {data.totalContributions > 0 && (
-                <Button variant="outline" size="sm" onClick={() => setShowPDFDialog(true)} className="bg-transparent border-white/20 text-white hover:bg-white/10">
-                  <FileDown className="w-4 h-4 mr-1.5" />
-                  Rapport PDF
+          {/* Action buttons row */}
+          <div className="bg-[hsl(222,47%,11%)] border-t border-white/10">
+            <div className="max-w-5xl mx-auto px-4 py-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <Button onClick={handleContributeClick} size="sm">
+                  <Plus className="w-4 h-4 mr-1.5" />
+                  Contribuer
                 </Button>
-              )}
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleFollowClick} 
-                disabled={isFollowLoading}
-                className="bg-transparent border-white/20 text-white hover:bg-white/10"
-              >
-                <Star className={`w-4 h-4 mr-1.5 ${isFollowing ? "fill-current text-warning" : ""}`} />
-                {isFollowing ? "Suivi" : "Suivre"}
-               </Button>
-              {/* Share button */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="bg-transparent border-white/20 text-white hover:bg-white/10" onClick={async (e) => {
-                    if (navigator.share) {
-                      e.preventDefault();
-                      await handleShare();
-                    }
-                  }}>
-                    <Share2 className="w-4 h-4 mr-1.5" />
-                    Partager
+                {data.totalContributions > 0 && (
+                  <Button variant="outline" size="sm" onClick={() => setShowPDFDialog(true)} className="bg-transparent border-white/20 text-white hover:bg-white/10">
+                    <FileDown className="w-4 h-4 mr-1.5" />
+                    Rapport PDF
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-56 p-2" align="start">
-                  <button
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
-                    onClick={() => {
-                      navigator.clipboard.writeText(window.location.href);
-                      toast({ title: "Lien copié", description: "Le lien a été copié dans le presse-papier." });
-                    }}
-                  >
-                    <Link2 className="w-4 h-4" /> Copier le lien
-                  </button>
-                  <a
-                    href={`mailto:?subject=${encodeURIComponent(seoTitle)}&body=${encodeURIComponent(window.location.href)}`}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
-                  >
-                    <Mail className="w-4 h-4" /> Partager par email
-                  </a>
-                </PopoverContent>
-              </Popover>
-              {!isCheckingOwner && currentUserId && ownerVerificationStatus === 'none' && (
-                <Button variant="outline" size="sm" onClick={() => setShowOwnerForm(true)} className="bg-transparent border-white/20 text-white hover:bg-white/10">
-                  <Shield className="w-4 h-4 mr-1.5" />
-                  Revendiquer
+                )}
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleFollowClick} 
+                  disabled={isFollowLoading}
+                  className="bg-transparent border-white/20 text-white hover:bg-white/10"
+                >
+                  <Star className={`w-4 h-4 mr-1.5 ${isFollowing ? "fill-current text-warning" : ""}`} />
+                  {isFollowing ? "Suivi" : "Suivre"}
                 </Button>
-              )}
-              {isAdmin && (
-                <>
-                  <Button variant="outline" size="sm" asChild className="bg-transparent border-primary/40 text-[#60A5FA] hover:bg-primary/10">
-                    <Link to="/admin/contributions"><Shield className="w-4 h-4 mr-1.5" /> Modérer</Link>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="bg-transparent border-white/20 text-white hover:bg-white/10" onClick={async (e) => {
+                      if (navigator.share) { e.preventDefault(); await handleShare(); }
+                    }}>
+                      <Share2 className="w-4 h-4 mr-1.5" />
+                      Partager
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-2" align="start">
+                    <button
+                      className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.href);
+                        toast({ title: "Lien copié", description: "Le lien a été copié dans le presse-papier." });
+                      }}
+                    >
+                      <Link2 className="w-4 h-4" /> Copier le lien
+                    </button>
+                    <a
+                      href={`mailto:?subject=${encodeURIComponent(seoTitle)}&body=${encodeURIComponent(window.location.href)}`}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
+                    >
+                      <Mail className="w-4 h-4" /> Partager par email
+                    </a>
+                  </PopoverContent>
+                </Popover>
+                {!isCheckingOwner && currentUserId && ownerVerificationStatus === 'none' && (
+                  <Button variant="outline" size="sm" onClick={() => setShowOwnerForm(true)} className="bg-transparent border-white/20 text-white hover:bg-white/10">
+                    <Shield className="w-4 h-4 mr-1.5" />
+                    Revendiquer
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => setShowFeaturedPhotoModal(true)} className="bg-transparent border-primary/40 text-[#60A5FA] hover:bg-primary/10">
-                    <Camera className="w-4 h-4 mr-1.5" /> Photo vedette
-                  </Button>
-                </>
-              )}
+                )}
+                {isAdmin && (
+                  <>
+                    <Button variant="outline" size="sm" asChild className="bg-transparent border-primary/40 text-[hsl(217,91%,68%)] hover:bg-primary/10">
+                      <Link to="/admin/contributions"><Shield className="w-4 h-4 mr-1.5" /> Modérer</Link>
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setShowFeaturedPhotoModal(true)} className="bg-transparent border-primary/40 text-[hsl(217,91%,68%)] hover:bg-primary/10">
+                      <Camera className="w-4 h-4 mr-1.5" /> Photo vedette
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* ═══ CONTENT WITH SIDEBAR ═══ */}
-        <div className="flex flex-1 min-h-[calc(100vh-56px)] pt-6">
-          <FunctionalSidebar
-            sectionLabel="Dossier"
-            items={(() => {
-              const sidebarItems: SidebarItem[] = [
-                { key: "all", label: "Chronologie", icon: <Clock className="w-4 h-4" />, count: contributions.length },
-                { key: "reports", label: "Rapports", icon: <FileSearch className="w-4 h-4" />, count: filterCounts.reports },
-                { key: "history", label: "Historique", icon: <FileText className="w-4 h-4" />, count: filterCounts.history },
-                { key: "photos", label: "Photos", icon: <Camera className="w-4 h-4" />, count: totalPhotos },
-                { key: "documents", label: "Échanges", icon: <MessageSquare className="w-4 h-4" />, count: filterCounts.documents },
-                { key: "signals", label: "Signalements", icon: <AlertTriangle className="w-4 h-4" />, count: filterCounts.signals },
-                { key: "sep", label: "", icon: null, separator: true },
-                { key: "pdf", label: "Rapport PDF", icon: <FileDown className="w-4 h-4" /> },
-              ];
-              return sidebarItems;
-            })()}
-            activeKey={filterCategory}
-            onSelect={(key) => {
-              if (key === "pdf") {
-                setShowPDFDialog(true);
-              } else {
-                setFilterCategory(key as FilterCategory);
-              }
-            }}
-          />
-          <div className="flex-1 min-w-0 px-4 md:px-6 py-6 pb-20 md:pb-6">
+        {/* ═══ STICKY NAVIGATION TABS ═══ */}
+        <StickyNav activeTab={activeNavTab} onTabClick={handleNavTabClick} />
 
-          {/* ═══ COMPLETENESS SCORE ═══ */}
-          <CompletenessScore
-            contributions={contributions}
-            onAddType={(type) => {
-              setShowContributionForm(true);
-            }}
-          />
+        {/* ═══ MAIN CONTENT AREA ═══ */}
+        <div className="max-w-5xl mx-auto px-4 py-6 space-y-8">
+
           {/* Owner status badges */}
           {!isCheckingOwner && currentUserId && ownerVerificationStatus === 'verified' && (
-            <div className="mb-5 p-4 rounded-xl bg-success/5 border border-success/20 flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-[hsl(152,69%,38%,0.05)] border border-[hsl(152,69%,38%,0.2)] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
-                  <CheckCircle className="w-4 h-4 text-success" />
+                <div className="w-8 h-8 rounded-lg bg-[hsl(152,69%,38%,0.1)] flex items-center justify-center">
+                  <CheckCircle className="w-4 h-4 text-[hsl(152,69%,38%)]" />
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-success block">Propriétaire vérifié</span>
+                  <span className="text-sm font-medium text-[hsl(152,69%,38%)] block">Propriétaire vérifié</span>
                   <span className="text-xs text-muted-foreground">Vos contributions sont marquées comme vérifiées</span>
                 </div>
               </div>
@@ -622,16 +615,22 @@ const VINDetail = () => {
             </div>
           )}
           {!isCheckingOwner && currentUserId && ownerVerificationStatus === 'pending' && (
-            <div className="mb-5 p-4 rounded-xl bg-warning/5 border border-warning/20 flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center">
-                <Clock className="w-4 h-4 text-warning" />
+            <div className="p-4 rounded-xl bg-[hsl(38,92%,50%,0.05)] border border-[hsl(38,92%,50%,0.2)] flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[hsl(38,92%,50%,0.1)] flex items-center justify-center">
+                <Clock className="w-4 h-4 text-[hsl(38,92%,50%)]" />
               </div>
               <div>
-                <span className="text-sm font-medium text-warning block">Vérification en cours</span>
+                <span className="text-sm font-medium text-[hsl(38,92%,50%)] block">Vérification en cours</span>
                 <span className="text-xs text-muted-foreground">Nous examinons votre demande de propriété</span>
               </div>
             </div>
           )}
+
+          {/* Completeness score */}
+          <CompletenessScore
+            contributions={contributions}
+            onAddType={() => setShowContributionForm(true)}
+          />
 
           {/* ═══ VERDICT DU DOSSIER ═══ */}
           {(() => {
@@ -658,27 +657,27 @@ const VINDetail = () => {
               message = "Achat abandonné suite à inspection";
               subtitle = `${inspectionContribs.length} rapport${inspectionContribs.length > 1 ? "s" : ""} d'inspection au dossier`;
             } else if (hasInspection && hasDocumentedHistory) {
-              bgClass = "bg-success/5 border-success/20";
-              textClass = "text-success";
+              bgClass = "bg-[hsl(152,69%,38%,0.05)] border-[hsl(152,69%,38%,0.2)]";
+              textClass = "text-[hsl(152,69%,38%)]";
               icon = "✅";
               message = "Dossier solide — Entretien vérifié + inspection réalisée";
               subtitle = `${inspectionContribs.length} rapport${inspectionContribs.length > 1 ? "s" : ""} + historique documenté`;
             } else if (hasInspection) {
-              bgClass = "bg-success/5 border-success/20";
-              textClass = "text-success";
+              bgClass = "bg-[hsl(152,69%,38%,0.05)] border-[hsl(152,69%,38%,0.2)]";
+              textClass = "text-[hsl(152,69%,38%)]";
               icon = "✅";
               message = "Inspection(s) au dossier — aucun signal négatif";
               subtitle = `${inspectionContribs.length} rapport${inspectionContribs.length > 1 ? "s" : ""} d'inspection au dossier`;
             } else if (hasDocumentedHistory) {
-              bgClass = "bg-success/5 border-success/20";
-              textClass = "text-success";
+              bgClass = "bg-[hsl(152,69%,38%,0.05)] border-[hsl(152,69%,38%,0.2)]";
+              textClass = "text-[hsl(152,69%,38%)]";
               icon = "✅";
-              message = "Historique d'entretien documenté — Des preuves de maintenance ont été partagées par la communauté.";
+              message = "Historique d'entretien documenté";
               subtitle = `${historyContribs.length} entrée${historyContribs.length > 1 ? "s" : ""} d'historique avec pièces jointes`;
             }
 
             return (
-              <div className={`mb-5 p-4 rounded-xl border flex items-center gap-3 ${bgClass}`}>
+              <div className={`p-4 rounded-xl border flex items-center gap-3 ${bgClass}`}>
                 <span className="text-xl flex-shrink-0">{icon}</span>
                 <div>
                   <span className={`text-sm font-semibold block ${textClass}`}>{message}</span>
@@ -688,237 +687,286 @@ const VINDetail = () => {
             );
           })()}
 
-          {/* ═══ SIGNAUX OBSERVÉS ═══ */}
-          {observedSignals.length > 0 && (
-            <section id="signals-section" className="mb-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-border flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-warning" />
-                <h3 className="font-display text-sm font-semibold text-foreground">Signaux observés</h3>
-                <Badge variant="outline" className="ml-auto text-warning border-warning/30 bg-warning/5">
-                  {observedSignals.length}
-                </Badge>
+          {/* ═══ SPEED 2: NARRATION — Chronologie ═══ */}
+          <section ref={narrationRef} id="narration">
+            <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+              <Clock className="w-5 h-5 text-primary" />
+              Chronologie du véhicule
+            </h2>
+
+            {/* Observed signals */}
+            {observedSignals.length > 0 && (
+              <div id="signals-section" className="mb-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-border flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-warning" />
+                  <h3 className="font-display text-sm font-semibold text-foreground">Signaux observés</h3>
+                  <Badge variant="outline" className="ml-auto text-[hsl(38,92%,50%)] border-[hsl(38,92%,50%,0.3)] bg-[hsl(38,92%,50%,0.05)]">
+                    {observedSignals.length}
+                  </Badge>
+                </div>
+                <div className="p-4 space-y-2">
+                  {observedSignals.map(signal => {
+                    const lastMonth = signal.lastObserved ? new Date(signal.lastObserved).toLocaleDateString("fr-CA", { month: "short", year: "numeric" }) : null;
+                    const isExpanded = expandedSignalId === signal.id;
+                    return (
+                      <div key={signal.id} className="rounded-lg border border-border overflow-hidden bg-muted/30">
+                        <button onClick={() => setExpandedSignalId(isExpanded ? null : signal.id)} className="w-full flex items-start gap-3 p-3 text-left hover:bg-muted/50 transition-colors">
+                          <div className="w-6 h-6 rounded-md bg-[hsl(38,92%,50%,0.1)] flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <AlertTriangle className="w-3.5 h-3.5 text-[hsl(38,92%,50%)]" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm text-foreground block">{signal.text}</span>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-xs text-muted-foreground">{signal.count} source{signal.count > 1 ? "s" : ""}</span>
+                              {lastMonth && <span className="text-xs text-muted-foreground">· {lastMonth}</span>}
+                            </div>
+                          </div>
+                          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                        </button>
+                        {isExpanded && <SignalProofs contributionIds={signal.contributionIds} allContributions={contributions} />}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="p-4 space-y-2">
-                {observedSignals.map(signal => {
-                  const lastMonth = signal.lastObserved ? new Date(signal.lastObserved).toLocaleDateString("fr-CA", { month: "short", year: "numeric" }) : null;
-                  const isExpanded = expandedSignalId === signal.id;
-                  return (
-                    <div key={signal.id} className="rounded-lg border border-border overflow-hidden bg-muted/30">
-                      <button onClick={() => setExpandedSignalId(isExpanded ? null : signal.id)} className="w-full flex items-start gap-3 p-3 text-left hover:bg-muted/50 transition-colors">
-                        <div className="w-6 h-6 rounded-md bg-warning/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <AlertTriangle className="w-3.5 h-3.5 text-warning" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-sm text-foreground block">{signal.text}</span>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-muted-foreground">{signal.count} source{signal.count > 1 ? "s" : ""}</span>
-                            {lastMonth && <span className="text-xs text-muted-foreground">· {lastMonth}</span>}
+            )}
+
+            {/* Filter tabs (legacy) */}
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none mb-4 pb-1">
+              {FILTER_TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setFilterCategory(tab.key)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                    filterCategory === tab.key
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  {tab.emoji && <span>{tab.emoji}</span>}
+                  {tab.label}
+                  {filterCounts[tab.key] > 0 && (
+                    <span className={`text-[10px] ml-0.5 ${filterCategory === tab.key ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                      {filterCounts[tab.key]}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Sort toggle */}
+            <div className="flex items-center justify-end mb-4">
+              <button
+                onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors"
+              >
+                {sortOrder === 'desc' ? <ArrowDown className="w-3.5 h-3.5" /> : <ArrowUp className="w-3.5 h-3.5" />}
+                {sortOrder === 'desc' ? 'Récent → Ancien' : 'Ancien → Récent'}
+              </button>
+            </div>
+
+            {/* ═══ LEGACY TIMELINE ═══ */}
+            {episodes.length > 0 ? (
+              <div className="relative">
+                <div className="absolute left-[19px] top-0 bottom-0 w-0.5 bg-border" />
+                <div className="space-y-0">
+                  {episodes.map((episode, epIdx) => {
+                    const isLastEpisode = epIdx === episodes.length - 1;
+                    const isMajor = episode.contributions.some(c =>
+                      ["inspection_report", "ownership_change", "for_sale", "purchase_decision"].includes(c.type)
+                    );
+                    return (
+                      <div key={episode.key + epIdx} className="relative">
+                        <div className="flex items-center gap-3 mb-2 relative">
+                          <div className="relative z-10 flex items-center justify-center flex-shrink-0 w-10 h-10">
+                            <div className={`rounded-full border-2 bg-card ${isMajor ? "w-4 h-4 border-primary bg-primary" : "w-2.5 h-2.5 border-muted-foreground/40"}`} />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-foreground tracking-wide">{episode.dateLabel}</span>
+                            <span className="text-xs text-muted-foreground">— {episode.author}{episode.contributions.length > 1 && ` · ${episode.contributions.length} contributions`}</span>
                           </div>
                         </div>
-                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                      </button>
-                      {isExpanded && <SignalProofs contributionIds={signal.contributionIds} allContributions={contributions} />}
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          )}
-
-          {/* Sort toggle */}
-          <div className="flex items-center justify-end mb-4">
-            <button
-              onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors flex-shrink-0"
-              title={sortOrder === 'desc' ? 'Plus récent en premier' : 'Plus ancien en premier'}
-            >
-              {sortOrder === 'desc' ? <ArrowDown className="w-3.5 h-3.5" /> : <ArrowUp className="w-3.5 h-3.5" />}
-              {sortOrder === 'desc' ? 'Récent → Ancien' : 'Ancien → Récent'}
-            </button>
-          </div>
-
-          {/* ═══ TIMELINE ═══ */}
-          {episodes.length > 0 ? (
-            <div className="relative">
-              {/* Vertical timeline line */}
-              <div className="absolute left-[19px] top-0 bottom-0 w-0.5 bg-border" />
-
-              <div className="space-y-0">
-                {episodes.map((episode, epIdx) => {
-                  const isLastEpisode = epIdx === episodes.length - 1;
-                  const isMajor = episode.contributions.some(c =>
-                    ["inspection_report", "ownership_change", "for_sale", "purchase_decision"].includes(c.type)
-                  );
-
-                  return (
-                    <div key={episode.key + epIdx} className="relative">
-                      {/* Date milestone */}
-                      <div className="flex items-center gap-3 mb-2 relative">
-                        <div className="relative z-10 flex items-center justify-center flex-shrink-0 w-10 h-10">
-                          <div className={`rounded-full border-2 bg-card ${
-                            isMajor 
-                              ? "w-4 h-4 border-primary bg-primary" 
-                              : "w-2.5 h-2.5 border-muted-foreground/40"
-                          }`} />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-foreground tracking-wide">
-                            {episode.dateLabel}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            — {episode.author}
-                            {episode.contributions.length > 1 && ` · ${episode.contributions.length} contributions`}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Contributions in this episode */}
-                      <div className={`ml-10 pl-3 space-y-2 ${isLastEpisode ? 'pb-2' : 'pb-6'}`}>
-                        {episode.contributions.map(c => {
-                          const Icon = getContributionIcon(c.type);
-                          const thumbPhotos = c.photos.slice(0, 3);
-                          const extraPhotos = c.photos.length - 3;
-                          return (
-                            <div
-                              key={c.id}
-                              className="w-full text-left rounded-xl bg-card border border-border shadow-sm p-4 hover:border-primary/20 transition-all"
-                            >
-                              <div className="flex items-start gap-3">
-                                {/* Icon — opens drawer */}
-                                <button
-                                  onClick={() => setSelectedContribution(c)}
-                                  className={`w-10 h-10 rounded-lg ${getIconBgColor(c.type)} flex items-center justify-center flex-shrink-0 mt-0.5 cursor-pointer hover:opacity-80 transition-opacity`}
-                                >
-                                  <Icon className={`w-5 h-5 ${getIconColor(c.type)}`} />
-                                </button>
-                                <div className="flex-1 min-w-0">
-                                  {/* Title — opens drawer */}
-                                  <div className="flex items-start justify-between gap-2">
-                                     <button
-                                      onClick={() => setSelectedContribution(c)}
-                                      className="text-sm font-semibold text-foreground leading-snug hover:text-primary transition-colors text-left cursor-pointer"
-                                    >
-                                      {(() => {
-                                        const bodyText = c.details || c.summaryPublic || "";
-                                        // If title is empty or title is just the start of the body text, don't show it as title
-                                        if (c.title && c.title !== c.summaryPublic && !bodyText.startsWith(c.title)) {
-                                          return c.title;
-                                        }
-                                        // No distinct title — use contribution type label
-                                        return getContributionLabel(c.type);
-                                      })()}
-                                    </button>
-                                    <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap">
-                                      <Badge variant={getContributionBadgeVariant(c.type)} className="text-[11px]">
-                                        {getContributionLabel(c.type)}
-                                      </Badge>
-                                      {(c.hasDocuments || c.hasPhotos) && (
-                                        <Badge variant="outline" className="text-[10px] bg-success/5 border-success/20 text-success">
-                                          📎 Pièce jointe
-                                        </Badge>
-                                      )}
-                                      {(authorContribCount.get(c.authorPublicId || c.author) || 0) >= 2 && (
-                                        <Badge variant="outline" className="text-[10px] bg-primary/5 border-primary/20 text-primary">
-                                          ✓ Vlinker actif
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  </div>
-                                  {/* Meta */}
-                                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5 flex-wrap">
-                                    {c.mileageAtIntervention && (
-                                      <span>{c.mileageAtIntervention.toLocaleString()} km</span>
-                                    )}
-                                    {c.askingPrice && (
-                                      <>
-                                        {c.mileageAtIntervention && <span>·</span>}
-                                        <span>{c.askingPrice.toLocaleString()} $</span>
-                                      </>
-                                    )}
-                                    {(c.hasPhotos || c.hasDocuments) && (
-                                      <>
-                                        {(c.mileageAtIntervention || c.askingPrice) && <span>·</span>}
-                                        <span className="flex items-center gap-1">
-                                          {c.hasPhotos && <><Camera className="w-3 h-3" /> {c.photoCount}</>}
-                                          {c.hasPhotos && c.hasDocuments && <span className="mx-0.5">/</span>}
-                                          {c.hasDocuments && <><File className="w-3 h-3" /> {c.documentCount}</>}
-                                        </span>
-                                      </>
-                                    )}
-                                  </div>
-                                  {/* Body text with expand */}
-                                   {(() => {
-                                    // Show the most complete text as body
-                                    const bodyText = c.details || c.summaryPublic || "";
-                                    if (!bodyText) return null;
-                                    const isLong = bodyText.length > 200;
-                                    const isExpanded = expandedTextIds.has(c.id);
-                                    const shownText = isLong && !isExpanded ? bodyText.slice(0, 200) + "…" : bodyText;
-                                    return (
-                                      <div className="mt-2">
-                                        <p className="text-sm text-foreground/80 whitespace-pre-line leading-relaxed">{shownText}</p>
-                                        {isLong && !isExpanded && (
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); setExpandedTextIds(prev => new Set(prev).add(c.id)); }}
-                                            className="text-xs text-primary font-medium mt-1 hover:underline cursor-pointer"
-                                          >
-                                            Lire la suite
-                                          </button>
+                        <div className={`ml-10 pl-3 space-y-2 ${isLastEpisode ? 'pb-2' : 'pb-6'}`}>
+                          {episode.contributions.map(c => {
+                            const Icon = getContributionIcon(c.type);
+                            const thumbPhotos = c.photos.slice(0, 3);
+                            const extraPhotos = c.photos.length - 3;
+                            return (
+                              <div key={c.id} className="w-full text-left rounded-xl bg-card border border-border shadow-sm p-4 hover:border-primary/20 transition-all">
+                                <div className="flex items-start gap-3">
+                                  <button onClick={() => setSelectedContribution(c)} className={`w-10 h-10 rounded-lg ${getIconBgColor(c.type)} flex items-center justify-center flex-shrink-0 mt-0.5 cursor-pointer hover:opacity-80 transition-opacity`}>
+                                    <Icon className={`w-5 h-5 ${getIconColor(c.type)}`} />
+                                  </button>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <button onClick={() => setSelectedContribution(c)} className="text-sm font-semibold text-foreground leading-snug hover:text-primary transition-colors text-left cursor-pointer">
+                                        {(() => {
+                                          const bodyText = c.details || c.summaryPublic || "";
+                                          if (c.title && c.title !== c.summaryPublic && !bodyText.startsWith(c.title)) return c.title;
+                                          return getContributionLabel(c.type);
+                                        })()}
+                                      </button>
+                                      <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap">
+                                        <Badge variant={getContributionBadgeVariant(c.type)} className="text-[11px]">{getContributionLabel(c.type)}</Badge>
+                                        {(c.hasDocuments || c.hasPhotos) && (
+                                          <Badge variant="outline" className="text-[10px] bg-[hsl(152,69%,38%,0.05)] border-[hsl(152,69%,38%,0.2)] text-[hsl(152,69%,38%)]">📎 Pièce jointe</Badge>
+                                        )}
+                                        {(authorContribCount.get(c.authorPublicId || c.author) || 0) >= 2 && (
+                                          <Badge variant="outline" className="text-[10px] bg-primary/5 border-primary/20 text-primary">✓ Vlinker actif</Badge>
                                         )}
                                       </div>
-                                    );
-                                  })()}
-                                  {/* Photo thumbnails */}
-                                  {c.hasPhotos && thumbPhotos.length > 0 && (
-                                    <div className="flex items-center gap-1.5 mt-2.5">
-                                      {thumbPhotos.map((photo, i) => (
-                                        <button
-                                          key={photo.id}
-                                          onClick={() => openLightbox(c.photos, i)}
-                                          className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0 border border-border cursor-pointer hover:opacity-90 transition-opacity"
-                                        >
-                                          <img src={photo.url} alt={photo.caption || "Photo"} className="w-full h-full object-cover" loading="lazy" />
-                                          {i === 2 && extraPhotos > 0 && (
-                                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                              <span className="text-white text-xs font-bold">+{extraPhotos}</span>
-                                            </div>
-                                          )}
-                                        </button>
-                                      ))}
                                     </div>
-                                  )}
+                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5 flex-wrap">
+                                      {c.mileageAtIntervention && <span>{c.mileageAtIntervention.toLocaleString()} km</span>}
+                                      {c.askingPrice && (<>{c.mileageAtIntervention && <span>·</span>}<span>{c.askingPrice.toLocaleString()} $</span></>)}
+                                      {(c.hasPhotos || c.hasDocuments) && (
+                                        <>{(c.mileageAtIntervention || c.askingPrice) && <span>·</span>}<span className="flex items-center gap-1">{c.hasPhotos && <><Camera className="w-3 h-3" /> {c.photoCount}</>}{c.hasPhotos && c.hasDocuments && <span className="mx-0.5">/</span>}{c.hasDocuments && <><File className="w-3 h-3" /> {c.documentCount}</>}</span></>
+                                      )}
+                                    </div>
+                                    {(() => {
+                                      const bodyText = c.details || c.summaryPublic || "";
+                                      if (!bodyText) return null;
+                                      const isLong = bodyText.length > 200;
+                                      const isExpanded = expandedTextIds.has(c.id);
+                                      const shownText = isLong && !isExpanded ? bodyText.slice(0, 200) + "…" : bodyText;
+                                      return (
+                                        <div className="mt-2">
+                                          <p className="text-sm text-foreground/80 whitespace-pre-line leading-relaxed">{shownText}</p>
+                                          {isLong && !isExpanded && (
+                                            <button onClick={(e) => { e.stopPropagation(); setExpandedTextIds(prev => new Set(prev).add(c.id)); }} className="text-xs text-primary font-medium mt-1 hover:underline cursor-pointer">
+                                              Lire la suite
+                                            </button>
+                                          )}
+                                        </div>
+                                      );
+                                    })()}
+                                    {c.hasPhotos && thumbPhotos.length > 0 && (
+                                      <div className="flex items-center gap-1.5 mt-2.5">
+                                        {thumbPhotos.map((photo, i) => (
+                                          <button key={photo.id} onClick={() => openLightbox(c.photos, i)} className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0 border border-border cursor-pointer hover:opacity-90 transition-opacity">
+                                            <img src={photo.url} alt={photo.caption || "Photo"} className="w-full h-full object-cover" loading="lazy" />
+                                            {i === 2 && extraPhotos > 0 && (
+                                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center"><span className="text-white text-xs font-bold">+{extraPhotos}</span></div>
+                                            )}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                    <AdminActions contributionId={c.id} contribution={c} />
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="p-12 rounded-xl bg-card border border-border shadow-sm text-center">
+            ) : (
+              <div className="p-12 rounded-xl bg-card border border-border shadow-sm text-center">
+                <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
+                  <FileText className="w-6 h-6 text-muted-foreground" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {filterCategory === "all" ? "Aucune contribution pour ce véhicule." : "Aucune contribution pour ce filtre."}
+                </p>
+                {filterCategory === "all" && (
+                  <Button className="mt-4" onClick={handleContributeClick}><Plus className="w-4 h-4 mr-1.5" /> Ajouter une contribution</Button>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* ═══ SPEED 3: PLONGÉE — Documents et preuves ═══ */}
+          <section ref={plongeeRef} id="plongee">
+            <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+              <FolderOpen className="w-5 h-5 text-primary" />
+              Documents et preuves
+            </h2>
+            <div className="p-8 rounded-xl bg-card border border-dashed border-border text-center">
               <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
-                <FileText className="w-6 h-6 text-muted-foreground" />
+                <FolderOpen className="w-6 h-6 text-muted-foreground" />
               </div>
-              <p className="text-sm text-muted-foreground">
-                {filterCategory === "all" 
-                  ? "Aucune contribution pour ce véhicule." 
-                  : "Aucune contribution pour ce filtre."}
-              </p>
-              {filterCategory === "all" && (
-                <Button className="mt-4" onClick={handleContributeClick}>
-                  <Plus className="w-4 h-4 mr-1.5" /> Ajouter une contribution
-                </Button>
-              )}
+              <p className="text-sm font-medium text-foreground">Section en construction</p>
+              <p className="text-xs text-muted-foreground mt-1">L'espace de preuves documentées sera disponible prochainement.</p>
             </div>
-          )}
+          </section>
 
+          {/* ═══ FACE A / FACE B PANELS ═══ */}
+          <section>
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Face A — Community dossier (70%) */}
+              <div className="flex-1 lg:w-[70%]">
+                <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+                  <Users className="w-5 h-5 text-primary" />
+                  Dossier communautaire
+                  <Badge variant="outline" className="text-[10px] ml-1">Face A</Badge>
+                </h2>
+                <div className="p-8 rounded-xl bg-card border border-dashed border-border text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Les faits de la communauté (acheteurs, mécaniciens, inspecteurs) seront affichés ici.
+                  </p>
+                </div>
+              </div>
 
+              {/* Face B — Owner space (30%) */}
+              <div className="lg:w-[30%]">
+                {isMobile ? (
+                  <Collapsible open={faceBOpen} onOpenChange={setFaceBOpen}>
+                    <CollapsibleTrigger className="w-full">
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-card border border-border">
+                        <h2 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
+                          <Shield className="w-4 h-4 text-[hsl(152,69%,38%)]" />
+                          Espace propriétaire
+                          <Badge variant="outline" className="text-[10px]">Face B</Badge>
+                        </h2>
+                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${faceBOpen ? "rotate-180" : ""}`} />
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="p-6 mt-2 rounded-xl bg-card border border-dashed border-border text-center">
+                        <p className="text-sm text-muted-foreground">
+                          L'espace propriétaire sera disponible prochainement.
+                        </p>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                ) : (
+                  <>
+                    <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+                      <Shield className="w-5 h-5 text-[hsl(152,69%,38%)]" />
+                      Espace propriétaire
+                      <Badge variant="outline" className="text-[10px] ml-1">Face B</Badge>
+                    </h2>
+                    <div className="p-6 rounded-xl bg-card border border-dashed border-border text-center">
+                      <p className="text-sm text-muted-foreground">
+                        L'espace propriétaire sera disponible prochainement.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </section>
 
-        </div>
+          {/* ═══ CONTRIBUTION SECTION ═══ */}
+          <section ref={contribuerRef} id="contribuer">
+            <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+              <PenTool className="w-5 h-5 text-primary" />
+              Contribuer à ce dossier
+            </h2>
+            <div className="p-6 rounded-xl bg-card border border-border shadow-sm text-center">
+              <p className="text-sm text-muted-foreground mb-4">
+                Partagez vos informations, photos ou documents pour enrichir ce dossier.
+              </p>
+              <Button onClick={handleContributeClick}>
+                <Plus className="w-4 h-4 mr-1.5" />
+                Ajouter une contribution
+              </Button>
+            </div>
+          </section>
         </div>
       </main>
 
@@ -970,7 +1018,6 @@ const VINDetail = () => {
           onSaved={() => refetch()}
         />
       )}
-
       <DocumentViewer doc={viewerDoc} open={viewerOpen} onOpenChange={setViewerOpen} />
     </div>
   );

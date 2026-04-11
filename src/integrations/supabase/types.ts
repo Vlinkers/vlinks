@@ -816,6 +816,7 @@ export type Database = {
         | "trusted_member"
         | "early_adopter"
         | "premium_member"
+      contribution_face: "face_a" | "face_b"
       contribution_type:
         | "inspection_report"
         | "vehicle_history"
@@ -827,6 +828,48 @@ export type Database = {
         | "ownership_change"
         | "for_sale"
         | "price_change"
+      contributor_role:
+        | "owner_verified"
+        | "owner_unverified"
+        | "former_owner"
+        | "buyer"
+        | "mechanic"
+        | "inspector"
+        | "dealer"
+        | "witness"
+        | "anonymous"
+      event_type:
+        | "purchase"
+        | "sale"
+        | "accident"
+        | "repair"
+        | "maintenance"
+        | "inspection"
+        | "modification"
+        | "recall"
+        | "insurance_claim"
+        | "listing"
+        | "import_export"
+        | "registration"
+        | "mileage_record"
+        | "other"
+      moderation_status: "pending" | "approved" | "rejected" | "flagged"
+      owner_verification_tier:
+        | "certificate_only"
+        | "certificate_plus_vin"
+        | "chain_of_trust"
+      proof_tier: "declaration" | "documented" | "verified"
+      red_flag_type:
+        | "odometer_rollback"
+        | "title_wash"
+        | "flood_damage"
+        | "frame_damage"
+        | "stolen"
+        | "lemon"
+        | "salvage_rebuilt"
+        | "inconsistent_history"
+        | "suspicious_listing"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -965,6 +1008,7 @@ export const Constants = {
         "early_adopter",
         "premium_member",
       ],
+      contribution_face: ["face_a", "face_b"],
       contribution_type: [
         "inspection_report",
         "vehicle_history",
@@ -976,6 +1020,52 @@ export const Constants = {
         "ownership_change",
         "for_sale",
         "price_change",
+      ],
+      contributor_role: [
+        "owner_verified",
+        "owner_unverified",
+        "former_owner",
+        "buyer",
+        "mechanic",
+        "inspector",
+        "dealer",
+        "witness",
+        "anonymous",
+      ],
+      event_type: [
+        "purchase",
+        "sale",
+        "accident",
+        "repair",
+        "maintenance",
+        "inspection",
+        "modification",
+        "recall",
+        "insurance_claim",
+        "listing",
+        "import_export",
+        "registration",
+        "mileage_record",
+        "other",
+      ],
+      moderation_status: ["pending", "approved", "rejected", "flagged"],
+      owner_verification_tier: [
+        "certificate_only",
+        "certificate_plus_vin",
+        "chain_of_trust",
+      ],
+      proof_tier: ["declaration", "documented", "verified"],
+      red_flag_type: [
+        "odometer_rollback",
+        "title_wash",
+        "flood_damage",
+        "frame_damage",
+        "stolen",
+        "lemon",
+        "salvage_rebuilt",
+        "inconsistent_history",
+        "suspicious_listing",
+        "other",
       ],
     },
   },

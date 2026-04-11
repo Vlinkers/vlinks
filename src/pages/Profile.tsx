@@ -523,6 +523,10 @@ const Profile = () => {
                 </div>
               )}
 
+              {activeTab === "activity" && user && (
+                <ContributorActivity userId={user.id} />
+              )}
+
               {activeTab === "contributions" && (
                 <Card>
                   <CardHeader>

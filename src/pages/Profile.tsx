@@ -441,6 +441,7 @@ const Profile = () => {
             sectionLabel="Mon espace"
             items={[
               { key: "profile", label: language === "fr" ? "Mon profil" : "Profile", icon: <User className="w-4 h-4" /> },
+              { key: "activity", label: language === "fr" ? "Mon activité" : "Activity", icon: <BarChart3 className="w-4 h-4" /> },
               { key: "contributions", label: "Contributions", icon: <FileText className="w-4 h-4" />, count: contributions.length },
               { key: "followed", label: language === "fr" ? "VINs suivis" : "Followed", icon: <Star className="w-4 h-4" />, count: followedVINs.length },
               { key: "claims", label: language === "fr" ? "Mes VINs" : "My VINs", icon: <Car className="w-4 h-4" />, count: ownerClaims.length },

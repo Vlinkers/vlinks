@@ -214,6 +214,53 @@ export type Database = {
           },
         ]
       }
+      evidence: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          evidence_type: string
+          fact_id: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string
+          id: string
+          is_redacted: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          evidence_type: string
+          fact_id: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type: string
+          id?: string
+          is_redacted?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          evidence_type?: string
+          fact_id?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string
+          id?: string
+          is_redacted?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evidence_fact_id_fkey"
+            columns: ["fact_id"]
+            isOneToOne: false
+            referencedRelation: "facts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facts: {
         Row: {
           content: string

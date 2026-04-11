@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+
 import {
   ChevronRight, CheckCircle, AlertTriangle, Shield, Users,
   HelpCircle, Info, MessageSquare, Car

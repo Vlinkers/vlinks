@@ -11,6 +11,7 @@ import { PDFDownloadDialog } from "@/components/PDFDownloadDialog";
 import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { useVINDecode } from "@/hooks/useVINDecode";
 import { useVinDossier } from "@/hooks/useVinDossier";
+import type { FactWithEvidence } from "@/hooks/useVinDossier";
 import { getContributionLabel, getContributionIcon, getContributionBadgeVariant } from "@/components/ContributionCard";
 import { ContributionDetailDrawer } from "@/components/ContributionDetailDrawer";
 import { AdminEditContribution } from "@/components/AdminEditContribution";
@@ -25,13 +26,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { VinHero } from "@/components/vin/VinHero";
 import { RedFlagsBanner } from "@/components/vin/RedFlagsBanner";
+import { EventTimeline } from "@/components/vin/EventTimeline";
+import { EventCard } from "@/components/vin/EventCard";
+import { MileageCurve } from "@/components/vin/MileageCurve";
+import { FaceAPanel } from "@/components/vin/FaceAPanel";
+import { FaceBPanel } from "@/components/vin/FaceBPanel";
+import { EvidenceDrawer } from "@/components/vin/EvidenceDrawer";
 import { 
   Shield, AlertTriangle, CheckCircle, FileText, ChevronRight, Clock, Camera,
   FileSearch, Eye, EyeOff, Plus, Loader2, User, Users, FileDown, Star, Trash2,
   ExternalLink, File, ChevronDown, Pencil, Calendar, MapPin, ArrowUpDown, ArrowDown, ArrowUp,
-  MessageSquare, Search, Share2, Link2, Mail, BookOpen, FolderOpen, PenTool
+  MessageSquare, Search, Share2, Link2, Mail, BookOpen, FolderOpen, PenTool, KeyRound, Gauge,
+  Recycle
 } from "lucide-react";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PhotoLightbox } from "@/components/PhotoLightbox";
 import { DocumentViewer } from "@/components/DocumentViewer";

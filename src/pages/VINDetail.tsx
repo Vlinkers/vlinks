@@ -11,6 +11,7 @@ import { PDFDownloadDialog } from "@/components/PDFDownloadDialog";
 import { useVINData, type ContributionType } from "@/hooks/useVINData";
 import { useVINDecode } from "@/hooks/useVINDecode";
 import { useVinDossier } from "@/hooks/useVinDossier";
+import type { FactWithEvidence } from "@/hooks/useVinDossier";
 import { getContributionLabel, getContributionIcon, getContributionBadgeVariant } from "@/components/ContributionCard";
 import { ContributionDetailDrawer } from "@/components/ContributionDetailDrawer";
 import { AdminEditContribution } from "@/components/AdminEditContribution";
@@ -25,13 +26,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { VinHero } from "@/components/vin/VinHero";
 import { RedFlagsBanner } from "@/components/vin/RedFlagsBanner";
+import { EventTimeline } from "@/components/vin/EventTimeline";
+import { EventCard } from "@/components/vin/EventCard";
+import { MileageCurve } from "@/components/vin/MileageCurve";
+import { FaceAPanel } from "@/components/vin/FaceAPanel";
+import { FaceBPanel } from "@/components/vin/FaceBPanel";
+import { EvidenceDrawer } from "@/components/vin/EvidenceDrawer";
 import { 
   Shield, AlertTriangle, CheckCircle, FileText, ChevronRight, Clock, Camera,
   FileSearch, Eye, EyeOff, Plus, Loader2, User, Users, FileDown, Star, Trash2,
   ExternalLink, File, ChevronDown, Pencil, Calendar, MapPin, ArrowUpDown, ArrowDown, ArrowUp,
-  MessageSquare, Search, Share2, Link2, Mail, BookOpen, FolderOpen, PenTool
+  MessageSquare, Search, Share2, Link2, Mail, BookOpen, FolderOpen, PenTool, KeyRound, Gauge,
+  Recycle
 } from "lucide-react";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PhotoLightbox } from "@/components/PhotoLightbox";
 import { DocumentViewer } from "@/components/DocumentViewer";
@@ -125,21 +133,20 @@ const matchesFilterCategory = (contribution: PublicContribution, category: Filte
 };
 
 // ── Sticky Nav Tabs ──
-const NAV_TABS = [
-  { key: "synthese", label: "Synthèse", icon: Eye },
-  { key: "narration", label: "Chronologie", icon: Clock },
-  { key: "plongee", label: "Preuves", icon: FolderOpen },
-  { key: "contribuer", label: "Contribuer", icon: PenTool },
-] as const;
+type NavTab = "synthese" | "narration" | "plongee" | "communaute" | "proprietaire" | "contribuer";
 
-type NavTab = typeof NAV_TABS[number]["key"];
+interface NavTabDef {
+  key: NavTab;
+  label: string;
+  icon: typeof Eye;
+}
 
-function StickyNav({ activeTab, onTabClick }: { activeTab: NavTab; onTabClick: (tab: NavTab) => void }) {
+function StickyNav({ activeTab, onTabClick, tabs }: { activeTab: NavTab; onTabClick: (tab: NavTab) => void; tabs: NavTabDef[] }) {
   return (
     <div className="sticky top-16 z-30 bg-card/95 backdrop-blur-sm border-b border-border">
       <div className="max-w-5xl mx-auto px-4">
         <nav className="flex gap-0 overflow-x-auto scrollbar-none -mb-px">
-          {NAV_TABS.map((tab) => {
+          {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
             return (
@@ -200,13 +207,77 @@ const VINDetail = () => {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [activeNavTab, setActiveNavTab] = useState<NavTab>("synthese");
   const [faceBOpen, setFaceBOpen] = useState(false);
+  const [evidenceDrawerOpen, setEvidenceDrawerOpen] = useState(false);
+  const [selectedFactForDrawer, setSelectedFactForDrawer] = useState<FactWithEvidence | null>(null);
+  const [selectedEventForDrawer, setSelectedEventForDrawer] = useState<string | null>(null);
 
   // Section refs for scroll tracking
   const syntheseRef = useRef<HTMLDivElement>(null);
   const narrationRef = useRef<HTMLDivElement>(null);
   const plongeeRef = useRef<HTMLDivElement>(null);
+  const communauteRef = useRef<HTMLDivElement>(null);
+  const proprietaireRef = useRef<HTMLDivElement>(null);
   const contribuerRef = useRef<HTMLDivElement>(null);
 
+  // Evidence drawer handler
+  const handleFactClick = useCallback((factId: string) => {
+    if (!dossier) return;
+    for (const ewf of dossier.events) {
+      for (const fw of ewf.facts) {
+        if (fw.fact.id === factId) {
+          setSelectedFactForDrawer(fw);
+          setSelectedEventForDrawer(ewf.event.id);
+          setEvidenceDrawerOpen(true);
+          return;
+        }
+      }
+    }
+  }, [dossier]);
+
+  // Nav tabs with counts
+  const navTabs: NavTabDef[] = useMemo(() => {
+    const evCount = dossier?.stats.totalEvents ?? 0;
+    const evidenceCount = dossier?.events.reduce((sum, e) => sum + e.facts.reduce((s, f) => s + f.evidence.length, 0), 0) ?? 0;
+    return [
+      { key: "synthese", label: "Synthèse", icon: Eye },
+      { key: "narration", label: `Chronologie${evCount ? ` (${evCount})` : ""}`, icon: Clock },
+      { key: "plongee", label: `Preuves${evidenceCount ? ` (${evidenceCount})` : ""}`, icon: FolderOpen },
+      { key: "communaute", label: "Communauté", icon: Users },
+      { key: "proprietaire", label: "Propriétaire", icon: KeyRound },
+      { key: "contribuer", label: "Contribuer", icon: PenTool },
+    ];
+  }, [dossier]);
+
+  // Owner verification for FaceBPanel
+  const [ownerVerification, setOwnerVerification] = useState<any>(null);
+  useEffect(() => {
+    if (!data?.id) return;
+    supabase.from("owner_verifications").select("*").eq("vin_id", data.id).eq("verification_status", "verified").is("ended_at", null).maybeSingle().then(({ data: v }) => setOwnerVerification(v));
+  }, [data?.id]);
+
+  const ownerContributor = useMemo(() => {
+    if (!dossier) return null;
+    return dossier.contributors.find(c => c.role === "owner_verified" || c.role === "owner_unverified") ?? null;
+  }, [dossier]);
+
+  // Sibling facts for evidence drawer
+  const siblingFacts = useMemo(() => {
+    if (!dossier || !selectedEventForDrawer) return [];
+    const ev = dossier.events.find(e => e.event.id === selectedEventForDrawer);
+    return ev?.facts ?? [];
+  }, [dossier, selectedEventForDrawer]);
+
+  // Event for evidence drawer
+  const drawerEvent = useMemo(() => {
+    if (!dossier || !selectedEventForDrawer) return null;
+    return dossier.events.find(e => e.event.id === selectedEventForDrawer)?.event ?? null;
+  }, [dossier, selectedEventForDrawer]);
+
+  // Contributor for drawer
+  const drawerContributor = useMemo(() => {
+    if (!selectedFactForDrawer || !dossier) return null;
+    return dossier.contributors.find(c => c.id === selectedFactForDrawer.fact.contributor_id) ?? null;
+  }, [selectedFactForDrawer, dossier]);
   const openDocViewer = useCallback((doc: ContributionDocument) => {
     setViewerDoc(doc);
     setViewerOpen(true);
@@ -226,6 +297,8 @@ const VINDetail = () => {
       synthese: syntheseRef,
       narration: narrationRef,
       plongee: plongeeRef,
+      communaute: communauteRef,
+      proprietaire: proprietaireRef,
       contribuer: contribuerRef,
     };
     const ref = refs[tab];
@@ -238,11 +311,13 @@ const VINDetail = () => {
 
   // Track active section on scroll
   useEffect(() => {
-    const sectionRefs = [
-      { key: "synthese" as NavTab, ref: syntheseRef },
-      { key: "narration" as NavTab, ref: narrationRef },
-      { key: "plongee" as NavTab, ref: plongeeRef },
-      { key: "contribuer" as NavTab, ref: contribuerRef },
+    const sectionRefs: { key: NavTab; ref: React.RefObject<HTMLDivElement> }[] = [
+      { key: "synthese", ref: syntheseRef },
+      { key: "narration", ref: narrationRef },
+      { key: "plongee", ref: plongeeRef },
+      { key: "communaute", ref: communauteRef },
+      { key: "proprietaire", ref: proprietaireRef },
+      { key: "contribuer", ref: contribuerRef },
     ];
 
     const handleScroll = () => {
@@ -592,7 +667,7 @@ const VINDetail = () => {
         </div>
 
         {/* ═══ STICKY NAVIGATION TABS ═══ */}
-        <StickyNav activeTab={activeNavTab} onTabClick={handleNavTabClick} />
+        <StickyNav activeTab={activeNavTab} onTabClick={handleNavTabClick} tabs={navTabs} />
 
         {/* ═══ MAIN CONTENT AREA ═══ */}
         <div className="max-w-5xl mx-auto px-4 py-6 space-y-8">
@@ -731,151 +806,169 @@ const VINDetail = () => {
               </div>
             )}
 
-            {/* Filter tabs (legacy) */}
-            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none mb-4 pb-1">
-              {FILTER_TABS.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setFilterCategory(tab.key)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                    filterCategory === tab.key
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                >
-                  {tab.emoji && <span>{tab.emoji}</span>}
-                  {tab.label}
-                  {filterCounts[tab.key] > 0 && (
-                    <span className={`text-[10px] ml-0.5 ${filterCategory === tab.key ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                      {filterCounts[tab.key]}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Sort toggle */}
-            <div className="flex items-center justify-end mb-4">
-              <button
-                onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors"
-              >
-                {sortOrder === 'desc' ? <ArrowDown className="w-3.5 h-3.5" /> : <ArrowUp className="w-3.5 h-3.5" />}
-                {sortOrder === 'desc' ? 'Récent → Ancien' : 'Ancien → Récent'}
-              </button>
-            </div>
-
-            {/* ═══ LEGACY TIMELINE ═══ */}
-            {episodes.length > 0 ? (
-              <div className="relative">
-                <div className="absolute left-[19px] top-0 bottom-0 w-0.5 bg-border" />
-                <div className="space-y-0">
-                  {episodes.map((episode, epIdx) => {
-                    const isLastEpisode = epIdx === episodes.length - 1;
-                    const isMajor = episode.contributions.some(c =>
-                      ["inspection_report", "ownership_change", "for_sale", "purchase_decision"].includes(c.type)
-                    );
-                    return (
-                      <div key={episode.key + epIdx} className="relative">
-                        <div className="flex items-center gap-3 mb-2 relative">
-                          <div className="relative z-10 flex items-center justify-center flex-shrink-0 w-10 h-10">
-                            <div className={`rounded-full border-2 bg-card ${isMajor ? "w-4 h-4 border-primary bg-primary" : "w-2.5 h-2.5 border-muted-foreground/40"}`} />
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-foreground tracking-wide">{episode.dateLabel}</span>
-                            <span className="text-xs text-muted-foreground">— {episode.author}{episode.contributions.length > 1 && ` · ${episode.contributions.length} contributions`}</span>
-                          </div>
-                        </div>
-                        <div className={`ml-10 pl-3 space-y-2 ${isLastEpisode ? 'pb-2' : 'pb-6'}`}>
-                          {episode.contributions.map(c => {
-                            const Icon = getContributionIcon(c.type);
-                            const thumbPhotos = c.photos.slice(0, 3);
-                            const extraPhotos = c.photos.length - 3;
-                            return (
-                              <div key={c.id} className="w-full text-left rounded-xl bg-card border border-border shadow-sm p-4 hover:border-primary/20 transition-all">
-                                <div className="flex items-start gap-3">
-                                  <button onClick={() => setSelectedContribution(c)} className={`w-10 h-10 rounded-lg ${getIconBgColor(c.type)} flex items-center justify-center flex-shrink-0 mt-0.5 cursor-pointer hover:opacity-80 transition-opacity`}>
-                                    <Icon className={`w-5 h-5 ${getIconColor(c.type)}`} />
-                                  </button>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-start justify-between gap-2">
-                                      <button onClick={() => setSelectedContribution(c)} className="text-sm font-semibold text-foreground leading-snug hover:text-primary transition-colors text-left cursor-pointer">
-                                        {(() => {
-                                          const bodyText = c.details || c.summaryPublic || "";
-                                          if (c.title && c.title !== c.summaryPublic && !bodyText.startsWith(c.title)) return c.title;
-                                          return getContributionLabel(c.type);
-                                        })()}
-                                      </button>
-                                      <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap">
-                                        <Badge variant={getContributionBadgeVariant(c.type)} className="text-[11px]">{getContributionLabel(c.type)}</Badge>
-                                        {(c.hasDocuments || c.hasPhotos) && (
-                                          <Badge variant="outline" className="text-[10px] bg-[hsl(152,69%,38%,0.05)] border-[hsl(152,69%,38%,0.2)] text-[hsl(152,69%,38%)]">📎 Pièce jointe</Badge>
-                                        )}
-                                        {(authorContribCount.get(c.authorPublicId || c.author) || 0) >= 2 && (
-                                          <Badge variant="outline" className="text-[10px] bg-primary/5 border-primary/20 text-primary">✓ Vlinker actif</Badge>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5 flex-wrap">
-                                      {c.mileageAtIntervention && <span>{c.mileageAtIntervention.toLocaleString()} km</span>}
-                                      {c.askingPrice && (<>{c.mileageAtIntervention && <span>·</span>}<span>{c.askingPrice.toLocaleString()} $</span></>)}
-                                      {(c.hasPhotos || c.hasDocuments) && (
-                                        <>{(c.mileageAtIntervention || c.askingPrice) && <span>·</span>}<span className="flex items-center gap-1">{c.hasPhotos && <><Camera className="w-3 h-3" /> {c.photoCount}</>}{c.hasPhotos && c.hasDocuments && <span className="mx-0.5">/</span>}{c.hasDocuments && <><File className="w-3 h-3" /> {c.documentCount}</>}</span></>
-                                      )}
-                                    </div>
-                                    {(() => {
-                                      const bodyText = c.details || c.summaryPublic || "";
-                                      if (!bodyText) return null;
-                                      const isLong = bodyText.length > 200;
-                                      const isExpanded = expandedTextIds.has(c.id);
-                                      const shownText = isLong && !isExpanded ? bodyText.slice(0, 200) + "…" : bodyText;
-                                      return (
-                                        <div className="mt-2">
-                                          <p className="text-sm text-foreground/80 whitespace-pre-line leading-relaxed">{shownText}</p>
-                                          {isLong && !isExpanded && (
-                                            <button onClick={(e) => { e.stopPropagation(); setExpandedTextIds(prev => new Set(prev).add(c.id)); }} className="text-xs text-primary font-medium mt-1 hover:underline cursor-pointer">
-                                              Lire la suite
-                                            </button>
-                                          )}
-                                        </div>
-                                      );
-                                    })()}
-                                    {c.hasPhotos && thumbPhotos.length > 0 && (
-                                      <div className="flex items-center gap-1.5 mt-2.5">
-                                        {thumbPhotos.map((photo, i) => (
-                                          <button key={photo.id} onClick={() => openLightbox(c.photos, i)} className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0 border border-border cursor-pointer hover:opacity-90 transition-opacity">
-                                            <img src={photo.url} alt={photo.caption || "Photo"} className="w-full h-full object-cover" loading="lazy" />
-                                            {i === 2 && extraPhotos > 0 && (
-                                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center"><span className="text-white text-xs font-bold">+{extraPhotos}</span></div>
-                                            )}
-                                          </button>
-                                        ))}
-                                      </div>
-                                    )}
-                                    <AdminActions contributionId={c.id} contribution={c} />
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+            {/* NEW: EventTimeline from dossier */}
+            {hasDossierData && dossier ? (
+              <EventTimeline
+                events={dossier.events}
+                phases={dossier.phases}
+                onEventClick={() => {}}
+                onFactClick={handleFactClick}
+              />
+            ) : isDossierLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="rounded-xl border border-border p-4 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-2/3" />
+                  </div>
+                ))}
               </div>
             ) : (
-              <div className="p-12 rounded-xl bg-card border border-border shadow-sm text-center">
-                <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
-                  <FileText className="w-6 h-6 text-muted-foreground" />
+              /* LEGACY FALLBACK */
+              <>
+                <div className="flex items-center gap-1 overflow-x-auto scrollbar-none mb-4 pb-1">
+                  {FILTER_TABS.map((tab) => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setFilterCategory(tab.key)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                        filterCategory === tab.key
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                    >
+                      {tab.emoji && <span>{tab.emoji}</span>}
+                      {tab.label}
+                      {filterCounts[tab.key] > 0 && (
+                        <span className={`text-[10px] ml-0.5 ${filterCategory === tab.key ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                          {filterCounts[tab.key]}
+                        </span>
+                      )}
+                    </button>
+                  ))}
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {filterCategory === "all" ? "Aucune contribution pour ce véhicule." : "Aucune contribution pour ce filtre."}
-                </p>
-                {filterCategory === "all" && (
-                  <Button className="mt-4" onClick={handleContributeClick}><Plus className="w-4 h-4 mr-1.5" /> Ajouter une contribution</Button>
+                <div className="flex items-center justify-end mb-4">
+                  <button
+                    onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors"
+                  >
+                    {sortOrder === 'desc' ? <ArrowDown className="w-3.5 h-3.5" /> : <ArrowUp className="w-3.5 h-3.5" />}
+                    {sortOrder === 'desc' ? 'Récent → Ancien' : 'Ancien → Récent'}
+                  </button>
+                </div>
+                {episodes.length > 0 ? (
+                  <div className="relative">
+                    <div className="absolute left-[19px] top-0 bottom-0 w-0.5 bg-border" />
+                    <div className="space-y-0">
+                      {episodes.map((episode, epIdx) => {
+                        const isLastEpisode = epIdx === episodes.length - 1;
+                        const isMajor = episode.contributions.some(c =>
+                          ["inspection_report", "ownership_change", "for_sale", "purchase_decision"].includes(c.type)
+                        );
+                        return (
+                          <div key={episode.key + epIdx} className="relative">
+                            <div className="flex items-center gap-3 mb-2 relative">
+                              <div className="relative z-10 flex items-center justify-center flex-shrink-0 w-10 h-10">
+                                <div className={`rounded-full border-2 bg-card ${isMajor ? "w-4 h-4 border-primary bg-primary" : "w-2.5 h-2.5 border-muted-foreground/40"}`} />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold text-foreground tracking-wide">{episode.dateLabel}</span>
+                                <span className="text-xs text-muted-foreground">— {episode.author}{episode.contributions.length > 1 && ` · ${episode.contributions.length} contributions`}</span>
+                              </div>
+                            </div>
+                            <div className={`ml-10 pl-3 space-y-2 ${isLastEpisode ? 'pb-2' : 'pb-6'}`}>
+                              {episode.contributions.map(c => {
+                                const Icon = getContributionIcon(c.type);
+                                const thumbPhotos = c.photos.slice(0, 3);
+                                const extraPhotos = c.photos.length - 3;
+                                return (
+                                  <div key={c.id} className="w-full text-left rounded-xl bg-card border border-border shadow-sm p-4 hover:border-primary/20 transition-all">
+                                    <div className="flex items-start gap-3">
+                                      <button onClick={() => setSelectedContribution(c)} className={`w-10 h-10 rounded-lg ${getIconBgColor(c.type)} flex items-center justify-center flex-shrink-0 mt-0.5 cursor-pointer hover:opacity-80 transition-opacity`}>
+                                        <Icon className={`w-5 h-5 ${getIconColor(c.type)}`} />
+                                      </button>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-start justify-between gap-2">
+                                          <button onClick={() => setSelectedContribution(c)} className="text-sm font-semibold text-foreground leading-snug hover:text-primary transition-colors text-left cursor-pointer">
+                                            {(() => {
+                                              const bodyText = c.details || c.summaryPublic || "";
+                                              if (c.title && c.title !== c.summaryPublic && !bodyText.startsWith(c.title)) return c.title;
+                                              return getContributionLabel(c.type);
+                                            })()}
+                                          </button>
+                                          <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap">
+                                            <Badge variant={getContributionBadgeVariant(c.type)} className="text-[11px]">{getContributionLabel(c.type)}</Badge>
+                                            {(c.hasDocuments || c.hasPhotos) && (
+                                              <Badge variant="outline" className="text-[10px] bg-[hsl(152,69%,38%,0.05)] border-[hsl(152,69%,38%,0.2)] text-[hsl(152,69%,38%)]">📎 Pièce jointe</Badge>
+                                            )}
+                                            {(authorContribCount.get(c.authorPublicId || c.author) || 0) >= 2 && (
+                                              <Badge variant="outline" className="text-[10px] bg-primary/5 border-primary/20 text-primary">✓ Vlinker actif</Badge>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5 flex-wrap">
+                                          {c.mileageAtIntervention && <span>{c.mileageAtIntervention.toLocaleString()} km</span>}
+                                          {c.askingPrice && (<>{c.mileageAtIntervention && <span>·</span>}<span>{c.askingPrice.toLocaleString()} $</span></>)}
+                                          {(c.hasPhotos || c.hasDocuments) && (
+                                            <>{(c.mileageAtIntervention || c.askingPrice) && <span>·</span>}<span className="flex items-center gap-1">{c.hasPhotos && <><Camera className="w-3 h-3" /> {c.photoCount}</>}{c.hasPhotos && c.hasDocuments && <span className="mx-0.5">/</span>}{c.hasDocuments && <><File className="w-3 h-3" /> {c.documentCount}</>}</span></>
+                                          )}
+                                        </div>
+                                        {(() => {
+                                          const bodyText = c.details || c.summaryPublic || "";
+                                          if (!bodyText) return null;
+                                          const isLong = bodyText.length > 200;
+                                          const isExpanded = expandedTextIds.has(c.id);
+                                          const shownText = isLong && !isExpanded ? bodyText.slice(0, 200) + "…" : bodyText;
+                                          return (
+                                            <div className="mt-2">
+                                              <p className="text-sm text-foreground/80 whitespace-pre-line leading-relaxed">{shownText}</p>
+                                              {isLong && !isExpanded && (
+                                                <button onClick={(e) => { e.stopPropagation(); setExpandedTextIds(prev => new Set(prev).add(c.id)); }} className="text-xs text-primary font-medium mt-1 hover:underline cursor-pointer">
+                                                  Lire la suite
+                                                </button>
+                                              )}
+                                            </div>
+                                          );
+                                        })()}
+                                        {c.hasPhotos && thumbPhotos.length > 0 && (
+                                          <div className="flex items-center gap-1.5 mt-2.5">
+                                            {thumbPhotos.map((photo, i) => (
+                                              <button key={photo.id} onClick={() => openLightbox(c.photos, i)} className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0 border border-border cursor-pointer hover:opacity-90 transition-opacity">
+                                                <img src={photo.url} alt={photo.caption || "Photo"} className="w-full h-full object-cover" loading="lazy" />
+                                                {i === 2 && extraPhotos > 0 && (
+                                                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center"><span className="text-white text-xs font-bold">+{extraPhotos}</span></div>
+                                                )}
+                                              </button>
+                                            ))}
+                                          </div>
+                                        )}
+                                        <AdminActions contributionId={c.id} contribution={c} />
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-12 rounded-xl bg-card border border-border shadow-sm text-center">
+                    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
+                      <FileText className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {filterCategory === "all" ? "Aucune contribution pour ce véhicule." : "Aucune contribution pour ce filtre."}
+                    </p>
+                    {filterCategory === "all" && (
+                      <Button className="mt-4" onClick={handleContributeClick}><Plus className="w-4 h-4 mr-1.5" /> Ajouter une contribution</Button>
+                    )}
+                  </div>
                 )}
-              </div>
+              </>
             )}
           </section>
 
@@ -885,71 +978,112 @@ const VINDetail = () => {
               <FolderOpen className="w-5 h-5 text-primary" />
               Documents et preuves
             </h2>
-            <div className="p-8 rounded-xl bg-card border border-dashed border-border text-center">
-              <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
-                <FolderOpen className="w-6 h-6 text-muted-foreground" />
+            {isDossierLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-[280px] w-full rounded-xl" />
+                <Skeleton className="h-20 w-full rounded-xl" />
               </div>
-              <p className="text-sm font-medium text-foreground">Section en construction</p>
-              <p className="text-xs text-muted-foreground mt-1">L'espace de preuves documentées sera disponible prochainement.</p>
-            </div>
+            ) : (
+              <div className="space-y-6">
+                {dossier && dossier.events.some(e => e.event.mileage_at_event != null) && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+                      <Gauge className="w-4 h-4 text-muted-foreground" />
+                      Courbe kilométrique
+                    </h3>
+                    <div className="rounded-xl bg-card border border-border p-4">
+                      <MileageCurve
+                        events={dossier.events}
+                        phases={dossier.phases}
+                        redFlags={dossier.redFlags}
+                        onEventClick={() => {}}
+                      />
+                    </div>
+                  </div>
+                )}
+                {dossier && dossier.redFlags.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+                      <AlertTriangle className="w-4 h-4 text-destructive" />
+                      Signaux d'alerte en détail
+                    </h3>
+                    <div className="space-y-2">
+                      {dossier.redFlags.map(flag => {
+                        const isActive = flag.is_active;
+                        const severityColors: Record<string, string> = {
+                          critical: "text-destructive bg-destructive/5 border-destructive/20",
+                          high: "text-[hsl(32,95%,52%)] bg-[hsl(32,95%,52%,0.05)] border-[hsl(32,95%,52%,0.2)]",
+                          medium: "text-[hsl(45,93%,47%)] bg-[hsl(45,93%,47%,0.05)] border-[hsl(45,93%,47%,0.2)]",
+                          low: "text-muted-foreground bg-muted/30 border-border",
+                        };
+                        const severityLabels: Record<string, string> = { critical: "CRITIQUE", high: "ÉLEVÉ", medium: "MOYEN", low: "FAIBLE" };
+                        const cls = severityColors[flag.severity] ?? severityColors.medium;
+                        return (
+                          <div key={flag.id} className={`rounded-lg border p-3 ${isActive ? cls : "bg-muted/10 border-border opacity-60"}`}>
+                            <div className="flex items-start gap-2">
+                              <div>
+                                <span className={`text-sm font-semibold ${isActive ? "" : "line-through"}`}>{flag.title}</span>
+                                <Badge variant="outline" className={`ml-2 text-[10px] px-1.5 py-0 h-4 ${isActive ? "" : "opacity-50"}`}>
+                                  {severityLabels[flag.severity] ?? flag.severity}
+                                </Badge>
+                                {!isActive && (
+                                  <Badge variant="outline" className="ml-1 text-[10px] px-1.5 py-0 h-4 text-[hsl(152,69%,38%)] border-[hsl(152,69%,38%,0.3)]">Résolu</Badge>
+                                )}
+                              </div>
+                            </div>
+                            {flag.description && <p className="text-xs text-muted-foreground mt-1">{flag.description}</p>}
+                            {flag.resolution_notes && <p className="text-xs text-[hsl(152,69%,38%)] mt-1 italic">Résolution : {flag.resolution_notes}</p>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {(!dossier || (!dossier.events.some(e => e.event.mileage_at_event != null) && dossier.redFlags.length === 0)) && (
+                  <div className="p-8 rounded-xl bg-card border border-dashed border-border text-center">
+                    <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
+                      <FolderOpen className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm font-medium text-foreground">Aucune preuve approfondie disponible</p>
+                    <p className="text-xs text-muted-foreground mt-1">Contribuez des relevés kilométriques ou des documents pour enrichir cette section.</p>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
 
           {/* ═══ FACE A / FACE B PANELS ═══ */}
-          <section>
-            <div className="flex flex-col lg:flex-row gap-6">
-              {/* Face A — Community dossier (70%) */}
-              <div className="flex-1 lg:w-[70%]">
-                <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
-                  <Users className="w-5 h-5 text-primary" />
-                  Dossier communautaire
-                  <Badge variant="outline" className="text-[10px] ml-1">Face A</Badge>
-                </h2>
-                <div className="p-8 rounded-xl bg-card border border-dashed border-border text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Les faits de la communauté (acheteurs, mécaniciens, inspecteurs) seront affichés ici.
-                  </p>
+          <div className="flex flex-col lg:flex-row gap-6">
+            <section ref={communauteRef} id="communaute" className="flex-1 lg:w-[70%]">
+              {isDossierLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-24 w-full rounded-xl" />
+                  <Skeleton className="h-24 w-full rounded-xl" />
                 </div>
-              </div>
-
-              {/* Face B — Owner space (30%) */}
-              <div className="lg:w-[30%]">
-                {isMobile ? (
-                  <Collapsible open={faceBOpen} onOpenChange={setFaceBOpen}>
-                    <CollapsibleTrigger className="w-full">
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-card border border-border">
-                        <h2 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
-                          <Shield className="w-4 h-4 text-[hsl(152,69%,38%)]" />
-                          Espace propriétaire
-                          <Badge variant="outline" className="text-[10px]">Face B</Badge>
-                        </h2>
-                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${faceBOpen ? "rotate-180" : ""}`} />
-                      </div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <div className="p-6 mt-2 rounded-xl bg-card border border-dashed border-border text-center">
-                        <p className="text-sm text-muted-foreground">
-                          L'espace propriétaire sera disponible prochainement.
-                        </p>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                ) : (
-                  <>
-                    <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
-                      <Shield className="w-5 h-5 text-[hsl(152,69%,38%)]" />
-                      Espace propriétaire
-                      <Badge variant="outline" className="text-[10px] ml-1">Face B</Badge>
-                    </h2>
-                    <div className="p-6 rounded-xl bg-card border border-dashed border-border text-center">
-                      <p className="text-sm text-muted-foreground">
-                        L'espace propriétaire sera disponible prochainement.
-                      </p>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </section>
+              ) : dossier ? (
+                <FaceAPanel events={dossier.events} contributors={dossier.contributors} onFactClick={handleFactClick} />
+              ) : (
+                <div className="p-8 rounded-xl bg-card border border-dashed border-border text-center">
+                  <p className="text-sm text-muted-foreground">Aucune donnée communautaire disponible.</p>
+                </div>
+              )}
+            </section>
+            <section ref={proprietaireRef} id="proprietaire" className="lg:w-[30%]">
+              {isDossierLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-6 w-40" />
+                  <Skeleton className="h-32 w-full rounded-xl" />
+                </div>
+              ) : dossier ? (
+                <FaceBPanel events={dossier.events} ownerContributor={ownerContributor} ownerVerification={ownerVerification} onFactClick={handleFactClick} vinId={data.id} />
+              ) : (
+                <div className="p-8 rounded-xl bg-card border border-dashed border-border text-center">
+                  <p className="text-sm text-muted-foreground">Espace propriétaire indisponible.</p>
+                </div>
+              )}
+            </section>
+          </div>
 
           {/* ═══ CONTRIBUTION SECTION ═══ */}
           <section ref={contribuerRef} id="contribuer">

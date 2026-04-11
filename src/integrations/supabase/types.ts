@@ -214,6 +214,62 @@ export type Database = {
           },
         ]
       }
+      facts: {
+        Row: {
+          content: string
+          contributor_id: string
+          created_at: string | null
+          event_id: string
+          face: Database["public"]["Enums"]["contribution_face"]
+          id: string
+          is_anonymous: boolean | null
+          moderation_status:
+            | Database["public"]["Enums"]["moderation_status"]
+            | null
+          proof_tier: Database["public"]["Enums"]["proof_tier"] | null
+          source_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          contributor_id: string
+          created_at?: string | null
+          event_id: string
+          face: Database["public"]["Enums"]["contribution_face"]
+          id?: string
+          is_anonymous?: boolean | null
+          moderation_status?:
+            | Database["public"]["Enums"]["moderation_status"]
+            | null
+          proof_tier?: Database["public"]["Enums"]["proof_tier"] | null
+          source_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          contributor_id?: string
+          created_at?: string | null
+          event_id?: string
+          face?: Database["public"]["Enums"]["contribution_face"]
+          id?: string
+          is_anonymous?: boolean | null
+          moderation_status?:
+            | Database["public"]["Enums"]["moderation_status"]
+            | null
+          proof_tier?: Database["public"]["Enums"]["proof_tier"] | null
+          source_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           created_at: string

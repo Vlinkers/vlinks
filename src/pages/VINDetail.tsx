@@ -133,21 +133,20 @@ const matchesFilterCategory = (contribution: PublicContribution, category: Filte
 };
 
 // ── Sticky Nav Tabs ──
-const NAV_TABS = [
-  { key: "synthese", label: "Synthèse", icon: Eye },
-  { key: "narration", label: "Chronologie", icon: Clock },
-  { key: "plongee", label: "Preuves", icon: FolderOpen },
-  { key: "contribuer", label: "Contribuer", icon: PenTool },
-] as const;
+type NavTab = "synthese" | "narration" | "plongee" | "communaute" | "proprietaire" | "contribuer";
 
-type NavTab = typeof NAV_TABS[number]["key"];
+interface NavTabDef {
+  key: NavTab;
+  label: string;
+  icon: typeof Eye;
+}
 
-function StickyNav({ activeTab, onTabClick }: { activeTab: NavTab; onTabClick: (tab: NavTab) => void }) {
+function StickyNav({ activeTab, onTabClick, tabs }: { activeTab: NavTab; onTabClick: (tab: NavTab) => void; tabs: NavTabDef[] }) {
   return (
     <div className="sticky top-16 z-30 bg-card/95 backdrop-blur-sm border-b border-border">
       <div className="max-w-5xl mx-auto px-4">
         <nav className="flex gap-0 overflow-x-auto scrollbar-none -mb-px">
-          {NAV_TABS.map((tab) => {
+          {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
             return (

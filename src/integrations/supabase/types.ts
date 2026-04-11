@@ -486,40 +486,70 @@ export type Database = {
       }
       owner_verifications: {
         Row: {
+          certificate_file_path: string | null
+          chain_of_trust_confirmed_at: string | null
+          chain_of_trust_from: string | null
           created_at: string
           document_path: string | null
           document_type: string | null
           ended_at: string | null
           id: string
+          notes: string | null
+          rejection_reason: string | null
+          reviewer_id: string | null
           updated_at: string
           user_id: string
           verification_status: string
+          verification_tier:
+            | Database["public"]["Enums"]["owner_verification_tier"]
+            | null
           verified_at: string | null
           vin_id: string
+          vin_plate_photo_path: string | null
         }
         Insert: {
+          certificate_file_path?: string | null
+          chain_of_trust_confirmed_at?: string | null
+          chain_of_trust_from?: string | null
           created_at?: string
           document_path?: string | null
           document_type?: string | null
           ended_at?: string | null
           id?: string
+          notes?: string | null
+          rejection_reason?: string | null
+          reviewer_id?: string | null
           updated_at?: string
           user_id: string
           verification_status?: string
+          verification_tier?:
+            | Database["public"]["Enums"]["owner_verification_tier"]
+            | null
           verified_at?: string | null
           vin_id: string
+          vin_plate_photo_path?: string | null
         }
         Update: {
+          certificate_file_path?: string | null
+          chain_of_trust_confirmed_at?: string | null
+          chain_of_trust_from?: string | null
           created_at?: string
           document_path?: string | null
           document_type?: string | null
           ended_at?: string | null
           id?: string
+          notes?: string | null
+          rejection_reason?: string | null
+          reviewer_id?: string | null
           updated_at?: string
           user_id?: string
           verification_status?: string
+          verification_tier?:
+            | Database["public"]["Enums"]["owner_verification_tier"]
+            | null
           verified_at?: string | null
           vin_id?: string
+          vin_plate_photo_path?: string | null
         }
         Relationships: [
           {

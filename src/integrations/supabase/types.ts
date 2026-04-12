@@ -1230,6 +1230,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_community_score: { Args: { p_vin_id: string }; Returns: number }
+      calculate_owner_transparency: {
+        Args: { p_vin_id: string }
+        Returns: number
+      }
       calculate_trust_level: { Args: { p_user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -1238,6 +1243,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      refresh_vin_scores: { Args: { p_vin_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

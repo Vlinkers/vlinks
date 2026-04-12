@@ -1124,7 +1124,7 @@ const VINDetail = () => {
         isActiveVlinker={selectedContribution ? (authorContribCount.get(selectedContribution.authorPublicId || selectedContribution.author) || 0) >= 2 : false}
       />
 
-      <UsernameRequiredDialog open={showUsernameDialog} onComplete={() => { setShowUsernameDialog(false); setUserHasUsername(true); setShowContributionForm(true); }} />
+      <UsernameRequiredDialog open={showUsernameDialog} onComplete={() => { setShowUsernameDialog(false); setUserHasUsername(true); handleNavTabClick("contribuer"); }} />
       {currentUserId && (
         <>
           <OwnerClaimForm vinId={data.id} vin={vin || ""} open={showOwnerForm} onOpenChange={setShowOwnerForm} onSuccess={() => refetch()} />

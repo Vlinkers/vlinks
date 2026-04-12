@@ -26,6 +26,7 @@ import AdminEvents from "./pages/admin/AdminEvents";
 import TermsOfService from "./pages/legal/TermsOfService";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import LegalNotice from "./pages/legal/LegalNotice";
+import AdminContentReports from "./pages/admin/AdminContentReports";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
                 <Route path="/admin/vins" element={<AdminVINs />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
                 <Route path="/admin/audit" element={<AdminAuditLog />} />
+                <Route path="/admin/reports" element={<AdminContentReports />} />
                 {/* Legal pages */}
                 <Route path="/conditions-utilisation" element={<TermsOfService />} />
                 <Route path="/politique-confidentialite" element={<PrivacyPolicy />} />

@@ -1,6 +1,8 @@
 import { ReactNode } from "react";
 import { Link, useLocation, Navigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard,
   FileText,
@@ -11,7 +13,9 @@ import {
   ArrowLeft,
   AlertTriangle,
   Calendar,
+  Flag,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import vlinksFull from "@/assets/vlinks-full-logo.png";
 
 const navItems = [
@@ -19,6 +23,7 @@ const navItems = [
   { to: "/admin/contributions", icon: FileText, label: "Faits" },
   { to: "/admin/events", icon: Calendar, label: "Événements" },
   { to: "/admin/red-flags", icon: AlertTriangle, label: "Red Flags" },
+  { to: "/admin/reports", icon: Flag, label: "Signalements", showBadge: true },
   { to: "/admin/vins", icon: Car, label: "VINs" },
   { to: "/admin/users", icon: Users, label: "Utilisateurs" },
   { to: "/admin/audit", icon: ClipboardList, label: "Journal" },
@@ -27,6 +32,19 @@ const navItems = [
 export function AdminLayout({ children }: { children: ReactNode }) {
   const { isAdmin, loading } = useAdmin();
   const location = useLocation();
+
+  const { data: pendingReportsCount = 0 } = useQuery({
+    queryKey: ["admin-pending-reports-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("content_reports")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+      if (error) throw error;
+      return count ?? 0;
+    },
+    refetchInterval: 30000,
+  });
 
   if (loading) {
     return (
@@ -64,6 +82,11 @@ export function AdminLayout({ children }: { children: ReactNode }) {
               >
                 <item.icon className="w-4 h-4" />
                 {item.label}
+                {"showBadge" in item && item.showBadge && pendingReportsCount > 0 && (
+                  <Badge variant="destructive" className="ml-auto text-[10px] h-5 min-w-5 px-1.5">
+                    {pendingReportsCount}
+                  </Badge>
+                )}
               </Link>
             );
           })}

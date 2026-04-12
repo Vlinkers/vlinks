@@ -145,12 +145,12 @@ export default function OwnerResponseForm({
 
   if (success) {
     return (
-      <Card className="border-green-200 bg-green-50/50">
+      <Card className="border-success/30 bg-success/5">
         <CardContent className="p-4 flex items-start gap-3">
-          <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
-          <div className="text-sm text-green-800">
-            <p className="font-medium">Votre réponse a été ajoutée.</p>
-            <p className="text-green-700 mt-1">
+          <CheckCircle2 className="w-5 h-5 text-success mt-0.5 shrink-0" />
+          <div className="text-sm">
+            <p className="font-medium text-foreground">Votre réponse a été ajoutée.</p>
+            <p className="text-muted-foreground mt-1">
               Cet événement a maintenant des sources des deux faces.
             </p>
           </div>

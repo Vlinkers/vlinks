@@ -23,6 +23,9 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminRedFlags from "./pages/admin/AdminRedFlags";
 import AdminEvents from "./pages/admin/AdminEvents";
+import TermsOfService from "./pages/legal/TermsOfService";
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
+import LegalNotice from "./pages/legal/LegalNotice";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +56,10 @@ const App = () => (
                 <Route path="/admin/vins" element={<AdminVINs />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
                 <Route path="/admin/audit" element={<AdminAuditLog />} />
+                {/* Legal pages */}
+                <Route path="/conditions-utilisation" element={<TermsOfService />} />
+                <Route path="/politique-confidentialite" element={<PrivacyPolicy />} />
+                <Route path="/mentions-legales" element={<LegalNotice />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

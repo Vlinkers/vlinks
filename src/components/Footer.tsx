@@ -17,9 +17,16 @@ const Footer = () => {
               <Link to="/pricing" className="hover:text-foreground transition-colors">Tarifs</Link>
             </nav>
           </div>
-          <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} VLINKS · Fait au Québec 🍁
-          </p>
+          <div className="text-xs text-muted-foreground text-right">
+            <p>© {new Date().getFullYear()} VLINKS · Fait au Québec 🍁</p>
+            <nav className="flex items-center gap-2 mt-1 justify-end">
+              <Link to="/conditions-utilisation" className="hover:text-foreground transition-colors">Conditions d'utilisation</Link>
+              <span>|</span>
+              <Link to="/politique-confidentialite" className="hover:text-foreground transition-colors">Politique de confidentialité</Link>
+              <span>|</span>
+              <Link to="/mentions-legales" className="hover:text-foreground transition-colors">Mentions légales</Link>
+            </nav>
+          </div>
         </div>
       </div>
     </footer>

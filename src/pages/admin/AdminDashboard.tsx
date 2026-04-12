@@ -1,6 +1,7 @@
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
 import {
   Car,

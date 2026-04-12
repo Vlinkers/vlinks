@@ -4,7 +4,8 @@ import SEO from "@/components/SEO";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ContributionForm } from "@/components/ContributionForm";
+import { ContributionGateway } from "@/components/contribution/ContributionGateway";
+import { useContributor } from "@/hooks/useContributor";
 import { OwnerClaimForm } from "@/components/OwnerClaimForm";
 import { UsernameRequiredDialog } from "@/components/UsernameRequiredDialog";
 import { PDFDownloadDialog } from "@/components/PDFDownloadDialog";
@@ -40,6 +41,7 @@ import {
   Recycle
 } from "lucide-react";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PhotoLightbox } from "@/components/PhotoLightbox";
 import { DocumentViewer } from "@/components/DocumentViewer";
@@ -177,11 +179,13 @@ const VINDetail = () => {
   const { data: vinDecode, isLoading: isDecodingVIN } = useVINDecode(vin);
   const { toast } = useToast();
   const { isAdmin, logAction } = useAdmin();
+  const queryClient = useQueryClient();
   const { isFollowing, isLoading: isFollowLoading, toggleFollow } = useVINFollow(vin);
   const isMobile = useIsMobile();
 
   // New dossier data layer
   const { data: dossier, isLoading: isDossierLoading } = useVinDossier(data?.id);
+  const { contributor } = useContributor(data?.id);
   const hasDossierData = !!(dossier && dossier.events.length > 0);
 
   const [showContributionForm, setShowContributionForm] = useState(false);
@@ -244,9 +248,9 @@ const VINDetail = () => {
       { key: "plongee", label: `Preuves${evidenceCount ? ` (${evidenceCount})` : ""}`, icon: FolderOpen },
       { key: "communaute", label: "Communauté", icon: Users },
       { key: "proprietaire", label: "Propriétaire", icon: KeyRound },
-      { key: "contribuer", label: "Contribuer", icon: PenTool },
+      { key: "contribuer", label: contributor ? "Contribuer" : "Contribuer ✦", icon: PenTool },
     ];
-  }, [dossier]);
+  }, [dossier, contributor]);
 
   // Owner verification for FaceBPanel
   const [ownerVerification, setOwnerVerification] = useState<any>(null);
@@ -1091,15 +1095,14 @@ const VINDetail = () => {
               <PenTool className="w-5 h-5 text-primary" />
               Contribuer à ce dossier
             </h2>
-            <div className="p-6 rounded-xl bg-card border border-border shadow-sm text-center">
-              <p className="text-sm text-muted-foreground mb-4">
-                Partagez vos informations, photos ou documents pour enrichir ce dossier.
-              </p>
-              <Button onClick={handleContributeClick}>
-                <Plus className="w-4 h-4 mr-1.5" />
-                Ajouter une contribution
-              </Button>
-            </div>
+            <ContributionGateway
+              vinId={data.id}
+              contributor={contributor}
+              onContributionComplete={() => {
+                queryClient.invalidateQueries({ queryKey: ["vin-dossier", data.id] });
+                refetch();
+              }}
+            />
           </section>
         </div>
       </main>
@@ -1121,12 +1124,22 @@ const VINDetail = () => {
         isActiveVlinker={selectedContribution ? (authorContribCount.get(selectedContribution.authorPublicId || selectedContribution.author) || 0) >= 2 : false}
       />
 
-      <UsernameRequiredDialog open={showUsernameDialog} onComplete={() => { setShowUsernameDialog(false); setUserHasUsername(true); setShowContributionForm(true); }} />
+      <UsernameRequiredDialog open={showUsernameDialog} onComplete={() => { setShowUsernameDialog(false); setUserHasUsername(true); handleNavTabClick("contribuer"); }} />
       {currentUserId && (
         <>
-          <ContributionForm vinId={data.id} vin={vin || ""} open={showContributionForm} onOpenChange={setShowContributionForm} onSuccess={() => refetch()} />
           <OwnerClaimForm vinId={data.id} vin={vin || ""} open={showOwnerForm} onOpenChange={setShowOwnerForm} onSuccess={() => refetch()} />
         </>
+      )}
+
+      {/* Floating Action Button — scroll to contribute */}
+      {currentUserId && (
+        <button
+          onClick={() => handleNavTabClick("contribuer")}
+          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center justify-center"
+          aria-label="Contribuer"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
       )}
       <PDFDownloadDialog open={showPDFDialog} onOpenChange={setShowPDFDialog} vin={vin || ""} vehicleName={vehicleName} />
       <AdminEditContribution

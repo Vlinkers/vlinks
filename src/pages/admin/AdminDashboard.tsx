@@ -36,6 +36,9 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
+  const { session } = useAuth();
+  const [migrating, setMigrating] = useState(false);
+  const [migrated, setMigrated] = useState(() => localStorage.getItem("vlinks_migration_done") === "true");
   const [stats, setStats] = useState<DashboardStats>({
     vins: 0, contributions: 0, users: 0, documents: 0, photos: 0,
     totalEvents: 0, pendingFacts: 0, activeRedFlags: 0,
@@ -178,6 +181,60 @@ export default function AdminDashboard() {
             )}
           </Link>
         ))}
+      </div>
+
+      {/* Migration tool */}
+      <h2 className="font-display text-lg font-semibold mb-3">Outils</h2>
+      <div className="p-4 rounded-xl border border-border bg-card/50">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-medium text-sm flex items-center gap-2">
+              <DatabaseBackup className="w-4 h-4 text-muted-foreground" />
+              Migration des contributions existantes
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Convertit les anciennes contributions vers le nouveau modèle (événements, faits, preuves).
+            </p>
+          </div>
+          <Button
+            variant={migrated ? "outline" : "default"}
+            size="sm"
+            disabled={migrating || migrated}
+            onClick={async () => {
+              setMigrating(true);
+              try {
+                const { data, error } = await supabase.functions.invoke("migrate-legacy-contributions", {
+                  headers: { Authorization: `Bearer ${session?.access_token}` },
+                });
+                if (error) throw error;
+                toast.success(
+                  `Migration terminée : ${data.events_created} événements, ${data.facts_created} faits, ${data.evidence_created} preuves, ${data.red_flags_created} red flags.`
+                );
+                if (data.errors?.length > 0) {
+                  toast.warning(`${data.errors.length} erreur(s) rencontrée(s).`);
+                }
+                localStorage.setItem("vlinks_migration_done", "true");
+                setMigrated(true);
+              } catch (err) {
+                toast.error("Erreur lors de la migration.");
+                console.error(err);
+              } finally {
+                setMigrating(false);
+              }
+            }}
+          >
+            {migrating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                Migration en cours…
+              </>
+            ) : migrated ? (
+              "Migration effectuée ✓"
+            ) : (
+              "Migrer les contributions"
+            )}
+          </Button>
+        </div>
       </div>
     </AdminLayout>
   );

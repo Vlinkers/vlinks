@@ -183,8 +183,8 @@ export default function OwnerResponseForm({
 
       {/* Unverified owner warning */}
       {!isOwnerVerified && (
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
-          <ShieldAlert className="w-4 h-4 mt-0.5 shrink-0 text-amber-600" />
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-warning/10 border border-warning/30 text-xs text-warning-foreground">
+          <ShieldAlert className="w-4 h-4 mt-0.5 shrink-0 text-warning" />
           <p>
             Vérifiez votre identité pour augmenter la crédibilité de vos réponses.{" "}
             <a href="#verification" className="underline font-medium">

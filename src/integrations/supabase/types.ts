@@ -44,6 +44,68 @@ export type Database = {
         }
         Relationships: []
       }
+      content_reports: {
+        Row: {
+          admin_action: string | null
+          admin_response: string | null
+          created_at: string | null
+          description: string
+          id: string
+          processed_at: string | null
+          processed_by: string | null
+          report_type: string
+          reporter_email: string | null
+          reporter_name: string | null
+          reporter_user_id: string | null
+          status: string | null
+          target_id: string
+          target_type: string
+          vin_id: string | null
+        }
+        Insert: {
+          admin_action?: string | null
+          admin_response?: string | null
+          created_at?: string | null
+          description: string
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          report_type: string
+          reporter_email?: string | null
+          reporter_name?: string | null
+          reporter_user_id?: string | null
+          status?: string | null
+          target_id: string
+          target_type: string
+          vin_id?: string | null
+        }
+        Update: {
+          admin_action?: string | null
+          admin_response?: string | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          report_type?: string
+          reporter_email?: string | null
+          reporter_name?: string | null
+          reporter_user_id?: string | null
+          status?: string | null
+          target_id?: string
+          target_type?: string
+          vin_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_reports_vin_id_fkey"
+            columns: ["vin_id"]
+            isOneToOne: false
+            referencedRelation: "vins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contribution_documents: {
         Row: {
           contribution_id: string

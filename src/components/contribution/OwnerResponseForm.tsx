@@ -168,7 +168,7 @@ export default function OwnerResponseForm({
       </div>
 
       {/* Original community fact */}
-      <Card className="border-blue-200 bg-blue-50/30">
+      <Card className="border-primary/20 bg-primary/5">
         <CardContent className="p-3">
           <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1.5">
             <span>👤 {ROLE_LABELS[factToRespondTo.face === "face_a" ? "buyer" : "owner_verified"] ?? "Communauté"}</span>

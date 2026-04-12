@@ -80,7 +80,7 @@ function buildSummary(dossier: VinDossier): string {
   const { vehicle, stats, trustQuadrant, redFlags } = dossier;
   const parts: string[] = [];
 
-  const name = [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ");
+  const name = [vehicle.year, vehicle.make, vehicle.model, vehicle.trim].filter(Boolean).join(" ");
   parts.push(
     `${name || "Véhicule"} avec ${stats.totalEvents} événement${stats.totalEvents !== 1 ? "s" : ""} documenté${stats.totalEvents !== 1 ? "s" : ""}.`
   );
@@ -108,7 +108,7 @@ export function VinHero({ dossier }: VinHeroProps) {
   const qConfig = QUADRANT_CONFIG[trustQuadrant];
   const QuadrantIcon = qConfig.icon;
 
-  const vehicleName = [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ");
+  const vehicleName = [vehicle.year, vehicle.make, vehicle.model, vehicle.trim].filter(Boolean).join(" ");
   const vehicleSpecs = [
     { label: "Motorisation", value: vehicle.engine },
     { label: "Carrosserie", value: vehicle.body_class },

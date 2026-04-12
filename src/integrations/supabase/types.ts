@@ -795,6 +795,7 @@ export type Database = {
           is_anonymous: boolean | null
           is_owner_contribution: boolean | null
           listing_url: string | null
+          migrated_at: string | null
           mileage_at_intervention: number | null
           old_price: number | null
           province: string | null
@@ -821,6 +822,7 @@ export type Database = {
           is_anonymous?: boolean | null
           is_owner_contribution?: boolean | null
           listing_url?: string | null
+          migrated_at?: string | null
           mileage_at_intervention?: number | null
           old_price?: number | null
           province?: string | null
@@ -847,6 +849,7 @@ export type Database = {
           is_anonymous?: boolean | null
           is_owner_contribution?: boolean | null
           listing_url?: string | null
+          migrated_at?: string | null
           mileage_at_intervention?: number | null
           old_price?: number | null
           province?: string | null
@@ -890,6 +893,7 @@ export type Database = {
           is_former_owner: boolean | null
           is_owner_contribution: boolean | null
           listing_url: string | null
+          migrated_at: string | null
           mileage_at_intervention: number | null
           old_price: number | null
           province: string | null
@@ -913,6 +917,7 @@ export type Database = {
           is_former_owner?: boolean | null
           is_owner_contribution?: boolean | null
           listing_url?: string | null
+          migrated_at?: string | null
           mileage_at_intervention?: number | null
           old_price?: number | null
           province?: string | null
@@ -936,6 +941,7 @@ export type Database = {
           is_former_owner?: boolean | null
           is_owner_contribution?: boolean | null
           listing_url?: string | null
+          migrated_at?: string | null
           mileage_at_intervention?: number | null
           old_price?: number | null
           province?: string | null

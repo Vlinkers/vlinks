@@ -41,6 +41,7 @@ import {
   Recycle
 } from "lucide-react";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PhotoLightbox } from "@/components/PhotoLightbox";
 import { DocumentViewer } from "@/components/DocumentViewer";
@@ -178,11 +179,13 @@ const VINDetail = () => {
   const { data: vinDecode, isLoading: isDecodingVIN } = useVINDecode(vin);
   const { toast } = useToast();
   const { isAdmin, logAction } = useAdmin();
+  const queryClient = useQueryClient();
   const { isFollowing, isLoading: isFollowLoading, toggleFollow } = useVINFollow(vin);
   const isMobile = useIsMobile();
 
   // New dossier data layer
   const { data: dossier, isLoading: isDossierLoading } = useVinDossier(data?.id);
+  const { contributor } = useContributor(data?.id);
   const hasDossierData = !!(dossier && dossier.events.length > 0);
 
   const [showContributionForm, setShowContributionForm] = useState(false);

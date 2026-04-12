@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Menu, X, LogOut, User, Search, Shield, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { NotificationBell } from "@/components/NotificationBell";
 import vlinksIcon from "@/assets/vlinks-icon.svg";
 import {
   DropdownMenu,
@@ -77,7 +78,9 @@ const Header = ({ hideSearch = false, transparent = false }: { hideSearch?: bool
             </Button>
           )}
           {user ? (
-            <DropdownMenu>
+            <>
+              <NotificationBell transparent={transparent} />
+              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className={`gap-2 ${transparent ? "text-white hover:bg-white/10" : ""}`}>
                   <User className="w-4 h-4" />
@@ -105,7 +108,8 @@ const Header = ({ hideSearch = false, transparent = false }: { hideSearch?: bool
                   Déconnexion
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+              </DropdownMenu>
+            </>
           ) : (
             <Button variant="ghost" size="sm" asChild className={transparent ? "text-white hover:bg-white/10" : ""}>
               <Link to="/auth">Connexion</Link>

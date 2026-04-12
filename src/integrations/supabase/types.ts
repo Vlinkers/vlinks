@@ -405,6 +405,50 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          related_id: string | null
+          title: string
+          type: string
+          user_id: string
+          vin_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          related_id?: string | null
+          title: string
+          type: string
+          user_id: string
+          vin_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          related_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+          vin_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_vin_id_fkey"
+            columns: ["vin_id"]
+            isOneToOne: false
+            referencedRelation: "vins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       observed_signals: {
         Row: {
           created_at: string

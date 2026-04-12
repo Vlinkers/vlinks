@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Menu, X, LogOut, User, Search, Shield, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { NotificationBell } from "@/components/NotificationBell";
 import vlinksIcon from "@/assets/vlinks-icon.svg";
 import {
   DropdownMenu,

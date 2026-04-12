@@ -21,6 +21,8 @@ import AdminContributions from "./pages/admin/AdminContributions";
 import AdminVINs from "./pages/admin/AdminVINs";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
+import AdminRedFlags from "./pages/admin/AdminRedFlags";
+import AdminEvents from "./pages/admin/AdminEvents";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +48,8 @@ const App = () => (
                 {/* Admin routes */}
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/contributions" element={<AdminContributions />} />
+                <Route path="/admin/events" element={<AdminEvents />} />
+                <Route path="/admin/red-flags" element={<AdminRedFlags />} />
                 <Route path="/admin/vins" element={<AdminVINs />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
                 <Route path="/admin/audit" element={<AdminAuditLog />} />

@@ -520,6 +520,8 @@ const Profile = () => {
                   <LogOut className="w-4 h-4 mr-2" />
                   {language === "fr" ? "Se déconnecter" : "Sign Out"}
                 </Button>
+
+                <DataDeletionRequest />
                 </div>
               )}
 

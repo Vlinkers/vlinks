@@ -9,12 +9,16 @@ import {
   ClipboardList,
   Loader2,
   ArrowLeft,
+  AlertTriangle,
+  Calendar,
 } from "lucide-react";
 import vlinksFull from "@/assets/vlinks-full-logo.png";
 
 const navItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/admin/contributions", icon: FileText, label: "Contributions" },
+  { to: "/admin/contributions", icon: FileText, label: "Faits" },
+  { to: "/admin/events", icon: Calendar, label: "Événements" },
+  { to: "/admin/red-flags", icon: AlertTriangle, label: "Red Flags" },
   { to: "/admin/vins", icon: Car, label: "VINs" },
   { to: "/admin/users", icon: Users, label: "Utilisateurs" },
   { to: "/admin/audit", icon: ClipboardList, label: "Journal" },

@@ -169,7 +169,7 @@ export default function AdminRedFlags() {
                   <td className="px-4 py-3">{severityBadge(f.severity)}</td>
                   <td className="px-4 py-3 text-xs max-w-[300px] truncate">
                     <div className="flex items-center gap-1.5">
-                      {isAutoDetected(f) && <Bot className="w-3.5 h-3.5 text-blue-500 shrink-0" title="Auto-détecté" />}
+                      {isAutoDetected(f) && <Bot className="w-3.5 h-3.5 text-blue-500 shrink-0" />}
                       {f.title}
                     </div>
                   </td>

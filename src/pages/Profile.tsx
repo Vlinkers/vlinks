@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { User, FileText, LogOut, Calendar, Trash2, Eye, Loader2, AlertCircle, Car, Shield, Star, BarChart3 } from "lucide-react";
 import { ContributorActivity } from "@/components/ContributorActivity";
+import DataDeletionRequest from "@/components/DataDeletionRequest";
 import { validateUsernameFormat, checkUsernameAvailability } from "@/lib/usernameValidation";
 import {
   AlertDialog,
@@ -520,6 +521,8 @@ const Profile = () => {
                   <LogOut className="w-4 h-4 mr-2" />
                   {language === "fr" ? "Se déconnecter" : "Sign Out"}
                 </Button>
+
+                <DataDeletionRequest />
                 </div>
               )}
 

@@ -248,9 +248,9 @@ const VINDetail = () => {
       { key: "plongee", label: `Preuves${evidenceCount ? ` (${evidenceCount})` : ""}`, icon: FolderOpen },
       { key: "communaute", label: "Communauté", icon: Users },
       { key: "proprietaire", label: "Propriétaire", icon: KeyRound },
-      { key: "contribuer", label: "Contribuer", icon: PenTool },
+      { key: "contribuer", label: contributor ? "Contribuer" : "Contribuer ✦", icon: PenTool },
     ];
-  }, [dossier]);
+  }, [dossier, contributor]);
 
   // Owner verification for FaceBPanel
   const [ownerVerification, setOwnerVerification] = useState<any>(null);
@@ -1095,15 +1095,14 @@ const VINDetail = () => {
               <PenTool className="w-5 h-5 text-primary" />
               Contribuer à ce dossier
             </h2>
-            <div className="p-6 rounded-xl bg-card border border-border shadow-sm text-center">
-              <p className="text-sm text-muted-foreground mb-4">
-                Partagez vos informations, photos ou documents pour enrichir ce dossier.
-              </p>
-              <Button onClick={handleContributeClick}>
-                <Plus className="w-4 h-4 mr-1.5" />
-                Ajouter une contribution
-              </Button>
-            </div>
+            <ContributionGateway
+              vinId={data.id}
+              contributor={contributor}
+              onContributionComplete={() => {
+                queryClient.invalidateQueries({ queryKey: ["vin-dossier", data.id] });
+                refetch();
+              }}
+            />
           </section>
         </div>
       </main>
@@ -1128,9 +1127,19 @@ const VINDetail = () => {
       <UsernameRequiredDialog open={showUsernameDialog} onComplete={() => { setShowUsernameDialog(false); setUserHasUsername(true); setShowContributionForm(true); }} />
       {currentUserId && (
         <>
-          <ContributionForm vinId={data.id} vin={vin || ""} open={showContributionForm} onOpenChange={setShowContributionForm} onSuccess={() => refetch()} />
           <OwnerClaimForm vinId={data.id} vin={vin || ""} open={showOwnerForm} onOpenChange={setShowOwnerForm} onSuccess={() => refetch()} />
         </>
+      )}
+
+      {/* Floating Action Button — scroll to contribute */}
+      {currentUserId && (
+        <button
+          onClick={() => handleNavTabClick("contribuer")}
+          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center justify-center"
+          aria-label="Contribuer"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
       )}
       <PDFDownloadDialog open={showPDFDialog} onOpenChange={setShowPDFDialog} vin={vin || ""} vehicleName={vehicleName} />
       <AdminEditContribution

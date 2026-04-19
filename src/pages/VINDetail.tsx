@@ -291,16 +291,16 @@ const VINDetail = () => {
       {showContributionForm && data && (
         <ContributionGateway
           vinId={data.id}
-          vin={data.vin}
-          onClose={() => setShowContributionForm(false)}
-          onSuccess={() => { setShowContributionForm(false); }}
+          contributor={contributor}
+          onContributionComplete={() => setShowContributionForm(false)}
         />
       )}
-      {showOwnerForm && data && (
+      {data && (
         <OwnerClaimForm
           vinId={data.id}
           vin={data.vin}
-          onClose={() => setShowOwnerForm(false)}
+          open={showOwnerForm}
+          onOpenChange={setShowOwnerForm}
           onSuccess={() => setShowOwnerForm(false)}
         />
       )}
@@ -314,8 +314,7 @@ const VINDetail = () => {
       )}
       <UsernameRequiredDialog
         open={showUsernameDialog}
-        onOpenChange={setShowUsernameDialog}
-        onSuccess={() => { setShowUsernameDialog(false); setShowContributionForm(true); }}
+        onComplete={() => { setShowUsernameDialog(false); setShowContributionForm(true); }}
       />
     </div>
   );

@@ -21,6 +21,7 @@ import {
   AlertTriangle, Loader2, Copy, LayoutDashboard, MessageSquare, Camera,
   FileText, Gauge, Plus, FileDown, Share2,
 } from "lucide-react";
+import { DashboardView } from "@/components/vin/DashboardView";
 
 // ─────────────────────────────────────────────────────────────────────────────
 type WorkspaceView = "dashboard" | "contributions" | "photos" | "documents" | "mileage" | "contribute";

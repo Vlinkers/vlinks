@@ -23,6 +23,9 @@ import {
 } from "lucide-react";
 import { DashboardView } from "@/components/vin/DashboardView";
 import { ContributionsView } from "@/components/vin/ContributionsView";
+import { PhotosView } from "@/components/vin/PhotosView";
+import { DocumentsView } from "@/components/vin/DocumentsView";
+import { MileageView } from "@/components/vin/MileageView";
 
 // ─────────────────────────────────────────────────────────────────────────────
 type WorkspaceView = "dashboard" | "contributions" | "photos" | "documents" | "mileage" | "contribute";
@@ -352,18 +355,25 @@ function WorkspacePanel({
     return <ContributionsView dossier={dossier} />;
   }
 
+  if (view === "photos") {
+    return <PhotosView dossier={dossier} onNavigate={(t) => onNavigate(t as WorkspaceView)} />;
+  }
+
+  if (view === "documents") {
+    return <DocumentsView dossier={dossier} onNavigate={(t) => onNavigate(t as WorkspaceView)} />;
+  }
+
+  if (view === "mileage") {
+    return <MileageView dossier={dossier} />;
+  }
+
   return (
     <div className="animate-in fade-in duration-200">
       <header className="mb-6">
         <h2 className="font-display text-2xl font-bold text-foreground">{label}</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Cette vue sera enrichie prochainement.
-        </p>
       </header>
       <div className="rounded-xl border border-dashed border-border bg-card p-12 text-center">
-        <p className="text-sm text-muted-foreground">
-          Placeholder — contenu de la vue <span className="font-semibold text-foreground">{label}</span>.
-        </p>
+        <p className="text-sm text-muted-foreground">Vue à venir.</p>
       </div>
     </div>
   );

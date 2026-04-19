@@ -126,11 +126,12 @@ function eventMatchesFilter(ewf: EventWithFacts, filter: FilterKey): boolean {
 
 interface ContributionsViewProps {
   dossier: VinDossier | null | undefined;
-  onContributionClick?: (eventId: string) => void;
 }
 
-export function ContributionsView({ dossier, onContributionClick }: ContributionsViewProps) {
+export function ContributionsView({ dossier }: ContributionsViewProps) {
+  const isMobile = useIsMobile();
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   const events = dossier?.events ?? [];
   const contributors = dossier?.contributors ?? [];
@@ -148,6 +149,12 @@ export function ContributionsView({ dossier, onContributionClick }: Contribution
     () => sorted.filter((ewf) => eventMatchesFilter(ewf, filter)),
     [sorted, filter]
   );
+
+  const selectedEwf = useMemo(
+    () => events.find((e) => e.event.id === selectedEventId) ?? null,
+    [events, selectedEventId]
+  );
+  const panelOpen = !!selectedEventId && !!selectedEwf;
 
   return (
     <div className="animate-in fade-in duration-200">
@@ -179,27 +186,45 @@ export function ContributionsView({ dossier, onContributionClick }: Contribution
         })}
       </div>
 
-      {/* List */}
-      {filtered.length === 0 ? (
-        <Card className="p-10 text-center border-dashed">
-          <p className="text-sm text-muted-foreground">
-            {events.length === 0
-              ? "Aucune contribution n'a encore été déposée sur ce véhicule."
-              : "Aucune contribution ne correspond à ce filtre."}
-          </p>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {filtered.map((ewf) => (
-            <ContributionCard
-              key={ewf.event.id}
-              ewf={ewf}
-              profile={ewf.facts[0]?.contributor?.user_id ? profiles[ewf.facts[0].contributor!.user_id!] : undefined}
-              onClick={() => onContributionClick?.(ewf.event.id)}
-            />
-          ))}
-        </div>
-      )}
+      {/* List — compresses on desktop when panel is open */}
+      <div
+        className={cn(
+          "transition-all duration-300 ease-out",
+          panelOpen && !isMobile ? "lg:max-w-[55%] lg:pr-4" : "max-w-full"
+        )}
+      >
+        {filtered.length === 0 ? (
+          <Card className="p-10 text-center border-dashed">
+            <p className="text-sm text-muted-foreground">
+              {events.length === 0
+                ? "Aucune contribution n'a encore été déposée sur ce véhicule."
+                : "Aucune contribution ne correspond à ce filtre."}
+            </p>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {filtered.map((ewf) => {
+              const userId = ewf.facts[0]?.contributor?.user_id;
+              return (
+                <ContributionCard
+                  key={ewf.event.id}
+                  ewf={ewf}
+                  profile={userId ? profiles[userId] : undefined}
+                  isActive={ewf.event.id === selectedEventId}
+                  onClick={() => setSelectedEventId(ewf.event.id)}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <ContributionDetailPanel
+        ewf={selectedEwf}
+        open={panelOpen}
+        onClose={() => setSelectedEventId(null)}
+        profiles={profiles}
+      />
     </div>
   );
 }

@@ -359,7 +359,7 @@ export default function AdminContributions() {
                     {f.contributor_display_name || roleLabels[f.contributor_role] || "—"}
                   </td>
                   <td className="px-3 py-3">{tierBadge(f.proof_tier)}</td>
-                  <td className="px-3 py-3">{faceBadge(f.face)}</td>
+                  <td className="px-3 py-3" />
                   <td className="px-3 py-3">{statusBadge(f.moderation_status)}</td>
                   <td className="px-3 py-3 text-muted-foreground text-xs">{new Date(f.created_at).toLocaleDateString("fr-CA")}</td>
                   <td className="px-3 py-3 text-right" onClick={(e) => e.stopPropagation()}>
@@ -407,7 +407,7 @@ export default function AdminContributions() {
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">Statut</p>
-                  <div className="flex items-center gap-2">{statusBadge(selected.moderation_status)} {tierBadge(selected.proof_tier)} {faceBadge(selected.face)}</div>
+                  <div className="flex items-center gap-2">{statusBadge(selected.moderation_status)} {tierBadge(selected.proof_tier)}</div>
                 </div>
               </div>
 

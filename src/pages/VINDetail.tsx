@@ -22,6 +22,7 @@ import {
   FileText, Gauge, Plus, FileDown, Share2,
 } from "lucide-react";
 import { DashboardView } from "@/components/vin/DashboardView";
+import { ContributionsView } from "@/components/vin/ContributionsView";
 
 // ─────────────────────────────────────────────────────────────────────────────
 type WorkspaceView = "dashboard" | "contributions" | "photos" | "documents" | "mileage" | "contribute";
@@ -345,6 +346,10 @@ function WorkspacePanel({
         onNavigate={(target) => onNavigate(target as WorkspaceView)}
       />
     );
+  }
+
+  if (view === "contributions") {
+    return <ContributionsView dossier={dossier} />;
   }
 
   return (

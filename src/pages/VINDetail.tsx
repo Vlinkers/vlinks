@@ -257,7 +257,12 @@ const VINDetail = () => {
         {/* ─── Central panel ─────────────────────────────────────── */}
         <main className="flex-1 min-w-0">
           <div className="max-w-5xl mx-auto p-4 md:p-6">
-            <WorkspacePanel view={activeView} label={activeLabel} dossier={dossier} />
+            <WorkspacePanel
+              view={activeView}
+              label={activeLabel}
+              dossier={dossier}
+              onNavigate={handleNavSelect}
+            />
           </div>
         </main>
       </div>

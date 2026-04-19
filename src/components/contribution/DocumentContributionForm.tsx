@@ -27,7 +27,6 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVinDossier } from "@/hooks/useVinDossier";
-import { ProofTierBadge } from "@/components/vin/ProofTierBadge";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 
 type Contributor = Tables<"contributors">;
@@ -274,11 +273,8 @@ export function DocumentContributionForm({
         <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto" />
         <h3 className="font-display text-lg font-semibold">Document déposé avec succès</h3>
         <p className="text-sm text-muted-foreground">
-          Votre contribution sera classée :
+          Votre contribution sera examinée par notre équipe avant publication.
         </p>
-        <div className="flex justify-center">
-          <ProofTierBadge tier={predictTier(successfulFiles)} />
-        </div>
       </Card>
     );
   }
@@ -608,10 +604,6 @@ export function DocumentContributionForm({
               ))}
             </div>
 
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
-              <span className="text-sm">Niveau de preuve estimé :</span>
-              <ProofTierBadge tier={predictTier(successfulFiles)} />
-            </div>
           </div>
 
           {error && (

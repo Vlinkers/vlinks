@@ -5,6 +5,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ContributionDetailPanel, type ProfileMeta } from "@/components/vin/ContributionDetailPanel";
 import type { EventWithFacts, FactWithEvidence, Contributor, VinDossier } from "@/hooks/useVinDossier";
 
 // ── Labels ──────────────────────────────────────────────
@@ -49,11 +51,6 @@ function isDoc(ev: { evidence_type: string; file_type: string | null }) {
 }
 
 // ── Profile lookup ──────────────────────────────────────
-
-interface ProfileMeta {
-  created_at: string;
-  vins_contributed_to: number | null;
-}
 
 function useContributorProfiles(contributors: Contributor[]) {
   const [profiles, setProfiles] = useState<Record<string, ProfileMeta>>({});

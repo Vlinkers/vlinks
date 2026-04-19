@@ -234,10 +234,12 @@ export function ContributionsView({ dossier }: ContributionsViewProps) {
 function ContributionCard({
   ewf,
   profile,
+  isActive,
   onClick,
 }: {
   ewf: EventWithFacts;
   profile: ProfileMeta | undefined;
+  isActive: boolean;
   onClick: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);

@@ -68,11 +68,6 @@ const tierBadge = (t: string) => {
   }
 };
 
-const faceBadge = (f: string) => (
-  <Badge variant="outline" className={`text-[10px] ${f === "face_a" ? "border-primary/50 text-primary" : "border-blue-500/50 text-blue-500"}`}>
-    {f === "face_a" ? "Face A" : "Face B"}
-  </Badge>
-);
 
 const roleLabels: Record<string, string> = {
   owner_verified: "Propriétaire ✓",
@@ -310,13 +305,7 @@ export default function AdminContributions() {
         ))}
       </div>
       <div className="flex flex-wrap gap-2 mb-6">
-        <span className="text-xs text-muted-foreground self-center mr-1">Face:</span>
-        {["all", "face_a", "face_b"].map((f) => (
-          <Button key={f} size="sm" variant={faceFilter === f ? "secondary" : "ghost"} onClick={() => setFaceFilter(f)} className="text-xs h-7">
-            {f === "all" ? "Toutes" : f === "face_a" ? "Face A" : "Face B"}
-          </Button>
-        ))}
-        <span className="text-xs text-muted-foreground self-center ml-3 mr-1">Tier:</span>
+        <span className="text-xs text-muted-foreground self-center mr-1">Niveau:</span>
         {["all", "verified", "documented", "declaration"].map((t) => (
           <Button key={t} size="sm" variant={tierFilter === t ? "secondary" : "ghost"} onClick={() => setTierFilter(t)} className="text-xs h-7">
             {t === "all" ? "Tous" : t === "verified" ? "Vérifié" : t === "documented" ? "Documenté" : "Déclaration"}
@@ -370,7 +359,7 @@ export default function AdminContributions() {
                     {f.contributor_display_name || roleLabels[f.contributor_role] || "—"}
                   </td>
                   <td className="px-3 py-3">{tierBadge(f.proof_tier)}</td>
-                  <td className="px-3 py-3">{faceBadge(f.face)}</td>
+                  <td className="px-3 py-3" />
                   <td className="px-3 py-3">{statusBadge(f.moderation_status)}</td>
                   <td className="px-3 py-3 text-muted-foreground text-xs">{new Date(f.created_at).toLocaleDateString("fr-CA")}</td>
                   <td className="px-3 py-3 text-right" onClick={(e) => e.stopPropagation()}>
@@ -418,7 +407,7 @@ export default function AdminContributions() {
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">Statut</p>
-                  <div className="flex items-center gap-2">{statusBadge(selected.moderation_status)} {tierBadge(selected.proof_tier)} {faceBadge(selected.face)}</div>
+                  <div className="flex items-center gap-2">{statusBadge(selected.moderation_status)} {tierBadge(selected.proof_tier)}</div>
                 </div>
               </div>
 

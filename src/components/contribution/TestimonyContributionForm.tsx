@@ -36,7 +36,6 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVinDossier } from "@/hooks/useVinDossier";
-import { ProofTierBadge } from "@/components/vin/ProofTierBadge";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 
 type Contributor = Tables<"contributors">;
@@ -252,10 +251,7 @@ export function TestimonyContributionForm({
       <Card className="p-6 text-center space-y-4 border-border bg-card">
         <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto" />
         <h3 className="font-display text-lg font-semibold">Témoignage déposé avec succès</h3>
-        <p className="text-sm text-muted-foreground">Votre contribution sera classée :</p>
-        <div className="flex justify-center">
-          <ProofTierBadge tier={tier} />
-        </div>
+        <p className="text-sm text-muted-foreground">Votre contribution sera examinée par notre équipe avant publication.</p>
       </Card>
     );
   }
@@ -399,14 +395,8 @@ export function TestimonyContributionForm({
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-3 space-y-3">
               <p className="text-xs text-muted-foreground">
-                Ajouter un document améliorera le niveau de preuve de votre témoignage.
+                Ajouter un document (facture, photo, rapport) renforce la crédibilité de votre témoignage.
               </p>
-              <div className="flex items-center gap-2 text-xs">
-                <span>Sans document :</span>
-                <ProofTierBadge tier="declaration" />
-                <span>→ Avec document :</span>
-                <ProofTierBadge tier="documented" />
-              </div>
 
               {!uploadedFile && (
                 <div
@@ -542,11 +532,6 @@ export function TestimonyContributionForm({
                 </Badge>
               </div>
             )}
-
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
-              <span>Niveau de preuve :</span>
-              <ProofTierBadge tier={tier} />
-            </div>
 
             {isAnonymous && (
               <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border border-border text-muted-foreground">

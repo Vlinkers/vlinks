@@ -44,21 +44,21 @@ const TermsOfService = () => {
 
             <h2>3. Droit de réponse</h2>
             <p>
-              Tout propriétaire ou personne concernée par les informations publiées sur un dossier VIN peut exercer un droit de réponse via l'Espace propriétaire (Face B de la matrice de confiance).
+              Tout propriétaire ou personne concernée par les informations publiées sur un dossier VIN peut exercer un droit de réponse via l'Espace propriétaire.
             </p>
             <p>
               Les réponses du propriétaire sont publiées sans modération éditoriale. Seule la conformité aux règles de la plateforme est vérifiée.
             </p>
             <p>
-              Le droit de réponse est structurel : il est intégré dans l'architecture même de la plateforme, garantissant un équilibre entre les contributions communautaires (Face A) et la perspective du propriétaire (Face B).
+              Le droit de réponse est structurel : il est intégré dans l'architecture même de la plateforme, garantissant un équilibre entre les contributions de la communauté et la perspective du propriétaire.
             </p>
 
-            <h2>4. Score de confiance</h2>
+            <h2>4. Modération</h2>
             <p>
-              Le score de confiance affiché pour chaque véhicule est un calcul automatique basé sur deux axes : le score communautaire (quantité et qualité des contributions Face A) et le score de transparence du propriétaire (engagement du propriétaire via la Face B).
+              Toutes les contributions publiées sur la plateforme sont examinées par une équipe humaine avant publication. VLINKS applique une politique de modération neutre et factuelle, sans jugement éditorial sur les véhicules.
             </p>
             <p>
-              La méthodologie de calcul est transparente et visible par tous les utilisateurs. Le score n'est pas un jugement de VLINKS mais le résultat d'un algorithme déterministe. VLINKS ne garantit pas l'exactitude du score ni son adéquation à un usage particulier.
+              VLINKS ne garantit pas l'exactitude des informations publiées par les contributeurs. Les utilisateurs sont invités à signaler tout contenu qui leur semble inapproprié via le système de signalement intégré.
             </p>
 
             <h2>5. Propriété intellectuelle</h2>

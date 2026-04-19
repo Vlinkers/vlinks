@@ -302,30 +302,30 @@ export function TestimonyContributionForm({
             <p className="text-xs text-destructive">Minimum 30 caractères ({factContent.length}/30)</p>
           )}
 
-          {/* Event context */}
+          {/* Intervention context */}
           <div className="space-y-3">
-            <p className="text-sm font-medium">À quel événement ce témoignage se rapporte-t-il ?</p>
+            <p className="text-sm font-medium">À quelle intervention ce témoignage se rapporte-t-il ?</p>
             <div className="flex gap-2">
               <Button
                 variant={eventChoice === "existing" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setEventChoice("existing")}
               >
-                Événement existant
+                Intervention existante
               </Button>
               <Button
                 variant={eventChoice === "new" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setEventChoice("new")}
               >
-                Nouvel événement
+                Nouvelle intervention
               </Button>
             </div>
 
             {eventChoice === "existing" && existingEvents.length > 0 && (
               <Select value={selectedEventId} onValueChange={setSelectedEventId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un événement" />
+                  <SelectValue placeholder="Sélectionner une intervention" />
                 </SelectTrigger>
                 <SelectContent>
                   {existingEvents.map((e) => (
@@ -339,7 +339,7 @@ export function TestimonyContributionForm({
 
             {eventChoice === "existing" && existingEvents.length === 0 && (
               <p className="text-sm text-muted-foreground italic">
-                Aucun événement existant. Créez-en un nouveau.
+                Aucune intervention existante. Créez-en une nouvelle.
               </p>
             )}
 
@@ -347,7 +347,7 @@ export function TestimonyContributionForm({
               <div className="space-y-2 pl-2 border-l-2 border-primary/20">
                 <Select value={newEventType} onValueChange={(v) => setNewEventType(v as EventType)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Type d'événement" />
+                    <SelectValue placeholder="Type d'intervention" />
                   </SelectTrigger>
                   <SelectContent>
                     {EVENT_TYPES.map((t) => (
@@ -356,7 +356,7 @@ export function TestimonyContributionForm({
                   </SelectContent>
                 </Select>
                 <Input
-                  placeholder="Titre de l'événement"
+                  placeholder="Titre de l'intervention"
                   value={newEventTitle}
                   onChange={(e) => setNewEventTitle(e.target.value)}
                 />
@@ -516,7 +516,7 @@ export function TestimonyContributionForm({
           <div className="space-y-3 text-sm">
             <div className="p-3 rounded-lg bg-muted/20 border border-border space-y-1">
               <p className="font-medium">
-                Événement :{" "}
+                Intervention :{" "}
                 {eventChoice === "new"
                   ? newEventTitle
                   : existingEvents.find((e) => e.id === selectedEventId)?.title ?? "—"}

@@ -89,7 +89,7 @@ const VINDetail = () => {
   const handleContributeClick = useCallback(() => {
     if (!currentUserId) { navigate(`/auth?redirect=/vin/${vin}`); return; }
     if (!userHasUsername) { setShowUsernameDialog(true); return; }
-    setShowContributionForm(true);
+    setActiveView("contribute");
   }, [currentUserId, userHasUsername, navigate, vin]);
 
   const handleNavSelect = useCallback((key: WorkspaceView) => {
@@ -266,6 +266,8 @@ const VINDetail = () => {
               label={activeLabel}
               dossier={dossier}
               onNavigate={handleNavSelect}
+              vinId={data.id}
+              contributor={contributor}
             />
           </div>
         </main>
@@ -298,13 +300,6 @@ const VINDetail = () => {
       )}
 
       {/* ─── Dialogs ────────────────────────────────────────────── */}
-      {showContributionForm && data && (
-        <ContributionGateway
-          vinId={data.id}
-          contributor={contributor}
-          onContributionComplete={() => setShowContributionForm(false)}
-        />
-      )}
       {data && (
         <OwnerClaimForm
           vinId={data.id}
@@ -324,7 +319,7 @@ const VINDetail = () => {
       )}
       <UsernameRequiredDialog
         open={showUsernameDialog}
-        onComplete={() => { setShowUsernameDialog(false); setShowContributionForm(true); }}
+        onComplete={() => { setShowUsernameDialog(false); setActiveView("contribute"); }}
       />
     </div>
   );
@@ -336,11 +331,15 @@ function WorkspacePanel({
   label,
   dossier,
   onNavigate,
+  vinId,
+  contributor,
 }: {
   view: WorkspaceView;
   label: string;
   dossier: any;
   onNavigate: (view: WorkspaceView) => void;
+  vinId: string;
+  contributor: any;
 }) {
   if (view === "dashboard") {
     return (
@@ -365,6 +364,17 @@ function WorkspacePanel({
 
   if (view === "mileage") {
     return <MileageView dossier={dossier} />;
+  }
+
+  if (view === "contribute") {
+    return (
+      <ContributionGateway
+        vinId={vinId}
+        contributor={contributor}
+        onContributionComplete={() => { /* success state handled inside */ }}
+        onViewContributions={() => onNavigate("contributions")}
+      />
+    );
   }
 
   return (

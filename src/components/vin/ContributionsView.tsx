@@ -267,7 +267,10 @@ function ContributionCard({
 
   return (
     <Card
-      className="p-4 cursor-pointer transition-all hover:shadow-md hover:border-primary/40"
+      className={cn(
+        "p-4 cursor-pointer transition-all hover:shadow-md hover:border-primary/40",
+        isActive && "border-primary shadow-md ring-1 ring-primary/30"
+      )}
       onClick={onClick}
     >
       {/* Header */}

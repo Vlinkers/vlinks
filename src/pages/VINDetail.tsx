@@ -327,16 +327,26 @@ const VINDetail = () => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Placeholder panel — content per view will be filled in subsequent prompts
 function WorkspacePanel({
   view,
   label,
   dossier,
+  onNavigate,
 }: {
   view: WorkspaceView;
   label: string;
   dossier: any;
+  onNavigate: (view: WorkspaceView) => void;
 }) {
+  if (view === "dashboard") {
+    return (
+      <DashboardView
+        dossier={dossier}
+        onNavigate={(target) => onNavigate(target as WorkspaceView)}
+      />
+    );
+  }
+
   return (
     <div className="animate-in fade-in duration-200">
       <header className="mb-6">
@@ -345,17 +355,10 @@ function WorkspacePanel({
           Cette vue sera enrichie prochainement.
         </p>
       </header>
-
       <div className="rounded-xl border border-dashed border-border bg-card p-12 text-center">
         <p className="text-sm text-muted-foreground">
           Placeholder — contenu de la vue <span className="font-semibold text-foreground">{label}</span>.
         </p>
-        {dossier && (
-          <p className="text-xs text-muted-foreground mt-3">
-            Données disponibles : {dossier.stats?.totalEvents ?? 0} événement(s),{" "}
-            {dossier.stats?.totalFacts ?? 0} fait(s).
-          </p>
-        )}
       </div>
     </div>
   );

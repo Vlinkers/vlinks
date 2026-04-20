@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Camera, Plus, X, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { buildPhotoUrl } from "@/lib/photoUrl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { VinDossier, Contributor } from "@/hooks/useVinDossier";
@@ -39,10 +40,7 @@ function isPhoto(ev: { evidence_type: string; file_type: string | null }) {
   return PHOTO_TYPES.includes(ev.evidence_type) || (ev.file_type ?? "").startsWith("image/");
 }
 
-function photoUrl(path: string) {
-  if (path.startsWith("http")) return path;
-  return supabase.storage.from("vin-photos").getPublicUrl(path).data.publicUrl;
-}
+// photoUrl now provided by shared buildPhotoUrl utility
 
 function formatDate(d: string | null | undefined) {
   if (!d) return "—";
@@ -70,7 +68,7 @@ export function PhotosView({ dossier, onNavigate }: PhotosViewProps) {
           if (!isPhoto(ev)) continue;
           items.push({
             id: ev.id,
-            url: photoUrl(ev.file_path),
+            url: buildPhotoUrl(ev.file_path),
             fileName: ev.file_name,
             description: ev.description,
             uploadedAt: ev.created_at ?? ewf.event.event_date ?? "",

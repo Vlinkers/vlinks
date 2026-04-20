@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
+import { buildPhotoUrl } from "@/lib/photoUrl";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OwnerClaimForm } from "@/components/OwnerClaimForm";
@@ -45,10 +46,7 @@ function isPhoto(ev: { evidence_type: string; file_type: string | null }) {
 function isDoc(ev: { evidence_type: string; file_type: string | null }) {
   return DOC_TYPES.includes(ev.evidence_type) || ev.file_type === "application/pdf";
 }
-function photoUrl(path: string) {
-  if (path.startsWith("http")) return path;
-  return supabase.storage.from("vin-photos").getPublicUrl(path).data.publicUrl;
-}
+// photoUrl now provided by shared buildPhotoUrl utility
 function initials(name: string | null | undefined) {
   if (!name) return "?";
   const parts = name.trim().split(/\s+/);
@@ -302,6 +300,30 @@ function OwnerContributionCard({
             <p className="text-sm text-foreground/90 leading-relaxed line-clamp-2 flex-1">{content}</p>
           ) : (
             <p className="text-sm text-muted-foreground/60 italic flex-1">Aucune description</p>
+          )}
+
+          {/* Photo thumbnails */}
+          {photos.length > 0 && (
+            <div className="flex items-center gap-1.5 mt-3">
+              {photos.slice(0, 4).map((p) => (
+                <div
+                  key={p.id}
+                  className="relative w-14 h-14 rounded-md overflow-hidden border border-[hsl(170,40%,80%)] bg-muted flex-shrink-0"
+                >
+                  <img
+                    src={buildPhotoUrl(p.file_path)}
+                    alt={p.description ?? p.file_name}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+              {photos.length > 4 && (
+                <div className="w-14 h-14 rounded-md border border-[hsl(170,40%,80%)] bg-[hsl(170,40%,92%)] flex items-center justify-center text-xs font-semibold text-[hsl(170,70%,30%)] flex-shrink-0">
+                  +{photos.length - 4}
+                </div>
+              )}
+            </div>
           )}
 
           <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-border/60">

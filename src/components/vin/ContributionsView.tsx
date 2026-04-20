@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Camera, FileText, ClipboardCheck, Calendar, Gauge, ChevronRight, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { buildPhotoUrl } from "@/lib/photoUrl";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -49,10 +50,7 @@ function isPhoto(ev: { evidence_type: string; file_type: string | null }) {
 function isDoc(ev: { evidence_type: string; file_type: string | null }) {
   return DOC_TYPES.includes(ev.evidence_type) || ev.file_type === "application/pdf";
 }
-function photoUrl(path: string) {
-  if (path.startsWith("http")) return path;
-  return supabase.storage.from("vin-photos").getPublicUrl(path).data.publicUrl;
-}
+// photoUrl now provided by shared buildPhotoUrl utility
 
 // ── Profile lookup ──────────────────────────────────────
 
@@ -372,6 +370,30 @@ function ContributionCard({
             </p>
           ) : (
             <p className="text-sm text-muted-foreground/60 italic flex-1">Aucune description</p>
+          )}
+
+          {/* Photo thumbnails (max 4 + overflow badge) */}
+          {photos.length > 0 && (
+            <div className="flex items-center gap-1.5 mt-3">
+              {photos.slice(0, 4).map((p) => (
+                <div
+                  key={p.id}
+                  className="relative w-14 h-14 rounded-md overflow-hidden border border-border/60 bg-muted flex-shrink-0"
+                >
+                  <img
+                    src={buildPhotoUrl(p.file_path)}
+                    alt={p.description ?? p.file_name}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+              {photos.length > 4 && (
+                <div className="w-14 h-14 rounded-md border border-border/60 bg-muted/60 flex items-center justify-center text-xs font-semibold text-muted-foreground flex-shrink-0">
+                  +{photos.length - 4}
+                </div>
+              )}
+            </div>
           )}
 
           <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-border/60">

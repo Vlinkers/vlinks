@@ -227,102 +227,107 @@ function OwnerContributionCard({
   const dateLabel = formatDate(ewf.event.event_date);
   const content = ownerFact?.fact.content ?? ewf.event.description ?? "";
 
+  const askingPrice = (ewf.event as any).asking_price as number | null | undefined;
+
   return (
     <Card
       className={cn(
-        "p-4 cursor-pointer transition-all hover:shadow-md border-l-4 border-l-[hsl(170,70%,35%)]",
+        "p-0 cursor-pointer transition-all hover:shadow-md overflow-hidden border-l-[3px] border-l-[hsl(170,70%,35%)]",
         isActive ? "shadow-md ring-1 ring-[hsl(170,70%,35%)]/40" : ""
       )}
       onClick={onClick}
     >
-      <div className="flex items-start gap-3 mb-3">
-        <Avatar className="w-10 h-10 flex-shrink-0">
-          <AvatarFallback className="bg-[hsl(170,55%,90%)] text-[hsl(170,70%,25%)] text-xs font-semibold">
-            {contributor?.is_anonymous ? "?" : initials(displayName)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="font-semibold text-sm text-foreground truncate">{displayName}</span>
-            <Badge
-              className={cn(
-                "text-[10px] h-5",
-                isVerified
-                  ? "bg-[hsl(170,70%,35%)] text-white hover:bg-[hsl(170,70%,30%)]"
-                  : "bg-[hsl(170,40%,90%)] text-[hsl(170,70%,25%)] hover:bg-[hsl(170,40%,85%)]"
-              )}
-            >
+      <div className="flex flex-col sm:flex-row">
+        {/* LEFT — Metadata block (30%) */}
+        <div className="sm:w-[34%] sm:max-w-[220px] p-4 flex flex-col gap-2 border-b sm:border-b-0 sm:border-r border-border/60 bg-[hsl(170,55%,97%)]">
+          <div className="flex items-center gap-2.5">
+            <Avatar className="w-9 h-9 flex-shrink-0">
+              <AvatarFallback className="bg-[hsl(170,55%,88%)] text-[hsl(170,70%,25%)] text-[11px] font-semibold">
+                {contributor?.is_anonymous ? "?" : initials(displayName)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-sm text-foreground truncate leading-tight">{displayName}</p>
+              <p className="text-[10px] text-muted-foreground truncate leading-tight mt-0.5">{roleLabel}</p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-1">
+            <Badge className={cn(
+              "text-[10px] h-4 px-1.5",
+              isVerified
+                ? "bg-[hsl(170,70%,35%)] text-white hover:bg-[hsl(170,70%,30%)]"
+                : "bg-[hsl(170,40%,90%)] text-[hsl(170,70%,25%)] hover:bg-[hsl(170,40%,85%)]"
+            )}>
               {isVerified && <ShieldCheck className="w-2.5 h-2.5 mr-0.5" />}
-              {roleLabel}
+              Propriétaire
             </Badge>
+            <Badge variant="secondary" className="text-[10px] h-4 px-1.5 font-medium">{eventLabel}</Badge>
           </div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-[11px] text-muted-foreground">
-            {dateLabel && (
-              <span className="inline-flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                {dateLabel}
-              </span>
-            )}
-            {ewf.event.mileage_at_event != null && (
-              <span className="inline-flex items-center gap-1">
-                <Gauge className="w-3 h-3" />
-                {ewf.event.mileage_at_event.toLocaleString("fr-CA")} km
-              </span>
-            )}
-          </div>
-        </div>
-        <ChevronRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0 mt-1" />
-      </div>
 
-      {content && (
-        <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line mb-3 line-clamp-4">
-          {content}
-        </p>
-      )}
-
-      {photos.length > 0 && (
-        <div className="flex gap-1.5 mb-3">
-          {photos.slice(0, 4).map((p) => (
-            <div key={p.id} className="w-16 h-16 rounded-md overflow-hidden bg-muted flex-shrink-0 border border-border">
-              <img src={photoUrl(p.file_path)} alt={p.file_name} loading="lazy" className="w-full h-full object-cover" />
+          {dateLabel && (
+            <div className="mt-1">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">Date</p>
+              <p className="font-display text-base font-bold text-foreground leading-tight">{dateLabel}</p>
             </div>
-          ))}
-          {photos.length > 4 && (
-            <div className="w-16 h-16 rounded-md bg-muted border border-border flex items-center justify-center text-xs font-medium text-muted-foreground flex-shrink-0">
-              +{photos.length - 4}
+          )}
+
+          {(ewf.event.mileage_at_event != null || askingPrice != null) && (
+            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-0.5">
+              {ewf.event.mileage_at_event != null && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium inline-flex items-center gap-1">
+                    <Gauge className="w-2.5 h-2.5" />Km
+                  </p>
+                  <p className="text-sm font-semibold text-foreground tabular-nums">
+                    {ewf.event.mileage_at_event.toLocaleString("fr-CA")}
+                  </p>
+                </div>
+              )}
+              {askingPrice != null && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">Prix</p>
+                  <p className="text-sm font-semibold text-foreground tabular-nums">
+                    {askingPrice.toLocaleString("fr-CA")} $
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
-      )}
 
-      {docs.length > 0 && (
-        <div className="space-y-1.5 mb-3">
-          {docs.slice(0, 3).map((d) => (
-            <div key={d.id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-[hsl(170,55%,96%)] text-xs">
-              <FileText className="w-3.5 h-3.5 text-[hsl(170,70%,30%)] flex-shrink-0" />
-              <span className="truncate text-foreground/80">{d.file_name}</span>
-            </div>
-          ))}
-          {docs.length > 3 && (
-            <p className="text-[11px] text-muted-foreground pl-1">
-              +{docs.length - 3} autre{docs.length - 3 > 1 ? "s" : ""} document{docs.length - 3 > 1 ? "s" : ""}
-            </p>
+        {/* RIGHT — Content + indicators (70%) */}
+        <div className="flex-1 p-4 flex flex-col min-w-0">
+          {content ? (
+            <p className="text-sm text-foreground/90 leading-relaxed line-clamp-2 flex-1">{content}</p>
+          ) : (
+            <p className="text-sm text-muted-foreground/60 italic flex-1">Aucune description</p>
           )}
-        </div>
-      )}
 
-      <div className="flex items-center gap-2 pt-2 border-t border-border/60">
-        <Badge variant="secondary" className="text-[10px] font-medium">{eventLabel}</Badge>
-        {photos.length > 0 && (
-          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-            <Camera className="w-3 h-3" />{photos.length}
-          </span>
-        )}
-        {docs.length > 0 && (
-          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-            <FileText className="w-3 h-3" />{docs.length}
-          </span>
-        )}
+          <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-border/60">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              {photos.length > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <Camera className="w-3.5 h-3.5" />
+                  <span className="tabular-nums font-medium">{photos.length}</span>
+                </span>
+              )}
+              {docs.length > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <FileText className="w-3.5 h-3.5" />
+                  <span className="tabular-nums font-medium">{docs.length}</span>
+                </span>
+              )}
+              {photos.length === 0 && docs.length === 0 && (
+                <span className="text-[11px] text-muted-foreground/50">Aucune pièce jointe</span>
+              )}
+            </div>
+            <span className="inline-flex items-center gap-1 text-xs text-[hsl(170,70%,30%)] font-medium">
+              Lire la suite
+              <ChevronRight className="w-3.5 h-3.5" />
+            </span>
+          </div>
+        </div>
       </div>
     </Card>
   );

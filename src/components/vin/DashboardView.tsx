@@ -41,12 +41,18 @@ export function DashboardView({ dossier, onNavigate }: DashboardViewProps) {
     };
   }, [dossier]);
 
-  const tiles: { key: DashboardTarget; icon: typeof MessageSquare; emoji: string; value: number; label: string }[] = [
-    { key: "contributions", icon: MessageSquare, emoji: "💬", value: inventory.contributions, label: "Contributions" },
-    { key: "photos",        icon: Camera,         emoji: "📷", value: inventory.photos,        label: "Photos" },
-    { key: "documents",     icon: FileText,       emoji: "📄", value: inventory.documents,     label: "Documents" },
-    { key: "contributions", icon: Wrench,         emoji: "🔧", value: inventory.inspections,   label: inventory.inspections === 1 ? "Rapport d'inspection" : "Rapports d'inspection" },
-    { key: "contributions", icon: Users,          emoji: "👤", value: inventory.contributors,  label: inventory.contributors === 1 ? "Contributeur" : "Contributeurs" },
+  const tiles: { key: DashboardTarget; icon: typeof MessageSquare; emoji: string; value: number; label: string; sublabel?: string }[] = [
+    {
+      key: "contributions",
+      icon: MessageSquare,
+      emoji: "💬",
+      value: inventory.contributions,
+      label: inventory.contributions === 1 ? "contribution" : "contributions",
+      sublabel: `${inventory.contributors} ${inventory.contributors === 1 ? "contributeur" : "contributeurs"}`,
+    },
+    { key: "photos",        icon: Camera,    emoji: "📷", value: inventory.photos,      label: inventory.photos === 1 ? "photo" : "photos" },
+    { key: "documents",     icon: FileText,  emoji: "📄", value: inventory.documents,   label: inventory.documents === 1 ? "document" : "documents" },
+    { key: "contributions", icon: Wrench,    emoji: "🔧", value: inventory.inspections, label: inventory.inspections === 1 ? "rapport d'inspection" : "rapports d'inspection" },
   ];
 
   // ── Section 2: missing items ────────────────────────────────────────────
@@ -100,7 +106,7 @@ export function DashboardView({ dossier, onNavigate }: DashboardViewProps) {
         <h3 className="text-xs font-semibold tracking-[0.12em] uppercase text-muted-foreground mb-3">
           Inventaire du dossier
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {tiles.map((tile, idx) => {
             const Icon = tile.icon;
             return (
@@ -124,6 +130,12 @@ export function DashboardView({ dossier, onNavigate }: DashboardViewProps) {
                 <div className="text-xs text-muted-foreground mt-1.5 leading-tight">
                   {tile.label}
                 </div>
+                {tile.sublabel && (
+                  <div className="text-[11px] text-muted-foreground/70 mt-0.5 leading-tight inline-flex items-center gap-1">
+                    <Users className="w-3 h-3" />
+                    {tile.sublabel}
+                  </div>
+                )}
               </button>
             );
           })}

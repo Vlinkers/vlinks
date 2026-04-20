@@ -1,9 +1,10 @@
-import { useMemo } from "react";
-import { FileText, FileSpreadsheet, FileImage, Plus, Download, ClipboardCheck } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useMemo, useState } from "react";
+import { FileText, FileSpreadsheet, FileImage, Plus, Eye, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DocumentViewer } from "@/components/DocumentViewer";
 import type { VinDossier, Contributor } from "@/hooks/useVinDossier";
+import type { ContributionDocument } from "@/hooks/useVINData";
 
 interface DocumentsViewProps {
   dossier: VinDossier | null | undefined;
@@ -12,7 +13,7 @@ interface DocumentsViewProps {
 
 interface DocItem {
   id: string;
-  url: string;
+  filePath: string;
   fileName: string;
   fileType: string | null;
   fileSize: number | null;
@@ -38,11 +39,6 @@ const ROLE_LABELS: Record<string, string> = {
 
 function isDoc(ev: { evidence_type: string; file_type: string | null }) {
   return DOC_TYPES.includes(ev.evidence_type) || ev.file_type === "application/pdf";
-}
-
-function docUrl(path: string) {
-  if (path.startsWith("http")) return path;
-  return supabase.storage.from("vin-documents").getPublicUrl(path).data.publicUrl;
 }
 
 function formatDate(d: string | null | undefined) {
@@ -74,6 +70,8 @@ function fileIcon(type: string | null, isInspection: boolean) {
 }
 
 export function DocumentsView({ dossier, onNavigate }: DocumentsViewProps) {
+  const [viewerDoc, setViewerDoc] = useState<ContributionDocument | null>(null);
+
   const documents = useMemo<DocItem[]>(() => {
     if (!dossier) return [];
     const items: DocItem[] = [];
@@ -83,7 +81,7 @@ export function DocumentsView({ dossier, onNavigate }: DocumentsViewProps) {
           if (!isDoc(ev)) continue;
           items.push({
             id: ev.id,
-            url: docUrl(ev.file_path),
+            filePath: ev.file_path,
             fileName: ev.file_name,
             fileType: ev.file_type,
             fileSize: ev.file_size,
@@ -98,6 +96,17 @@ export function DocumentsView({ dossier, onNavigate }: DocumentsViewProps) {
     items.sort((a, b) => (b.uploadedAt || "").localeCompare(a.uploadedAt || ""));
     return items;
   }, [dossier]);
+
+  const openDoc = (d: DocItem) => {
+    setViewerDoc({
+      id: d.id,
+      fileName: d.fileName,
+      filePath: d.filePath,
+      fileType: d.fileType,
+      fileSize: d.fileSize,
+      description: null,
+    });
+  };
 
   if (documents.length === 0) {
     return (
@@ -131,12 +140,11 @@ export function DocumentsView({ dossier, onNavigate }: DocumentsViewProps) {
         {documents.map((d) => {
           const Icon = fileIcon(d.fileType, d.isInspection);
           return (
-            <a
+            <button
               key={d.id}
-              href={d.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/40 hover:border-primary/40 transition-colors group"
+              type="button"
+              onClick={() => openDoc(d)}
+              className="w-full text-left flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/40 hover:border-primary/40 transition-colors group"
             >
               <div
                 className={`flex-shrink-0 w-10 h-10 rounded-md flex items-center justify-center ${
@@ -160,11 +168,17 @@ export function DocumentsView({ dossier, onNavigate }: DocumentsViewProps) {
                   {d.fileSize ? ` · ${formatSize(d.fileSize)}` : ""}
                 </p>
               </div>
-              <Download className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
-            </a>
+              <Eye className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+            </button>
           );
         })}
       </div>
+
+      <DocumentViewer
+        doc={viewerDoc}
+        open={!!viewerDoc}
+        onOpenChange={(o) => { if (!o) setViewerDoc(null); }}
+      />
     </div>
   );
 }

@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { X, Calendar, Gauge, FileText, Download, ExternalLink, Camera } from "lucide-react";
+import { X, Calendar, Gauge, FileText, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { PhotoLightbox } from "@/components/PhotoLightbox";
+import { DocumentViewer } from "@/components/DocumentViewer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { EventWithFacts, FactWithEvidence, Evidence } from "@/hooks/useVinDossier";
+import type { ContributionDocument } from "@/hooks/useVINData";
 
 const ROLE_LABELS: Record<string, string> = {
   owner_verified: "Propriétaire vérifié",
@@ -373,30 +374,39 @@ function FactBlock({
 }
 
 function DocumentItem({ doc }: { doc: Evidence }) {
-  const url = docUrl(doc.file_path);
+  const [viewerDoc, setViewerDoc] = useState<ContributionDocument | null>(null);
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/40">
-      <div className="w-10 h-10 rounded-md bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-        <FileText className="w-5 h-5" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">{doc.file_name}</p>
-        {doc.description && (
-          <p className="text-xs text-muted-foreground truncate">{doc.description}</p>
-        )}
-      </div>
-      <div className="flex gap-1 flex-shrink-0">
-        <Button asChild size="icon" variant="ghost" className="h-8 w-8" aria-label="Ouvrir">
-          <a href={url} target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="w-4 h-4" />
-          </a>
-        </Button>
-        <Button asChild size="icon" variant="ghost" className="h-8 w-8" aria-label="Télécharger">
-          <a href={url} download={doc.file_name}>
-            <Download className="w-4 h-4" />
-          </a>
-        </Button>
-      </div>
-    </div>
+    <>
+      <button
+        type="button"
+        onClick={() =>
+          setViewerDoc({
+            id: doc.id,
+            fileName: doc.file_name,
+            filePath: doc.file_path,
+            fileType: doc.file_type,
+            fileSize: doc.file_size,
+            description: doc.description,
+          })
+        }
+        className="w-full text-left flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/40 hover:bg-muted hover:border-primary/40 transition-colors group"
+      >
+        <div className="w-10 h-10 rounded-md bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+          <FileText className="w-5 h-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground truncate">{doc.file_name}</p>
+          {doc.description && (
+            <p className="text-xs text-muted-foreground truncate">{doc.description}</p>
+          )}
+        </div>
+        <Eye className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+      </button>
+      <DocumentViewer
+        doc={viewerDoc}
+        open={!!viewerDoc}
+        onOpenChange={(o) => { if (!o) setViewerDoc(null); }}
+      />
+    </>
   );
 }

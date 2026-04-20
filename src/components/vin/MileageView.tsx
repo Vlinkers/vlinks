@@ -1,24 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Gauge, UserCircle2, DollarSign, ClipboardCheck } from "lucide-react";
+import { Gauge, UserCircle2, DollarSign, ClipboardCheck, TrendingUp } from "lucide-react";
 import { MileageCurve, type TimelineMarker } from "@/components/vin/MileageCurve";
 import { supabase } from "@/integrations/supabase/client";
-import type { VinDossier, Contributor } from "@/hooks/useVinDossier";
+import type { VinDossier } from "@/hooks/useVinDossier";
 
 interface MileageViewProps {
   dossier: VinDossier | null | undefined;
 }
-
-const ROLE_LABELS: Record<string, string> = {
-  owner_verified: "Propriétaire vérifié",
-  owner_unverified: "Propriétaire",
-  former_owner: "Ancien propriétaire",
-  buyer: "Acheteur",
-  mechanic: "Mécanicien",
-  inspector: "Inspecteur",
-  dealer: "Concessionnaire",
-  witness: "Témoin",
-  anonymous: "Anonyme",
-};
 
 function formatDate(d: string | null | undefined) {
   if (!d) return "—";
@@ -27,10 +15,9 @@ function formatDate(d: string | null | undefined) {
   } catch { return "—"; }
 }
 
-function contributorLabel(c: Contributor | null) {
-  if (!c) return "Anonyme";
-  if (c.is_anonymous) return "Anonyme";
-  return c.display_name || ROLE_LABELS[c.role] || "Contributeur";
+function formatPrice(p: number | null | undefined) {
+  if (p == null) return "—";
+  return `${p.toLocaleString("fr-CA")} $`;
 }
 
 interface PublicContribRow {
@@ -38,29 +25,30 @@ interface PublicContribRow {
   contribution_type: string;
   intervention_date: string | null;
   asking_price: number | null;
+  mileage_at_intervention: number | null;
 }
 
 export function MileageView({ dossier }: MileageViewProps) {
   const [extraMarkers, setExtraMarkers] = useState<TimelineMarker[]>([]);
-  const [ownerChangeCount, setOwnerChangeCount] = useState(0);
+  const [contribs, setContribs] = useState<PublicContribRow[]>([]);
 
   const vinId = dossier?.vin.id;
 
-  // Fetch public_contributions to enrich timeline (ownership_change, for_sale, price_change, inspection_report)
   useEffect(() => {
     if (!vinId) return;
     let cancelled = false;
     (async () => {
       const { data } = await supabase
         .from("public_contributions")
-        .select("id, contribution_type, intervention_date, asking_price")
+        .select("id, contribution_type, intervention_date, asking_price, mileage_at_intervention")
         .eq("vin_id", vinId)
         .eq("status", "approved");
       if (cancelled || !data) return;
 
       const rows = data as PublicContribRow[];
+      setContribs(rows);
+
       const markers: TimelineMarker[] = [];
-      let owners = 0;
 
       for (const r of rows) {
         if (!r.intervention_date) continue;
@@ -68,12 +56,11 @@ export function MileageView({ dossier }: MileageViewProps) {
         if (Number.isNaN(ts)) continue;
 
         if (r.contribution_type === "ownership_change") {
-          owners += 1;
           markers.push({
             id: `owner-${r.id}`,
             ts,
             kind: "ownership",
-            label: `Changement de propriétaire — ${formatDate(r.intervention_date)}`,
+            label: `Changement de propriétaire — ${formatDate(r.intervention_date)}${r.mileage_at_intervention ? ` · ${r.mileage_at_intervention.toLocaleString("fr-CA")} km` : ""}`,
           });
         }
 
@@ -82,7 +69,7 @@ export function MileageView({ dossier }: MileageViewProps) {
             id: `price-${r.id}`,
             ts,
             kind: "price",
-            label: `Prix déclaré : ${r.asking_price.toLocaleString("fr-CA")} $ — ${formatDate(r.intervention_date)}`,
+            label: `Prix déclaré : ${formatPrice(r.asking_price)} — ${formatDate(r.intervention_date)}`,
             value: r.asking_price,
           });
         }
@@ -97,7 +84,7 @@ export function MileageView({ dossier }: MileageViewProps) {
         }
       }
 
-      // Also add inspection events from the events table
+      // Inspection events from events table
       if (dossier) {
         for (const ewf of dossier.events) {
           if (ewf.event.event_type !== "inspection" || !ewf.event.event_date) continue;
@@ -113,57 +100,110 @@ export function MileageView({ dossier }: MileageViewProps) {
       }
 
       setExtraMarkers(markers);
-      setOwnerChangeCount(owners);
     })();
     return () => { cancelled = true; };
   }, [vinId, dossier]);
 
+  // Mileage readings (from events with mileage_at_event)
   const readings = useMemo(() => {
     if (!dossier) return [];
-    const out: { id: string; date: string | null; mileage: number; contributor: Contributor | null }[] = [];
+    const out: { id: string; date: string | null; mileage: number }[] = [];
     for (const ewf of dossier.events) {
       if (ewf.event.mileage_at_event == null) continue;
-      const firstContributor = ewf.facts[0]?.contributor ?? null;
       out.push({
         id: ewf.event.id,
         date: ewf.event.event_date,
         mileage: ewf.event.mileage_at_event,
-        contributor: firstContributor,
       });
     }
-    out.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    out.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
     return out;
   }, [dossier]);
 
-  if (!dossier || readings.length === 0) {
+  // Aggregate stats
+  const stats = useMemo(() => {
+    const ownerChanges = extraMarkers.filter((m) => m.kind === "ownership");
+    const ownerCount = ownerChanges.length;
+
+    // Possession durations
+    let avgMonths: number | null = null;
+    if (ownerChanges.length >= 2) {
+      const sorted = [...ownerChanges].sort((a, b) => a.ts - b.ts);
+      const diffs: number[] = [];
+      for (let i = 1; i < sorted.length; i++) {
+        diffs.push((sorted[i].ts - sorted[i - 1].ts) / (1000 * 60 * 60 * 24 * 30.44));
+      }
+      avgMonths = Math.round(diffs.reduce((a, b) => a + b, 0) / diffs.length);
+    }
+
+    const firstReading = readings[0] ?? null;
+    const lastReading = readings[readings.length - 1] ?? null;
+
+    let progressionMonths: number | null = null;
+    let progressionKm: number | null = null;
+    if (firstReading?.date && lastReading?.date && firstReading !== lastReading) {
+      progressionKm = lastReading.mileage - firstReading.mileage;
+      progressionMonths = Math.max(
+        1,
+        Math.round((new Date(lastReading.date).getTime() - new Date(firstReading.date).getTime()) / (1000 * 60 * 60 * 24 * 30.44))
+      );
+    }
+
+    const prices = contribs
+      .filter((c) => c.asking_price != null && c.asking_price > 0)
+      .map((c) => c.asking_price as number);
+    const minPrice = prices.length ? Math.min(...prices) : null;
+    const maxPrice = prices.length ? Math.max(...prices) : null;
+
+    return {
+      ownerCount,
+      avgMonths,
+      firstReading,
+      lastReading,
+      progressionKm,
+      progressionMonths,
+      minPrice,
+      maxPrice,
+      pricesCount: prices.length,
+    };
+  }, [extraMarkers, readings, contribs]);
+
+  const inspectionCount = extraMarkers.filter((m) => m.kind === "inspection").length;
+  const priceCount = extraMarkers.filter((m) => m.kind === "price").length;
+
+  // Empty state
+  if (!dossier || (readings.length === 0 && extraMarkers.length === 0)) {
     return (
       <div className="animate-in fade-in duration-200">
         <header className="mb-6">
-          <h2 className="font-display text-2xl font-bold text-foreground">Kilométrage</h2>
+          <h2 className="font-display text-2xl font-bold text-foreground">Frise de vie</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Évolution chronologique du véhicule : kilométrage, propriétaires, prix et inspections.
+          </p>
         </header>
         <div className="rounded-xl border border-dashed border-border bg-card p-12 text-center">
           <Gauge className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">
-            Aucun relevé de kilométrage disponible.
+            Aucune donnée temporelle disponible pour ce véhicule.
           </p>
         </div>
       </div>
     );
   }
 
-  const inspectionCount = extraMarkers.filter((m) => m.kind === "inspection").length;
-  const priceCount = extraMarkers.filter((m) => m.kind === "price").length;
-
   return (
     <div className="animate-in fade-in duration-200 space-y-6">
       <header>
-        <h2 className="font-display text-2xl font-bold text-foreground">Kilométrage</h2>
+        <h2 className="font-display text-2xl font-bold text-foreground">Frise de vie</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          {readings.length} relevé{readings.length > 1 ? "s" : ""} · {ownerChangeCount} propriétaire{ownerChangeCount > 1 ? "s" : ""} déclaré{ownerChangeCount > 1 ? "s" : ""}
+          {readings.length} relevé{readings.length > 1 ? "s" : ""} kilométrique{readings.length > 1 ? "s" : ""}
+          {stats.ownerCount > 0 && <> · {stats.ownerCount} propriétaire{stats.ownerCount > 1 ? "s" : ""} déclaré{stats.ownerCount > 1 ? "s" : ""}</>}
+          {stats.avgMonths != null && <> · durée moyenne {stats.avgMonths} mois</>}
         </p>
       </header>
 
-      <div className="rounded-xl border border-border bg-card p-4" style={{ maxHeight: 460 }}>
+      {/* Chart */}
+      <div className="rounded-xl border border-border bg-card p-4">
         <MileageCurve
           events={dossier.events}
           phases={dossier.phases}
@@ -172,58 +212,114 @@ export function MileageView({ dossier }: MileageViewProps) {
         />
       </div>
 
-      {/* Timeline legend */}
-      {(extraMarkers.length > 0) && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground px-1">
-          {ownerChangeCount > 0 && (
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[hsl(262,60%,55%)] inline-block" />
-              <UserCircle2 className="w-3.5 h-3.5" />
-              Changement de propriétaire ({ownerChangeCount})
-            </span>
-          )}
-          {priceCount > 0 && (
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[hsl(32,95%,52%)] inline-block" />
-              <DollarSign className="w-3.5 h-3.5" />
-              Prix déclaré ({priceCount})
-            </span>
-          )}
-          {inspectionCount > 0 && (
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-primary inline-block" />
-              <ClipboardCheck className="w-3.5 h-3.5" />
-              Rapport d'inspection ({inspectionCount})
-            </span>
-          )}
+      {/* Full legend */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground px-1">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="w-4 h-0.5 bg-[hsl(152,44%,28%)] inline-block" />
+          Kilométrage
+        </span>
+        {stats.ownerCount > 0 && (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-4 border-t border-dashed border-[hsl(262,60%,55%)] inline-block" />
+            <UserCircle2 className="w-3.5 h-3.5" />
+            Changement de propriétaire ({stats.ownerCount})
+          </span>
+        )}
+        {priceCount > 0 && (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[hsl(32,95%,52%)] inline-block" />
+            <DollarSign className="w-3.5 h-3.5" />
+            Prix déclaré ({priceCount})
+          </span>
+        )}
+        {inspectionCount > 0 && (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[hsl(152,60%,38%)] inline-block" />
+            <ClipboardCheck className="w-3.5 h-3.5" />
+            Rapport d'inspection ({inspectionCount})
+          </span>
+        )}
+      </div>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <SummaryCard
+          icon={<UserCircle2 className="w-4 h-4 text-[hsl(262,60%,55%)]" />}
+          label="Propriétaires"
+          value={stats.ownerCount > 0 ? `${stats.ownerCount} déclaré${stats.ownerCount > 1 ? "s" : ""}` : "—"}
+          hint={stats.avgMonths != null ? `Durée moyenne ${stats.avgMonths} mois` : undefined}
+        />
+        <SummaryCard
+          icon={<Gauge className="w-4 h-4 text-[hsl(152,44%,28%)]" />}
+          label="Premier relevé"
+          value={stats.firstReading ? `${stats.firstReading.mileage.toLocaleString("fr-CA")} km` : "—"}
+          hint={stats.firstReading ? formatDate(stats.firstReading.date) : undefined}
+        />
+        <SummaryCard
+          icon={<TrendingUp className="w-4 h-4 text-[hsl(152,44%,28%)]" />}
+          label="Dernier relevé"
+          value={stats.lastReading ? `${stats.lastReading.mileage.toLocaleString("fr-CA")} km` : "—"}
+          hint={
+            stats.progressionKm != null && stats.progressionMonths != null
+              ? `+${stats.progressionKm.toLocaleString("fr-CA")} km sur ${stats.progressionMonths} mois`
+              : stats.lastReading ? formatDate(stats.lastReading.date) : undefined
+          }
+        />
+        <SummaryCard
+          icon={<DollarSign className="w-4 h-4 text-[hsl(32,95%,52%)]" />}
+          label="Prix observés"
+          value={
+            stats.minPrice != null && stats.maxPrice != null
+              ? stats.minPrice === stats.maxPrice
+                ? formatPrice(stats.minPrice)
+                : `${formatPrice(stats.minPrice)} → ${formatPrice(stats.maxPrice)}`
+              : "—"
+          }
+          hint={stats.pricesCount > 0 ? `${stats.pricesCount} prix déclaré${stats.pricesCount > 1 ? "s" : ""}` : undefined}
+        />
+      </div>
+
+      {/* Mileage readings table */}
+      {readings.length > 0 && (
+        <div>
+          <h3 className="font-display text-base font-semibold text-foreground mb-3">Relevés kilométriques</h3>
+          <div className="rounded-lg border border-border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
+                <tr>
+                  <th className="text-left px-4 py-2.5 font-semibold">Date</th>
+                  <th className="text-right px-4 py-2.5 font-semibold">Kilométrage</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border bg-card">
+                {[...readings].reverse().map((r) => (
+                  <tr key={r.id} className="hover:bg-muted/30">
+                    <td className="px-4 py-2.5 text-foreground">{formatDate(r.date)}</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-medium text-foreground">
+                      {r.mileage.toLocaleString("fr-CA")} km
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
+    </div>
+  );
+}
 
-      <div>
-        <h3 className="font-display text-base font-semibold text-foreground mb-3">Relevés</h3>
-        <div className="rounded-lg border border-border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
-              <tr>
-                <th className="text-left px-4 py-2.5 font-semibold">Date</th>
-                <th className="text-right px-4 py-2.5 font-semibold">Kilométrage</th>
-                <th className="text-left px-4 py-2.5 font-semibold">Source</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border bg-card">
-              {readings.map((r) => (
-                <tr key={r.id} className="hover:bg-muted/30">
-                  <td className="px-4 py-2.5 text-foreground">{formatDate(r.date)}</td>
-                  <td className="px-4 py-2.5 text-right font-mono font-medium text-foreground">
-                    {r.mileage.toLocaleString("fr-CA")} km
-                  </td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{contributorLabel(r.contributor)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+function SummaryCard({
+  icon, label, value, hint,
+}: { icon: React.ReactNode; label: string; value: string; hint?: string }) {
+  return (
+    <div className="rounded-lg border border-border bg-card p-3">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+        {icon}
+        <span>{label}</span>
       </div>
+      <div className="font-mono font-semibold text-foreground text-sm">{value}</div>
+      {hint && <div className="text-[11px] text-muted-foreground mt-0.5">{hint}</div>}
     </div>
   );
 }

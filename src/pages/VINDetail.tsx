@@ -220,6 +220,10 @@ const VINDetail = () => {
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeView === item.key;
+                const showUnclaimed =
+                  item.key === "owner" &&
+                  !!dossier &&
+                  !dossier.contributors.some((c) => OWNER_ROLES.has(c.role));
                 return (
                   <button
                     key={item.key}
@@ -233,6 +237,11 @@ const VINDetail = () => {
                   >
                     <Icon className="w-4 h-4 flex-shrink-0" />
                     <span className="flex-1 truncate">{item.label}</span>
+                    {showUnclaimed && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/50 font-medium tracking-wide flex-shrink-0">
+                        Non revendiqué
+                      </span>
+                    )}
                   </button>
                 );
               })}

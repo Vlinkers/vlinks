@@ -10,11 +10,20 @@ import type { EventWithFacts, VehiclePhase, RedFlag } from "@/hooks/useVinDossie
 
 // ── Props ───────────────────────────────────────────────
 
+export interface TimelineMarker {
+  id: string;
+  ts: number;
+  kind: "ownership" | "price" | "inspection";
+  label: string;
+  value?: number;
+}
+
 interface MileageCurveProps {
   events: EventWithFacts[];
   phases: VehiclePhase[];
   redFlags: RedFlag[];
   onEventClick?: (eventId: string) => void;
+  markers?: TimelineMarker[];
 }
 
 // ── Types ───────────────────────────────────────────────

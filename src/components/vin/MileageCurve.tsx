@@ -275,6 +275,37 @@ export function MileageCurve({ events, phases, redFlags, onEventClick, markers =
 
             <Tooltip content={<CustomTooltip />} />
 
+            {/* Timeline markers (ownership changes, prices, inspections) */}
+            {markers
+              .filter((m) => m.ts >= domainMin && m.ts <= domainMax)
+              .map((m) => {
+                const color =
+                  m.kind === "ownership" ? "hsl(262, 60%, 55%)"
+                  : m.kind === "price" ? "hsl(32, 95%, 52%)"
+                  : "hsl(152, 60%, 38%)";
+                return (
+                  <ReferenceLine
+                    key={m.id}
+                    x={m.ts}
+                    stroke={color}
+                    strokeDasharray="2 3"
+                    strokeOpacity={0.55}
+                    ifOverflow="extendDomain"
+                    label={(props: any) => {
+                      const { viewBox } = props;
+                      const cx = viewBox?.x ?? 0;
+                      const cy = (viewBox?.y ?? 0) + 4;
+                      return (
+                        <g>
+                          <title>{m.label}</title>
+                          <circle cx={cx} cy={cy} r={4} fill={color} stroke="white" strokeWidth={1.5} />
+                        </g>
+                      );
+                    }}
+                  />
+                );
+              })}
+
             <Line
               type="monotone"
               dataKey="mileage"

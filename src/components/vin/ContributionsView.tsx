@@ -246,8 +246,6 @@ function ContributionCard({
   isActive: boolean;
   onClick: () => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
-
   // Primary fact = first non-empty content
   const primaryFact: FactWithEvidence | undefined =
     ewf.facts.find((f) => f.fact.content && f.fact.content.trim().length > 0) ?? ewf.facts[0];
@@ -265,12 +263,10 @@ function ContributionCard({
   const roleLabel = contributor ? ROLE_LABELS[contributor.role] ?? "Contributeur" : "Contributeur";
   const eventLabel = EVENT_TYPE_LABELS[ewf.event.event_type] ?? "Autre";
   const dateLabel = formatDate(ewf.event.event_date);
-  const memberSince = profile && !contributor?.is_anonymous ? formatMonthYear(profile.created_at) : null;
-  const dossiersCount = profile && !contributor?.is_anonymous ? profile.vins_contributed_to ?? 0 : null;
 
   const content = primaryFact?.fact.content ?? ewf.event.description ?? "";
-  const isLong = content.length > 240;
-  const displayContent = !expanded && isLong ? content.slice(0, 240).trimEnd() + "…" : content;
+  void profile; // currently unused — reserved for future contributor metadata
+  void formatMonthYear;
 
   const isInspection = ewf.event.event_type === "inspection";
   const askingPrice = (ewf.event as any).asking_price as number | null | undefined;

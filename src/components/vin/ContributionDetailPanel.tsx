@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { X, Calendar, Gauge, FileText, Download, ExternalLink, Camera } from "lucide-react";
+import { X, Calendar, Gauge, FileText, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { PhotoLightbox } from "@/components/PhotoLightbox";
+import { DocumentViewer } from "@/components/DocumentViewer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { EventWithFacts, FactWithEvidence, Evidence } from "@/hooks/useVinDossier";
+import type { ContributionDocument } from "@/hooks/useVINData";
 
 const ROLE_LABELS: Record<string, string> = {
   owner_verified: "Propriétaire vérifié",

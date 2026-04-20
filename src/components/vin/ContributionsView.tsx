@@ -49,6 +49,10 @@ function isPhoto(ev: { evidence_type: string; file_type: string | null }) {
 function isDoc(ev: { evidence_type: string; file_type: string | null }) {
   return DOC_TYPES.includes(ev.evidence_type) || ev.file_type === "application/pdf";
 }
+function photoUrl(path: string) {
+  if (path.startsWith("http")) return path;
+  return supabase.storage.from("vin-photos").getPublicUrl(path).data.publicUrl;
+}
 
 // ── Profile lookup ──────────────────────────────────────
 
@@ -338,7 +342,7 @@ function ContributionCard({
               className="w-16 h-16 rounded-md overflow-hidden bg-muted flex-shrink-0 border border-border"
             >
               <img
-                src={supabase.storage.from("vin-photos").getPublicUrl(p.file_path).data.publicUrl}
+                src={photoUrl(p.file_path)}
                 alt={p.file_name}
                 loading="lazy"
                 className="w-full h-full object-cover"

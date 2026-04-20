@@ -348,6 +348,7 @@ function WorkspacePanel({
   dossier,
   onNavigate,
   vinId,
+  vin,
   contributor,
 }: {
   view: WorkspaceView;
@@ -355,6 +356,7 @@ function WorkspacePanel({
   dossier: any;
   onNavigate: (view: WorkspaceView) => void;
   vinId: string;
+  vin: string;
   contributor: any;
 }) {
   if (view === "dashboard") {
@@ -364,6 +366,10 @@ function WorkspacePanel({
         onNavigate={(target) => onNavigate(target as WorkspaceView)}
       />
     );
+  }
+
+  if (view === "owner") {
+    return <OwnerView dossier={dossier} vinId={vinId} vin={vin} />;
   }
 
   if (view === "contributions") {

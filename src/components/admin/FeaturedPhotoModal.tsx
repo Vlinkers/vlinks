@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { buildPhotoUrl } from "@/lib/photoUrl";
 import { Loader2, Check, X, ImageOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -41,13 +42,11 @@ export function FeaturedPhotoModal({ open, onOpenChange, vinId, vinCode, current
         .select("id, file_path, caption")
         .in("contribution_id", vcIds);
 
-      const mapped = (photoRows || []).map((p) => {
-        // file_path stores full URLs for photos — use directly if it starts with http
-        const url = p.file_path.startsWith("http")
-          ? p.file_path
-          : supabase.storage.from("vin-photos").getPublicUrl(p.file_path).data.publicUrl;
-        return { id: p.id, url, caption: p.caption };
-      });
+      const mapped = (photoRows || []).map((p) => ({
+        id: p.id,
+        url: buildPhotoUrl(p.file_path),
+        caption: p.caption,
+      }));
       setPhotos(mapped);
       setLoading(false);
     };

@@ -128,7 +128,7 @@ function CustomDot(props: any) {
 
 // ── Main component ──────────────────────────────────────
 
-export function MileageCurve({ events, phases, redFlags, onEventClick }: MileageCurveProps) {
+export function MileageCurve({ events, phases, redFlags, onEventClick, markers = [] }: MileageCurveProps) {
   const { points, phaseAreas } = useMemo(() => {
     // Build sorted data points
     const raw = events

@@ -39,7 +39,7 @@ const NAV_ITEMS: { key: WorkspaceView; label: string; icon: typeof LayoutDashboa
   { key: "contributions", label: "Contributions", icon: MessageSquare },
   { key: "photos", label: "Photos", icon: Camera },
   { key: "documents", label: "Documents", icon: FileText },
-  { key: "mileage", label: "Kilométrage", icon: Gauge },
+  { key: "mileage", label: "Frise de vie", icon: Gauge },
   { key: "contribute", label: "Contribuer", icon: Plus },
 ];
 

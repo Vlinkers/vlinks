@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { X, Calendar, Gauge, FileText, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { buildPhotoUrl } from "@/lib/photoUrl";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PhotoLightbox } from "@/components/PhotoLightbox";
@@ -39,9 +40,7 @@ function isPhoto(ev: { evidence_type: string; file_type: string | null }) {
 function isDoc(ev: { evidence_type: string; file_type: string | null }) {
   return DOC_TYPES.includes(ev.evidence_type) || ev.file_type === "application/pdf";
 }
-function photoUrl(path: string) {
-  return supabase.storage.from("vin-photos").getPublicUrl(path).data.publicUrl;
-}
+// photoUrl now provided by shared buildPhotoUrl utility
 function docUrl(path: string) {
   return supabase.storage.from("vin-documents").getPublicUrl(path).data.publicUrl;
 }
@@ -102,7 +101,7 @@ export function ContributionDetailPanel({ ewf, open, onClose, profiles }: Contri
     return ewf.facts.flatMap((fw) =>
       fw.evidence.filter(isPhoto).map((ev) => ({
         id: ev.id,
-        url: photoUrl(ev.file_path),
+        url: buildPhotoUrl(ev.file_path),
         caption: ev.description ?? null,
       }))
     );
@@ -346,7 +345,7 @@ function FactBlock({
               className="aspect-[4/3] rounded-lg overflow-hidden bg-muted border border-border hover:border-primary/50 transition-colors group"
             >
               <img
-                src={photoUrl(p.file_path)}
+                src={buildPhotoUrl(p.file_path)}
                 alt={p.description ?? p.file_name}
                 loading="lazy"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

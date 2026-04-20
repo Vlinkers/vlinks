@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { sanitizeSelectValue, desanitizeSelectValue } from "@/lib/sanitizeSelectValue";
 import { supabase } from "@/integrations/supabase/client";
+import { buildPhotoUrl } from "@/lib/photoUrl";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, Trash2, X, File, Camera, ArrowLeft, AlertTriangle, RefreshCw } from "lucide-react";
 import type { PublicContribution, ContributionType } from "@/hooks/useVINData";
@@ -318,7 +319,7 @@ export function AdminEditContribution({ contribution, open, onOpenChange, onSave
                     {photos.map(p => (
                       <div key={p.id} className="relative group rounded-lg overflow-hidden border border-border bg-muted aspect-square">
                         <img
-                          src={p.url.startsWith("http") ? p.url : supabase.storage.from("vin-photos").getPublicUrl(p.url).data.publicUrl}
+                          src={buildPhotoUrl(p.url)}
                           alt={p.fileName}
                           className="w-full h-full object-cover"
                           onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}

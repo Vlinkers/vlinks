@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Camera, FileText, ClipboardCheck, Calendar, Gauge, ChevronRight } from "lucide-react";
+import { Camera, FileText, ClipboardCheck, Calendar, Gauge, ChevronRight, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";

@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { supabase } from "@/integrations/supabase/client";
 import { buildPhotoUrl } from "@/lib/photoUrl";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Camera, Plus, X, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { buildPhotoUrl } from "@/lib/photoUrl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

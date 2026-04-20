@@ -19,19 +19,23 @@ import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
 import {
   AlertTriangle, Loader2, Copy, LayoutDashboard, MessageSquare, Camera,
-  FileText, Gauge, Plus, FileDown, Share2,
+  FileText, Gauge, Plus, FileDown, Share2, Shield,
 } from "lucide-react";
 import { DashboardView } from "@/components/vin/DashboardView";
 import { ContributionsView } from "@/components/vin/ContributionsView";
 import { PhotosView } from "@/components/vin/PhotosView";
 import { DocumentsView } from "@/components/vin/DocumentsView";
 import { MileageView } from "@/components/vin/MileageView";
+import { OwnerView } from "@/components/vin/OwnerView";
 
 // ─────────────────────────────────────────────────────────────────────────────
-type WorkspaceView = "dashboard" | "contributions" | "photos" | "documents" | "mileage" | "contribute";
+type WorkspaceView = "dashboard" | "owner" | "contributions" | "photos" | "documents" | "mileage" | "contribute";
+
+const OWNER_ROLES = new Set(["owner_verified", "owner_unverified", "former_owner"]);
 
 const NAV_ITEMS: { key: WorkspaceView; label: string; icon: typeof LayoutDashboard }[] = [
   { key: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
+  { key: "owner", label: "Dossier propriétaire", icon: Shield },
   { key: "contributions", label: "Contributions", icon: MessageSquare },
   { key: "photos", label: "Photos", icon: Camera },
   { key: "documents", label: "Documents", icon: FileText },
@@ -216,6 +220,10 @@ const VINDetail = () => {
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeView === item.key;
+                const showUnclaimed =
+                  item.key === "owner" &&
+                  !!dossier &&
+                  !dossier.contributors.some((c) => OWNER_ROLES.has(c.role));
                 return (
                   <button
                     key={item.key}
@@ -229,6 +237,11 @@ const VINDetail = () => {
                   >
                     <Icon className="w-4 h-4 flex-shrink-0" />
                     <span className="flex-1 truncate">{item.label}</span>
+                    {showUnclaimed && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/50 font-medium tracking-wide flex-shrink-0">
+                        Non revendiqué
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -268,6 +281,7 @@ const VINDetail = () => {
                 dossier={dossier}
                 onNavigate={handleNavSelect}
                 vinId={data.id}
+                vin={data.vin}
                 contributor={contributor}
               />
             </div>
@@ -334,6 +348,7 @@ function WorkspacePanel({
   dossier,
   onNavigate,
   vinId,
+  vin,
   contributor,
 }: {
   view: WorkspaceView;
@@ -341,6 +356,7 @@ function WorkspacePanel({
   dossier: any;
   onNavigate: (view: WorkspaceView) => void;
   vinId: string;
+  vin: string;
   contributor: any;
 }) {
   if (view === "dashboard") {
@@ -350,6 +366,10 @@ function WorkspacePanel({
         onNavigate={(target) => onNavigate(target as WorkspaceView)}
       />
     );
+  }
+
+  if (view === "owner") {
+    return <OwnerView dossier={dossier} vinId={vinId} vin={vin} />;
   }
 
   if (view === "contributions") {

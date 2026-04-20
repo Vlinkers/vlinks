@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Camera, FileText, ClipboardCheck, Calendar, Gauge, ChevronRight } from "lucide-react";
+import { Camera, FileText, ClipboardCheck, Calendar, Gauge, ChevronRight, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -256,6 +256,9 @@ function ContributionCard({
   const photos = allEvidence.filter(isPhoto);
   const docs = allEvidence.filter(isDoc);
 
+  const isOwnerContribution = !!contributor && ["owner_verified", "owner_unverified", "former_owner"].includes(contributor.role);
+  const isVerifiedOwner = contributor?.role === "owner_verified";
+
   const displayName = contributor?.is_anonymous
     ? "Anonyme"
     : contributor?.display_name ?? "Contributeur";
@@ -273,6 +276,7 @@ function ContributionCard({
     <Card
       className={cn(
         "p-4 cursor-pointer transition-all hover:shadow-md hover:border-primary/40",
+        isOwnerContribution && "border-l-4 border-l-[hsl(170,70%,35%)]",
         isActive && "border-primary shadow-md ring-1 ring-primary/30"
       )}
       onClick={onClick}
@@ -280,14 +284,33 @@ function ContributionCard({
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
         <Avatar className="w-10 h-10 flex-shrink-0">
-          <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+          <AvatarFallback className={cn(
+            "text-xs font-semibold",
+            isOwnerContribution
+              ? "bg-[hsl(170,55%,90%)] text-[hsl(170,70%,25%)]"
+              : "bg-primary/10 text-primary"
+          )}>
             {contributor?.is_anonymous ? "?" : initials(displayName)}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
             <span className="font-semibold text-sm text-foreground truncate">{displayName}</span>
-            <span className="text-xs text-muted-foreground">· {roleLabel}</span>
+            {isOwnerContribution ? (
+              <Badge
+                className={cn(
+                  "text-[10px] h-4.5 px-1.5",
+                  isVerifiedOwner
+                    ? "bg-[hsl(170,70%,35%)] text-white hover:bg-[hsl(170,70%,30%)]"
+                    : "bg-[hsl(170,40%,90%)] text-[hsl(170,70%,25%)] hover:bg-[hsl(170,40%,85%)]"
+                )}
+              >
+                {isVerifiedOwner && <ShieldCheck className="w-2.5 h-2.5 mr-0.5" />}
+                Propriétaire
+              </Badge>
+            ) : (
+              <span className="text-xs text-muted-foreground">· {roleLabel}</span>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-[11px] text-muted-foreground">
             {dateLabel && (

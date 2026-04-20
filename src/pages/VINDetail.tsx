@@ -281,6 +281,7 @@ const VINDetail = () => {
                 dossier={dossier}
                 onNavigate={handleNavSelect}
                 vinId={data.id}
+                vin={data.vin}
                 contributor={contributor}
               />
             </div>

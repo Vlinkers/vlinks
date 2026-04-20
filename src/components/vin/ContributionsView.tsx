@@ -272,152 +272,136 @@ function ContributionCard({
   const isLong = content.length > 240;
   const displayContent = !expanded && isLong ? content.slice(0, 240).trimEnd() + "…" : content;
 
+  const isInspection = ewf.event.event_type === "inspection";
+  const askingPrice = (ewf.event as any).asking_price as number | null | undefined;
+
+  // Border-left semantic
+  const borderClass = isOwnerContribution
+    ? "border-l-[3px] border-l-[hsl(170,70%,35%)]"
+    : isInspection
+      ? "border-l-[3px] border-l-primary"
+      : "border-l border-l-border";
+
   return (
     <Card
       className={cn(
-        "p-4 cursor-pointer transition-all hover:shadow-md hover:border-primary/40",
-        isOwnerContribution && "border-l-4 border-l-[hsl(170,70%,35%)]",
-        isActive && "border-primary shadow-md ring-1 ring-primary/30"
+        "p-0 cursor-pointer transition-all hover:shadow-md hover:border-primary/40 overflow-hidden",
+        borderClass,
+        isActive && "shadow-md ring-1 ring-primary/30"
       )}
       onClick={onClick}
     >
-      {/* Header */}
-      <div className="flex items-start gap-3 mb-3">
-        <Avatar className="w-10 h-10 flex-shrink-0">
-          <AvatarFallback className={cn(
-            "text-xs font-semibold",
-            isOwnerContribution
-              ? "bg-[hsl(170,55%,90%)] text-[hsl(170,70%,25%)]"
-              : "bg-primary/10 text-primary"
-          )}>
-            {contributor?.is_anonymous ? "?" : initials(displayName)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-            <span className="font-semibold text-sm text-foreground truncate">{displayName}</span>
-            {isOwnerContribution ? (
-              <Badge
-                className={cn(
-                  "text-[10px] h-4.5 px-1.5",
-                  isVerifiedOwner
-                    ? "bg-[hsl(170,70%,35%)] text-white hover:bg-[hsl(170,70%,30%)]"
-                    : "bg-[hsl(170,40%,90%)] text-[hsl(170,70%,25%)] hover:bg-[hsl(170,40%,85%)]"
-                )}
-              >
+      <div className="flex flex-col sm:flex-row">
+        {/* LEFT — Metadata block (30%) */}
+        <div className={cn(
+          "sm:w-[34%] sm:max-w-[220px] p-4 flex flex-col gap-2 border-b sm:border-b-0 sm:border-r border-border/60",
+          isOwnerContribution ? "bg-[hsl(170,55%,97%)]" : isInspection ? "bg-primary/5" : "bg-muted/30"
+        )}>
+          <div className="flex items-center gap-2.5">
+            <Avatar className="w-9 h-9 flex-shrink-0">
+              <AvatarFallback className={cn(
+                "text-[11px] font-semibold",
+                isOwnerContribution
+                  ? "bg-[hsl(170,55%,88%)] text-[hsl(170,70%,25%)]"
+                  : "bg-primary/15 text-primary"
+              )}>
+                {contributor?.is_anonymous ? "?" : initials(displayName)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-sm text-foreground truncate leading-tight">{displayName}</p>
+              <p className="text-[10px] text-muted-foreground truncate leading-tight mt-0.5">{roleLabel}</p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-1">
+            {isOwnerContribution && (
+              <Badge className={cn(
+                "text-[10px] h-4 px-1.5",
+                isVerifiedOwner
+                  ? "bg-[hsl(170,70%,35%)] text-white hover:bg-[hsl(170,70%,30%)]"
+                  : "bg-[hsl(170,40%,90%)] text-[hsl(170,70%,25%)] hover:bg-[hsl(170,40%,85%)]"
+              )}>
                 {isVerifiedOwner && <ShieldCheck className="w-2.5 h-2.5 mr-0.5" />}
                 Propriétaire
               </Badge>
-            ) : (
-              <span className="text-xs text-muted-foreground">· {roleLabel}</span>
             )}
+            {isInspection && !isOwnerContribution && (
+              <Badge className="text-[10px] h-4 px-1.5 bg-primary/15 text-primary hover:bg-primary/20">
+                <ClipboardCheck className="w-2.5 h-2.5 mr-0.5" />
+                Rapport
+              </Badge>
+            )}
+            <Badge variant="secondary" className="text-[10px] h-4 px-1.5 font-medium">
+              {eventLabel}
+            </Badge>
           </div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-[11px] text-muted-foreground">
-            {dateLabel && (
-              <span className="inline-flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                {dateLabel}
-              </span>
-            )}
-            {ewf.event.mileage_at_event != null && (
-              <span className="inline-flex items-center gap-1">
-                <Gauge className="w-3 h-3" />
-                {ewf.event.mileage_at_event.toLocaleString("fr-CA")} km
-              </span>
-            )}
-          </div>
-          {(memberSince || (dossiersCount != null && dossiersCount > 0)) && (
-            <div className="flex flex-wrap gap-x-2 mt-0.5 text-[10px] text-muted-foreground/70">
-              {memberSince && <span>Membre depuis {memberSince}</span>}
-              {memberSince && dossiersCount != null && dossiersCount > 0 && <span>·</span>}
-              {dossiersCount != null && dossiersCount > 0 && (
-                <span>A contribué à {dossiersCount} dossier{dossiersCount > 1 ? "s" : ""}</span>
+
+          {dateLabel && (
+            <div className="mt-1">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">Date</p>
+              <p className="font-display text-base font-bold text-foreground leading-tight">{dateLabel}</p>
+            </div>
+          )}
+
+          {(ewf.event.mileage_at_event != null || askingPrice != null) && (
+            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-0.5">
+              {ewf.event.mileage_at_event != null && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium inline-flex items-center gap-1">
+                    <Gauge className="w-2.5 h-2.5" />Km
+                  </p>
+                  <p className="text-sm font-semibold text-foreground tabular-nums">
+                    {ewf.event.mileage_at_event.toLocaleString("fr-CA")}
+                  </p>
+                </div>
+              )}
+              {askingPrice != null && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">Prix</p>
+                  <p className="text-sm font-semibold text-foreground tabular-nums">
+                    {askingPrice.toLocaleString("fr-CA")} $
+                  </p>
+                </div>
               )}
             </div>
           )}
         </div>
-        <ChevronRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0 mt-1" />
-      </div>
 
-      {/* Body */}
-      {content && (
-        <div className="mb-3">
-          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
-            {displayContent}
-          </p>
-          {isLong && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
-              className="text-xs text-primary hover:underline mt-1 font-medium"
-            >
-              {expanded ? "Voir moins" : "Lire la suite"}
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Photo thumbnails */}
-      {photos.length > 0 && (
-        <div className="flex gap-1.5 mb-3">
-          {photos.slice(0, 4).map((p) => (
-            <div
-              key={p.id}
-              className="w-16 h-16 rounded-md overflow-hidden bg-muted flex-shrink-0 border border-border"
-            >
-              <img
-                src={photoUrl(p.file_path)}
-                alt={p.file_name}
-                loading="lazy"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ))}
-          {photos.length > 4 && (
-            <div className="w-16 h-16 rounded-md bg-muted border border-border flex items-center justify-center text-xs font-medium text-muted-foreground flex-shrink-0">
-              +{photos.length - 4}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Documents */}
-      {docs.length > 0 && (
-        <div className="space-y-1.5 mb-3">
-          {docs.slice(0, 3).map((d) => (
-            <div
-              key={d.id}
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-muted/60 text-xs"
-            >
-              <FileText className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-              <span className="truncate text-foreground/80">{d.file_name}</span>
-            </div>
-          ))}
-          {docs.length > 3 && (
-            <p className="text-[11px] text-muted-foreground pl-1">
-              +{docs.length - 3} autre{docs.length - 3 > 1 ? "s" : ""} document{docs.length - 3 > 1 ? "s" : ""}
+        {/* RIGHT — Content + indicators (70%) */}
+        <div className="flex-1 p-4 flex flex-col min-w-0">
+          {content ? (
+            <p className="text-sm text-foreground/90 leading-relaxed line-clamp-2 flex-1">
+              {content}
             </p>
+          ) : (
+            <p className="text-sm text-muted-foreground/60 italic flex-1">Aucune description</p>
           )}
-        </div>
-      )}
 
-      {/* Footer */}
-      <div className="flex items-center gap-2 pt-2 border-t border-border/60">
-        <Badge variant="secondary" className="text-[10px] font-medium">
-          {ewf.event.event_type === "inspection" && <ClipboardCheck className="w-3 h-3 mr-1" />}
-          {eventLabel}
-        </Badge>
-        {photos.length > 0 && (
-          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-            <Camera className="w-3 h-3" />
-            {photos.length}
-          </span>
-        )}
-        {docs.length > 0 && (
-          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-            <FileText className="w-3 h-3" />
-            {docs.length}
-          </span>
-        )}
+          <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-border/60">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              {photos.length > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <Camera className="w-3.5 h-3.5" />
+                  <span className="tabular-nums font-medium">{photos.length}</span>
+                </span>
+              )}
+              {docs.length > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <FileText className="w-3.5 h-3.5" />
+                  <span className="tabular-nums font-medium">{docs.length}</span>
+                </span>
+              )}
+              {photos.length === 0 && docs.length === 0 && (
+                <span className="text-[11px] text-muted-foreground/50">Aucune pièce jointe</span>
+              )}
+            </div>
+            <span className="inline-flex items-center gap-1 text-xs text-primary font-medium">
+              Lire la suite
+              <ChevronRight className="w-3.5 h-3.5" />
+            </span>
+          </div>
+        </div>
       </div>
     </Card>
   );

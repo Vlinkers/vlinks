@@ -259,7 +259,8 @@ function ContributionCard({
     ? "Anonyme"
     : contributor?.display_name ?? "Contributeur";
   const roleLabel = contributor ? ROLE_LABELS[contributor.role] ?? "Contributeur" : "Contributeur";
-  const eventLabel = EVENT_TYPE_LABELS[ewf.event.event_type] ?? "Autre";
+  const showEventBadge = ewf.event.event_type !== "other";
+  const eventLabel = EVENT_TYPE_LABELS[ewf.event.event_type] ?? "";
   const dateLabel = formatDate(ewf.event.event_date);
 
   const content = primaryFact?.fact.content ?? ewf.event.description ?? "";
@@ -286,9 +287,9 @@ function ContributionCard({
       onClick={onClick}
     >
       <div className="flex flex-col sm:flex-row">
-        {/* LEFT — Metadata block (30%) */}
+        {/* LEFT — Metadata block (~28%) */}
         <div className={cn(
-          "sm:w-[34%] sm:max-w-[220px] p-4 flex flex-col gap-2 border-b sm:border-b-0 sm:border-r border-border/60",
+          "sm:w-[28%] sm:max-w-[180px] p-3 flex flex-col gap-2 border-b sm:border-b-0 sm:border-r border-border/60",
           isOwnerContribution ? "bg-[hsl(170,55%,97%)]" : isInspection ? "bg-primary/5" : "bg-muted/30"
         )}>
           <div className="flex items-center gap-2.5">
@@ -326,9 +327,11 @@ function ContributionCard({
                 Rapport
               </Badge>
             )}
-            <Badge variant="secondary" className="text-[10px] h-4 px-1.5 font-medium">
-              {eventLabel}
-            </Badge>
+            {showEventBadge && (
+              <Badge variant="secondary" className="text-[10px] h-4 px-1.5 font-medium">
+                {eventLabel}
+              </Badge>
+            )}
           </div>
 
           {dateLabel && (

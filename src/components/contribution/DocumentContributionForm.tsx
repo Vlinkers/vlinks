@@ -447,9 +447,9 @@ export function DocumentContributionForm({
             ))}
           </div>
 
-          {/* Intervention context */}
+          {/* Event context */}
           <div className="space-y-3">
-            <p className="text-sm font-medium">À quelle intervention ce document se rapporte-t-il ?</p>
+            <p className="text-sm font-medium">Ce document concerne :</p>
 
             <div className="flex gap-2">
               <Button
@@ -457,21 +457,21 @@ export function DocumentContributionForm({
                 size="sm"
                 onClick={() => setEventChoice("existing")}
               >
-                Intervention existante
+                Un événement déjà documenté
               </Button>
               <Button
                 variant={eventChoice === "new" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setEventChoice("new")}
               >
-                Nouvelle intervention
+                Un nouvel événement
               </Button>
             </div>
 
             {eventChoice === "existing" && existingEvents.length > 0 && (
               <Select value={selectedEventId} onValueChange={setSelectedEventId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner une intervention" />
+                  <SelectValue placeholder="Sélectionner un événement existant" />
                 </SelectTrigger>
                 <SelectContent>
                   {existingEvents.map((e) => (
@@ -486,7 +486,7 @@ export function DocumentContributionForm({
 
             {eventChoice === "existing" && existingEvents.length === 0 && (
               <p className="text-sm text-muted-foreground italic">
-                Aucune intervention existante. Créez-en une nouvelle.
+                Aucun événement existant. Créez-en un nouveau.
               </p>
             )}
 
@@ -497,7 +497,7 @@ export function DocumentContributionForm({
                   onValueChange={(v) => setNewEventType(v as EventType)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Type d'intervention" />
+                    <SelectValue placeholder="Type d'événement" />
                   </SelectTrigger>
                   <SelectContent>
                     {EVENT_TYPES.map((t) => (
@@ -508,7 +508,7 @@ export function DocumentContributionForm({
                   </SelectContent>
                 </Select>
                 <Input
-                  placeholder="Titre de l'intervention"
+                  placeholder="Titre de l'événement"
                   value={newEventTitle}
                   onChange={(e) => setNewEventTitle(e.target.value)}
                 />
@@ -570,7 +570,7 @@ export function DocumentContributionForm({
           <div className="space-y-3 text-sm">
             <div className="p-3 rounded-lg bg-muted/20 border border-border space-y-1">
               <p className="font-medium">
-                Intervention :{" "}
+                Événement :{" "}
                 {eventChoice === "new"
                   ? newEventTitle
                   : existingEvents.find((e) => e.id === selectedEventId)?.title ?? "—"}

@@ -213,7 +213,7 @@ export default function OwnerResponseForm({
         <CollapsibleTrigger asChild>
           <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <Upload className="w-4 h-4" />
-            Ajouter une pièce justificative (optionnel)
+            Ajouter des fichiers (optionnel)
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-3 space-y-3">

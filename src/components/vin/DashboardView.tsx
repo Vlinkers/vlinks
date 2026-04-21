@@ -13,6 +13,28 @@ interface DashboardViewProps {
 const PHOTO_TYPES = ["photo", "image"];
 const DOCUMENT_TYPES = ["document", "invoice", "inspection_report", "insurance_doc", "registration", "listing_screenshot"];
 
+const EVENT_TYPE_LABELS: Record<string, string> = {
+  purchase: "Achat",
+  sale: "Vente",
+  maintenance: "Entretien",
+  inspection: "Inspection",
+  accident: "Accident",
+  repair: "Réparation",
+  modification: "Modification",
+  recall: "Rappel",
+  insurance_claim: "Réclamation d'assurance",
+  listing: "Mise en vente",
+  import_export: "Import/Export",
+  registration: "Immatriculation",
+  mileage_record: "Relevé kilométrique",
+  observation: "Observation",
+  other: "Autre",
+};
+
+function translateEventType(type: string): string {
+  return EVENT_TYPE_LABELS[type] ?? type.replace(/_/g, " ");
+}
+
 export function DashboardView({ dossier, onNavigate }: DashboardViewProps) {
   const inventory = useMemo(() => {
     if (!dossier) {
@@ -182,12 +204,12 @@ export function DashboardView({ dossier, onNavigate }: DashboardViewProps) {
                   <Clock className="w-3 h-3" />
                   <span>{r.date ?? "Date inconnue"}</span>
                   <span>·</span>
-                  <span className="font-medium text-foreground/70 capitalize">{r.type.replace(/_/g, " ")}</span>
+                  <span className="font-medium text-foreground/70">{translateEventType(r.type)}</span>
                   <span>·</span>
                   <span>{r.author}</span>
                 </div>
                 <div className="text-sm font-medium text-foreground truncate">{r.title}</div>
-                {r.excerpt && (
+                {r.excerpt && r.excerpt.trim().toLowerCase() !== r.title.trim().toLowerCase() && (
                   <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{r.excerpt}</div>
                 )}
               </button>

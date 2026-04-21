@@ -403,7 +403,7 @@ export function AlertContributionForm({
                 className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full"
               >
                 <Paperclip className="w-4 h-4" />
-                <span>Ajouter une preuve (optionnel)</span>
+                <span>Ajouter des fichiers (optionnel)</span>
                 <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${attachOpen ? "rotate-180" : ""}`} />
               </button>
             </CollapsibleTrigger>

@@ -282,21 +282,36 @@ export function DocumentContributionForm({
   return (
     <Card className="p-5 space-y-5 border-border bg-card">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <Button variant="ghost" size="sm" onClick={step === 1 ? onBack : () => setStep(step - 1)}>
           <ArrowLeft className="w-4 h-4 mr-1" />
           {step === 1 ? "Retour" : "Précédent"}
         </Button>
-        <div className="flex items-center gap-1.5">
-          {[1, 2, 3].map((s) => (
+      </div>
+
+      {/* Stepper */}
+      <div className="flex items-center gap-2 text-xs">
+        {[
+          { n: 1, label: "Fichiers" },
+          { n: 2, label: "Détails" },
+          { n: 3, label: "Confirmation" },
+        ].map((s, i) => (
+          <div key={s.n} className="flex items-center gap-2 flex-1">
             <div
-              key={s}
-              className={`h-1.5 rounded-full transition-all ${
-                s === step ? "w-8 bg-primary" : s < step ? "w-6 bg-primary/40" : "w-6 bg-muted"
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors ${
+                s.n === step
+                  ? "bg-primary text-primary-foreground font-medium"
+                  : s.n < step
+                  ? "bg-primary/10 text-primary"
+                  : "bg-muted text-muted-foreground"
               }`}
-            />
-          ))}
-        </div>
+            >
+              <span className="font-mono">{s.n}.</span>
+              <span>{s.label}</span>
+            </div>
+            {i < 2 && <div className="flex-1 h-px bg-border" />}
+          </div>
+        ))}
       </div>
 
       {/* STEP 1 - Upload */}
@@ -306,6 +321,9 @@ export function DocumentContributionForm({
             <h3 className="font-display text-lg font-semibold">Téléversez vos documents</h3>
             <p className="text-sm text-muted-foreground">
               Photos, factures, rapports, vidéos — tout ce qui documente ce véhicule.
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 italic">
+              Vous pourrez ajouter une description et des détails à l'étape suivante.
             </p>
           </div>
 

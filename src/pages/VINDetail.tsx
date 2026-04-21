@@ -33,13 +33,13 @@ type WorkspaceView = "dashboard" | "owner" | "contributions" | "photos" | "docum
 
 const OWNER_ROLES = new Set(["owner_verified", "owner_unverified", "former_owner"]);
 
-const NAV_ITEMS: { key: WorkspaceView; label: string; icon: typeof LayoutDashboard }[] = [
+const NAV_ITEMS: { key: WorkspaceView; label: string; sidebarLabel?: string; icon: typeof LayoutDashboard }[] = [
   { key: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
-  { key: "owner", label: "Dossier propriétaire", icon: Shield },
   { key: "contributions", label: "Contributions", icon: MessageSquare },
   { key: "photos", label: "Photos", icon: Camera },
   { key: "documents", label: "Documents", icon: FileText },
   { key: "mileage", label: "Frise de vie", icon: Gauge },
+  { key: "owner", label: "Dossier propriétaire", sidebarLabel: "Propriétaire", icon: Shield },
   { key: "contribute", label: "Contribuer", icon: Plus },
 ];
 
@@ -195,28 +195,28 @@ const VINDetail = () => {
         {!isMobile && (
           <aside className="w-[250px] flex-shrink-0 bg-[#1A1A2E] text-white flex flex-col sticky top-16 self-start h-[calc(100vh-4rem)]">
             {/* Identity */}
-            <div className="p-4 border-b border-white/10">
-              <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[hsl(152,69%,50%)] mb-2">
+            <div className="px-4 pt-3 pb-3 border-b border-white/10">
+              <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[hsl(152,69%,50%)] mb-1">
                 Dossier véhicule
               </p>
-              <h1 className="font-display text-base font-bold leading-tight mb-2">
+              <h1 className="font-display text-sm font-bold leading-tight mb-1.5">
                 {vehicleName || "Véhicule inconnu"}
               </h1>
               <button
                 onClick={copyVin}
-                className="inline-flex items-center gap-1.5 font-mono text-[12px] text-[hsl(152,69%,60%)] hover:text-white transition-colors group mb-2"
+                className="inline-flex items-center gap-1.5 font-mono text-[11px] text-[hsl(152,69%,60%)] hover:text-white transition-colors group"
                 title="Copier le VIN"
               >
                 <span className="truncate">{data.vin}</span>
                 <Copy className="w-3 h-3 opacity-50 group-hover:opacity-100 flex-shrink-0" />
               </button>
               {vehicleSpecs && (
-                <p className="text-[11px] text-white/50 leading-relaxed">{vehicleSpecs}</p>
+                <p className="text-[11px] text-white/50 leading-snug mt-1">{vehicleSpecs}</p>
               )}
             </div>
 
             {/* Nav */}
-            <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
+            <nav className="flex-1 px-2 py-1.5 space-y-0.5 overflow-y-auto">
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeView === item.key;
@@ -229,14 +229,14 @@ const VINDetail = () => {
                     key={item.key}
                     onClick={() => handleNavSelect(item.key)}
                     className={cn(
-                      "w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-all text-left border-l-2",
+                      "w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-sm transition-all text-left border-l-2",
                       isActive
                         ? "bg-white/10 border-[hsl(152,69%,50%)] text-white font-medium"
                         : "border-transparent text-white/60 hover:bg-white/[0.06] hover:text-white/90"
                     )}
                   >
                     <Icon className="w-4 h-4 flex-shrink-0" />
-                    <span className="flex-1 truncate">{item.label}</span>
+                    <span className="flex-1 truncate">{item.sidebarLabel ?? item.label}</span>
                     {showUnclaimed && (
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/50 font-medium tracking-wide flex-shrink-0">
                         Non revendiqué
@@ -248,12 +248,12 @@ const VINDetail = () => {
             </nav>
 
             {/* Footer actions */}
-            <div className="p-3 border-t border-white/10 space-y-1.5">
+            <div className="p-2 border-t border-white/10 space-y-1">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowPDFDialog(true)}
-                className="w-full justify-start text-white/70 hover:text-white hover:bg-white/[0.06] h-8 text-xs"
+                className="w-full justify-start text-white/70 hover:text-white hover:bg-white/[0.06] h-7 text-xs"
               >
                 <FileDown className="w-3.5 h-3.5 mr-2" />
                 Rapport PDF
@@ -262,7 +262,7 @@ const VINDetail = () => {
                 variant="ghost"
                 size="sm"
                 onClick={handleShare}
-                className="w-full justify-start text-white/70 hover:text-white hover:bg-white/[0.06] h-8 text-xs"
+                className="w-full justify-start text-white/70 hover:text-white hover:bg-white/[0.06] h-7 text-xs"
               >
                 <Share2 className="w-3.5 h-3.5 mr-2" />
                 Partager

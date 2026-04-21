@@ -241,43 +241,66 @@ export function MileageView({ dossier }: MileageViewProps) {
         )}
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <SummaryCard
-          icon={<UserCircle2 className="w-4 h-4 text-[hsl(262,60%,55%)]" />}
-          label="Propriétaires"
-          value={stats.ownerCount > 0 ? `${stats.ownerCount} déclaré${stats.ownerCount > 1 ? "s" : ""}` : "—"}
-          hint={stats.avgMonths != null ? `Durée moyenne ${stats.avgMonths} mois` : undefined}
-        />
-        <SummaryCard
-          icon={<Gauge className="w-4 h-4 text-[hsl(152,44%,28%)]" />}
-          label="Premier relevé"
-          value={stats.firstReading ? `${stats.firstReading.mileage.toLocaleString("fr-CA")} km` : "—"}
-          hint={stats.firstReading ? formatDate(stats.firstReading.date) : undefined}
-        />
-        <SummaryCard
-          icon={<TrendingUp className="w-4 h-4 text-[hsl(152,44%,28%)]" />}
-          label="Dernier relevé"
-          value={stats.lastReading ? `${stats.lastReading.mileage.toLocaleString("fr-CA")} km` : "—"}
-          hint={
-            stats.progressionKm != null && stats.progressionMonths != null
-              ? `+${stats.progressionKm.toLocaleString("fr-CA")} km sur ${stats.progressionMonths} mois`
-              : stats.lastReading ? formatDate(stats.lastReading.date) : undefined
-          }
-        />
-        <SummaryCard
-          icon={<DollarSign className="w-4 h-4 text-[hsl(32,95%,52%)]" />}
-          label="Prix observés"
-          value={
-            stats.minPrice != null && stats.maxPrice != null
-              ? stats.minPrice === stats.maxPrice
-                ? formatPrice(stats.minPrice)
-                : `${formatPrice(stats.minPrice)} → ${formatPrice(stats.maxPrice)}`
-              : "—"
-          }
-          hint={stats.pricesCount > 0 ? `${stats.pricesCount} prix déclaré${stats.pricesCount > 1 ? "s" : ""}` : undefined}
-        />
-      </div>
+      {/* Summary cards — only render tiles with actual data */}
+      {(() => {
+        const tiles: React.ReactNode[] = [];
+        if (stats.ownerCount > 0) {
+          tiles.push(
+            <SummaryCard
+              key="owners"
+              icon={<UserCircle2 className="w-4 h-4 text-[hsl(262,60%,55%)]" />}
+              label="Propriétaires"
+              value={`${stats.ownerCount} déclaré${stats.ownerCount > 1 ? "s" : ""}`}
+              hint={stats.avgMonths != null ? `Durée moyenne ${stats.avgMonths} mois` : undefined}
+            />
+          );
+        }
+        if (stats.firstReading) {
+          tiles.push(
+            <SummaryCard
+              key="first"
+              icon={<Gauge className="w-4 h-4 text-[hsl(152,44%,28%)]" />}
+              label="Premier relevé"
+              value={`${stats.firstReading.mileage.toLocaleString("fr-CA")} km`}
+              hint={formatDate(stats.firstReading.date)}
+            />
+          );
+        }
+        if (stats.lastReading && stats.lastReading !== stats.firstReading) {
+          tiles.push(
+            <SummaryCard
+              key="last"
+              icon={<TrendingUp className="w-4 h-4 text-[hsl(152,44%,28%)]" />}
+              label="Dernier relevé"
+              value={`${stats.lastReading.mileage.toLocaleString("fr-CA")} km`}
+              hint={
+                stats.progressionKm != null && stats.progressionMonths != null
+                  ? `+${stats.progressionKm.toLocaleString("fr-CA")} km sur ${stats.progressionMonths} mois`
+                  : formatDate(stats.lastReading.date)
+              }
+            />
+          );
+        }
+        if (stats.minPrice != null && stats.maxPrice != null) {
+          tiles.push(
+            <SummaryCard
+              key="price"
+              icon={<DollarSign className="w-4 h-4 text-[hsl(32,95%,52%)]" />}
+              label="Prix observés"
+              value={
+                stats.minPrice === stats.maxPrice
+                  ? formatPrice(stats.minPrice)
+                  : `${formatPrice(stats.minPrice)} → ${formatPrice(stats.maxPrice)}`
+              }
+              hint={stats.pricesCount > 0 ? `${stats.pricesCount} prix déclaré${stats.pricesCount > 1 ? "s" : ""}` : undefined}
+            />
+          );
+        }
+        if (tiles.length === 0) return null;
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">{tiles}</div>
+        );
+      })()}
 
       {/* Mileage readings table */}
       {readings.length > 0 && (

@@ -103,12 +103,23 @@ export function DashboardView({ dossier, onNavigate }: DashboardViewProps) {
       .map(ewf => {
         const firstFact = ewf.facts[0];
         const contributor = firstFact?.contributor;
+        const title = (ewf.event.title ?? "").trim();
+        const body = (firstFact?.fact.content ?? "").trim();
+        // If title is empty, identical to body, or a truncated prefix of body → show body only.
+        const titleNorm = title.replace(/[…\.]+$/, "").trim().toLowerCase();
+        const bodyNorm = body.toLowerCase();
+        const titleIsTruncatedPrefix =
+          !!titleNorm && !!bodyNorm && bodyNorm.startsWith(titleNorm) && body.length > title.length;
+        const titleEqualsBody = !!titleNorm && titleNorm === bodyNorm;
+        const useBodyAsTitle = !title || titleEqualsBody || titleIsTruncatedPrefix;
+        const displayTitle = useBodyAsTitle ? body : title;
+        const displayExcerpt = useBodyAsTitle ? null : (body || null);
         return {
           id: ewf.event.id,
-          title: ewf.event.title,
+          title: displayTitle,
           type: ewf.event.event_type,
           date: ewf.event.event_date,
-          excerpt: firstFact?.fact.content?.slice(0, 120) ?? null,
+          excerpt: displayExcerpt,
           author: contributor?.is_anonymous ? "Anonyme" : (contributor?.display_name ?? "Anonyme"),
         };
       });
@@ -203,12 +214,16 @@ export function DashboardView({ dossier, onNavigate }: DashboardViewProps) {
                 <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-1">
                   <Clock className="w-3 h-3" />
                   <span>{r.date ?? "Date inconnue"}</span>
-                  <span>·</span>
-                  <span className="font-medium text-foreground/70">{translateEventType(r.type)}</span>
+                  {r.type !== "other" && (
+                    <>
+                      <span>·</span>
+                      <span className="font-medium text-foreground/70">{translateEventType(r.type)}</span>
+                    </>
+                  )}
                   <span>·</span>
                   <span>{r.author}</span>
                 </div>
-                <div className="text-sm font-medium text-foreground truncate">{r.title}</div>
+                <div className="text-sm font-medium text-foreground line-clamp-2">{r.title}</div>
                 {r.excerpt && r.excerpt.trim().toLowerCase() !== r.title.trim().toLowerCase() && (
                   <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{r.excerpt}</div>
                 )}

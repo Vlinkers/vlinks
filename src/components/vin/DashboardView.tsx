@@ -105,13 +105,24 @@ export function DashboardView({ dossier, onNavigate }: DashboardViewProps) {
         const contributor = firstFact?.contributor;
         const title = (ewf.event.title ?? "").trim();
         const body = (firstFact?.fact.content ?? "").trim();
-        // If title is empty, identical to body, or a truncated prefix of body → show body only.
-        const titleNorm = title.replace(/[…\.]+$/, "").trim().toLowerCase();
-        const bodyNorm = body.toLowerCase();
+        // Aggressive normalization: lowercase, strip punctuation/diacritics/whitespace.
+        const normalize = (s: string) =>
+          s
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") // diacritics
+            .replace(/[…\.\,\!\?\;\:\'\"\`\(\)\[\]]/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+        const titleNorm = normalize(title);
+        const bodyNorm = normalize(body);
+        const titleEqualsBody = !!titleNorm && titleNorm === bodyNorm;
         const titleIsTruncatedPrefix =
           !!titleNorm && !!bodyNorm && bodyNorm.startsWith(titleNorm) && body.length > title.length;
-        const titleEqualsBody = !!titleNorm && titleNorm === bodyNorm;
-        const useBodyAsTitle = !title || titleEqualsBody || titleIsTruncatedPrefix;
+        // Also dedupe if title shares the first 20 chars with body
+        const sharedPrefix =
+          !!titleNorm && !!bodyNorm && titleNorm.slice(0, 20) === bodyNorm.slice(0, 20);
+        const useBodyAsTitle = !title || titleEqualsBody || titleIsTruncatedPrefix || sharedPrefix;
         const displayTitle = useBodyAsTitle ? body : title;
         const displayExcerpt = useBodyAsTitle ? null : (body || null);
         return {

@@ -35,6 +35,63 @@ const documentTypes = [
   { value: "autre", label: "Autre document", description: "Tout document prouvant la propriété" },
 ];
 
+type LoggedErrorDetails = {
+  message: string;
+  code?: string;
+  details?: string;
+  hint?: string;
+};
+
+const getErrorDetails = (error: unknown): LoggedErrorDetails => {
+  if (error && typeof error === "object") {
+    const candidate = error as {
+      message?: string;
+      code?: string;
+      details?: string;
+      hint?: string;
+    };
+
+    return {
+      message: candidate.message || "Erreur inconnue",
+      code: candidate.code,
+      details: candidate.details,
+      hint: candidate.hint,
+    };
+  }
+
+  return {
+    message: error instanceof Error ? error.message : String(error ?? "Erreur inconnue"),
+  };
+};
+
+const logClaimStep = (step: string, payload?: Record<string, unknown>) => {
+  console.info(`[OwnerClaimForm] ${step}`, payload ?? {});
+};
+
+const logClaimError = (step: string, error: unknown) => {
+  const details = getErrorDetails(error);
+  console.error(
+    `[OwnerClaimForm] ${step} échouée:`,
+    details.message,
+    details.code,
+    details.details,
+    details.hint,
+    error
+  );
+  return details;
+};
+
+const buildUserErrorMessage = (step: string, error: unknown) => {
+  const details = getErrorDetails(error);
+
+  if (step === "INSERT owner_claims" && details.code === "23505") {
+    return "Ce VIN est déjà revendiqué par un autre utilisateur.";
+  }
+
+  const suffix = details.code ? ` (${details.code})` : "";
+  return `${details.message}${suffix}`;
+};
+
 export function OwnerClaimForm({
   vinId,
   vin,
@@ -85,6 +142,14 @@ export function OwnerClaimForm({
     setIsSubmitting(true);
 
     try {
+      logClaimStep("Début revendication", {
+        vin,
+        vinId,
+        documentType,
+        fileName: document.name,
+        fileSize: document.size,
+      });
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
@@ -95,78 +160,125 @@ export function OwnerClaimForm({
         return;
       }
 
+      logClaimStep("Utilisateur authentifié", { userId: user.id });
+
       // Get or create VIN record
       let actualVinId = vinId;
       if (!actualVinId) {
-        const { data: existingVin } = await supabase
+        logClaimStep("Recherche du VIN existant", { vin });
+
+        const { data: existingVin, error: existingVinError } = await supabase
           .from("vins")
           .select("id")
           .eq("vin", vin)
           .maybeSingle();
 
+        if (existingVinError) {
+          throw { step: "SELECT vins", ...existingVinError };
+        }
+
         if (existingVin) {
           actualVinId = existingVin.id;
+          logClaimStep("VIN existant trouvé", { actualVinId });
         } else {
+          logClaimStep("Création du VIN", { vin });
           const { data: newVin, error: vinError } = await supabase
             .from("vins")
             .insert({ vin })
             .select("id")
             .single();
 
-          if (vinError) throw vinError;
+          if (vinError) throw { step: "INSERT vins", ...vinError };
           actualVinId = newVin.id;
+          logClaimStep("VIN créé", { actualVinId });
         }
       }
 
-      // Check if there's already an active claim for this VIN
-      const { data: existingClaim } = await supabase
+      logClaimStep("Vérification backend d'une revendication active sur ce VIN", { actualVinId, userId: user.id });
+
+      const { data: hasActiveClaim, error: activeClaimCheckError } = await supabase
+        .rpc("vin_has_active_owner_claim", { p_vin_id: actualVinId });
+
+      if (activeClaimCheckError) {
+        throw { step: "RPC vin_has_active_owner_claim", ...activeClaimCheckError };
+      }
+
+      logClaimStep("Résultat vérification backend", { actualVinId, hasActiveClaim });
+
+      const { data: existingOwnClaim, error: existingOwnClaimError } = await supabase
         .from("owner_claims")
-        .select("id, user_id")
+        .select("id")
         .eq("vin_id", actualVinId)
+        .eq("user_id", user.id)
         .eq("status", "active")
         .maybeSingle();
 
-      if (existingClaim) {
-        if (existingClaim.user_id === user.id) {
-          toast({
-            title: "Déjà revendiqué",
-            description: "Vous avez déjà revendiqué ce VIN",
-          });
-        } else {
-          toast({
-            title: "VIN déjà revendiqué",
-            description: "Ce VIN est déjà revendiqué par un autre utilisateur",
-            variant: "destructive",
-          });
-        }
+      if (existingOwnClaimError) {
+        throw { step: "SELECT owner_claims own active", ...existingOwnClaimError };
+      }
+
+      if (existingOwnClaim) {
+        logClaimStep("Revendication déjà existante pour cet utilisateur", { claimId: existingOwnClaim.id });
+        toast({
+          title: "Déjà revendiqué",
+          description: "Vous avez déjà revendiqué ce VIN",
+        });
+        return;
+      }
+
+      if (hasActiveClaim) {
+        toast({
+          title: "VIN déjà revendiqué",
+          description: "Ce VIN est déjà revendiqué par un autre utilisateur.",
+          variant: "destructive",
+        });
         return;
       }
 
       // Upload document to private bucket
       const filePath = buildSafeFilePath(`${user.id}/${actualVinId}`, document.name);
+      logClaimStep("Upload du document", {
+        bucket: "owner-verification-docs",
+        filePath,
+      });
+
       const { error: uploadError } = await supabase.storage
         .from("owner-verification-docs")
         .upload(filePath, document);
 
       if (uploadError) {
-        throw uploadError;
+        throw { step: "UPLOAD owner-verification-docs", ...uploadError };
       }
 
+      logClaimStep("Upload réussi", { filePath });
+
       // Create owner_claims record
-      const { error: claimError } = await supabase
+      logClaimStep("Insertion owner_claims", { actualVinId, userId: user.id });
+
+      const { data: createdClaim, error: claimError } = await supabase
         .from("owner_claims")
         .insert({
           user_id: user.id,
           vin_id: actualVinId,
           status: "active",
-        });
+        })
+        .select("id")
+        .single();
 
       if (claimError) {
-        throw claimError;
+        logClaimError("INSERT owner_claims", claimError);
+
+        await supabase.storage.from("owner-verification-docs").remove([filePath]);
+
+        throw { step: "INSERT owner_claims", ...claimError };
       }
 
+      logClaimStep("owner_claims créé", { claimId: createdClaim.id });
+
       // Also create owner_verifications record for backward compatibility
-      const { error: verificationError } = await supabase
+      logClaimStep("Insertion owner_verifications", { actualVinId, userId: user.id, filePath, documentType });
+
+      const { data: createdVerification, error: verificationError } = await supabase
         .from("owner_verifications")
         .insert({
           user_id: user.id,
@@ -174,11 +286,17 @@ export function OwnerClaimForm({
           document_path: filePath,
           document_type: documentType,
           verification_status: "pending",
-        });
+        })
+        .select("id")
+        .single();
 
       if (verificationError && verificationError.code !== "23505") {
-        console.error("Error creating verification:", verificationError);
+        throw { step: "INSERT owner_verifications", ...verificationError };
       }
+
+      logClaimStep("owner_verifications créé", {
+        verificationId: createdVerification?.id ?? "déjà existant",
+      });
 
       toast({
         title: "VIN revendiqué",
@@ -190,10 +308,16 @@ export function OwnerClaimForm({
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {
-      console.error("Error submitting claim:", error);
+      const step =
+        error && typeof error === "object" && "step" in error
+          ? String((error as { step?: string }).step)
+          : "Soumission de la revendication";
+
+      logClaimError(step, error);
+
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'envoi",
+        description: buildUserErrorMessage(step, error),
         variant: "destructive",
       });
     } finally {

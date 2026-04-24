@@ -56,6 +56,19 @@ export function AdminLayout({ children }: { children: ReactNode }) {
     refetchInterval: 30000,
   });
 
+  const { data: pendingClaimsCount = 0 } = useQuery({
+    queryKey: ["admin-pending-owner-claims-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("owner_verifications")
+        .select("*", { count: "exact", head: true })
+        .eq("verification_status", "pending");
+      if (error) throw error;
+      return count ?? 0;
+    },
+    refetchInterval: 30000,
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">

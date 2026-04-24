@@ -15,6 +15,7 @@ import {
   Calendar,
   Flag,
   Menu,
+  KeyRound,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ const navItems = [
   { to: "/admin/events", icon: Calendar, label: "Événements" },
   { to: "/admin/red-flags", icon: AlertTriangle, label: "Red Flags" },
   { to: "/admin/reports", icon: Flag, label: "Signalements", showBadge: true },
+  { to: "/admin/owner-claims", icon: KeyRound, label: "Revendications", showClaimsBadge: true },
   { to: "/admin/vins", icon: Car, label: "VINs" },
   { to: "/admin/users", icon: Users, label: "Utilisateurs" },
   { to: "/admin/audit", icon: ClipboardList, label: "Journal" },

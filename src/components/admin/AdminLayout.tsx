@@ -108,6 +108,11 @@ export function AdminLayout({ children }: { children: ReactNode }) {
                   {pendingReportsCount}
                 </Badge>
               )}
+              {"showClaimsBadge" in item && item.showClaimsBadge && pendingClaimsCount > 0 && (
+                <Badge variant="destructive" className="ml-auto text-[10px] h-5 min-w-5 px-1.5">
+                  {pendingClaimsCount}
+                </Badge>
+              )}
             </Link>
           );
         })}

@@ -194,25 +194,43 @@ export function OwnerClaimForm({
         }
       }
 
-      logClaimStep("Vérification d'une revendication active du même utilisateur", { actualVinId, userId: user.id });
+      logClaimStep("Vérification backend d'une revendication active sur ce VIN", { actualVinId, userId: user.id });
 
-      const { data: existingClaim, error: existingClaimError } = await supabase
+      const { data: hasActiveClaim, error: activeClaimCheckError } = await supabase
+        .rpc("vin_has_active_owner_claim", { p_vin_id: actualVinId });
+
+      if (activeClaimCheckError) {
+        throw { step: "RPC vin_has_active_owner_claim", ...activeClaimCheckError };
+      }
+
+      logClaimStep("Résultat vérification backend", { actualVinId, hasActiveClaim });
+
+      const { data: existingOwnClaim, error: existingOwnClaimError } = await supabase
         .from("owner_claims")
-        .select("id, user_id")
+        .select("id")
         .eq("vin_id", actualVinId)
         .eq("user_id", user.id)
         .eq("status", "active")
         .maybeSingle();
 
-      if (existingClaimError) {
-        throw { step: "SELECT owner_claims", ...existingClaimError };
+      if (existingOwnClaimError) {
+        throw { step: "SELECT owner_claims own active", ...existingOwnClaimError };
       }
 
-      if (existingClaim) {
-        logClaimStep("Revendication déjà existante pour cet utilisateur", { claimId: existingClaim.id });
+      if (existingOwnClaim) {
+        logClaimStep("Revendication déjà existante pour cet utilisateur", { claimId: existingOwnClaim.id });
         toast({
           title: "Déjà revendiqué",
           description: "Vous avez déjà revendiqué ce VIN",
+        });
+        return;
+      }
+
+      if (hasActiveClaim) {
+        toast({
+          title: "VIN déjà revendiqué",
+          description: "Ce VIN est déjà revendiqué par un autre utilisateur.",
+          variant: "destructive",
         });
         return;
       }

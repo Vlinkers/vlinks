@@ -78,6 +78,23 @@ const VINDetail = () => {
     })();
   }, []);
 
+  // Check if current user has a pending verification on this VIN (for sidebar badge)
+  useEffect(() => {
+    if (!currentUserId || !data?.id) { setHasMyPendingClaim(false); return; }
+    let cancelled = false;
+    (async () => {
+      const { data: rows } = await supabase
+        .from("owner_verifications")
+        .select("id")
+        .eq("user_id", currentUserId)
+        .eq("vin_id", data.id)
+        .eq("verification_status", "pending")
+        .limit(1);
+      if (!cancelled) setHasMyPendingClaim(!!rows && rows.length > 0);
+    })();
+    return () => { cancelled = true; };
+  }, [currentUserId, data?.id]);
+
   const vehicleName = vinDecode?.is_valid
     ? [vinDecode.model_year, vinDecode.make, vinDecode.model, vinDecode.trim].filter(Boolean).join(" ")
     : data ? [data.year, data.make, data.model].filter(Boolean).join(" ") : "";

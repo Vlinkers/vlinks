@@ -136,6 +136,11 @@ export function OwnerView({ dossier, vinId, vin }: OwnerViewProps) {
                 <Badge variant="secondary" className="bg-[hsl(170,40%,90%)] text-[hsl(170,70%,25%)]">
                   Propriétaire déclaré
                 </Badge>
+              ) : hasPendingClaim ? (
+                <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800">
+                  <Clock className="w-3 h-3 mr-1" />
+                  Revendication en cours de vérification
+                </Badge>
               ) : (
                 <Badge variant="outline" className="text-muted-foreground">
                   Non revendiqué
@@ -149,31 +154,46 @@ export function OwnerView({ dossier, vinId, vin }: OwnerViewProps) {
         </header>
       </div>
 
-      {/* No owner yet — invitation */}
+      {/* No owner yet — invitation OR pending state */}
       {!hasAnyOwner ? (
-        <Card className="p-8 text-center border-dashed border-[hsl(170,40%,70%)] bg-[hsl(170,55%,98%)]">
-          <div className="w-14 h-14 rounded-full bg-[hsl(170,55%,90%)] flex items-center justify-center mx-auto mb-4">
-            <Home className="w-7 h-7 text-[hsl(170,70%,30%)]" />
-          </div>
-          <h3 className="font-display text-lg font-semibold text-foreground mb-2">
-            Ce véhicule n'a pas encore de propriétaire déclaré sur VLINKS
-          </h3>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
-            Si vous êtes le propriétaire actuel, vous pouvez revendiquer ce dossier pour ajouter
-            l'historique d'entretien officiel et répondre aux observations de la communauté.
-          </p>
-          <Button
-            onClick={() => setClaimOpen(true)}
-            className="bg-[hsl(170,70%,30%)] hover:bg-[hsl(170,70%,25%)] text-white"
-          >
-            <Shield className="w-4 h-4 mr-2" />
-            Je suis le propriétaire actuel — Revendiquer ce VIN
-          </Button>
-          <p className="text-xs text-muted-foreground/70 mt-4 inline-flex items-center gap-1.5">
-            <Lock className="w-3 h-3" />
-            Vérification documentaire requise (carte grise, plaque VIN…)
-          </p>
-        </Card>
+        hasPendingClaim ? (
+          <Card className="p-8 text-center border-dashed border-amber-300 bg-amber-50/50">
+            <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+              <Clock className="w-7 h-7 text-amber-700" />
+            </div>
+            <h3 className="font-display text-lg font-semibold text-foreground mb-2">
+              Votre revendication est en cours de vérification
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Notre équipe examine actuellement le document que vous avez fourni. Vous serez notifié
+              dès que votre statut de propriétaire sera confirmé.
+            </p>
+          </Card>
+        ) : (
+          <Card className="p-8 text-center border-dashed border-[hsl(170,40%,70%)] bg-[hsl(170,55%,98%)]">
+            <div className="w-14 h-14 rounded-full bg-[hsl(170,55%,90%)] flex items-center justify-center mx-auto mb-4">
+              <Home className="w-7 h-7 text-[hsl(170,70%,30%)]" />
+            </div>
+            <h3 className="font-display text-lg font-semibold text-foreground mb-2">
+              Ce véhicule n'a pas encore de propriétaire déclaré sur VLINKS
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
+              Si vous êtes le propriétaire actuel, vous pouvez revendiquer ce dossier pour ajouter
+              l'historique d'entretien officiel et répondre aux observations de la communauté.
+            </p>
+            <Button
+              onClick={() => setClaimOpen(true)}
+              className="bg-[hsl(170,70%,30%)] hover:bg-[hsl(170,70%,25%)] text-white"
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              Je suis le propriétaire actuel — Revendiquer ce VIN
+            </Button>
+            <p className="text-xs text-muted-foreground/70 mt-4 inline-flex items-center gap-1.5">
+              <Lock className="w-3 h-3" />
+              Vérification documentaire requise (carte grise, plaque VIN…)
+            </p>
+          </Card>
+        )
       ) : ownerEvents.length === 0 ? (
         <Card className="p-8 text-center border-dashed bg-[hsl(170,55%,98%)]">
           <p className="text-sm text-muted-foreground">

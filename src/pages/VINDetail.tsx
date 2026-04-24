@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
 import {
   AlertTriangle, Loader2, Copy, LayoutDashboard, MessageSquare, Camera,
-  FileText, Gauge, Plus, FileDown, Share2, Shield,
+  FileText, Gauge, Plus, FileDown, Share2, Shield, CheckCircle2, Clock,
 } from "lucide-react";
 import { DashboardView } from "@/components/vin/DashboardView";
 import { ContributionsView } from "@/components/vin/ContributionsView";
@@ -62,6 +62,7 @@ const VINDetail = () => {
   const [showUsernameDialog, setShowUsernameDialog] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [userHasUsername, setUserHasUsername] = useState(true);
+  const [hasMyPendingClaim, setHasMyPendingClaim] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -76,6 +77,23 @@ const VINDetail = () => {
       setUserHasUsername(!!(profile?.username && profile.username.length >= 3));
     })();
   }, []);
+
+  // Check if current user has a pending verification on this VIN (for sidebar badge)
+  useEffect(() => {
+    if (!currentUserId || !data?.id) { setHasMyPendingClaim(false); return; }
+    let cancelled = false;
+    (async () => {
+      const { data: rows } = await supabase
+        .from("owner_verifications")
+        .select("id")
+        .eq("user_id", currentUserId)
+        .eq("vin_id", data.id)
+        .eq("verification_status", "pending")
+        .limit(1);
+      if (!cancelled) setHasMyPendingClaim(!!rows && rows.length > 0);
+    })();
+    return () => { cancelled = true; };
+  }, [currentUserId, data?.id]);
 
   const vehicleName = vinDecode?.is_valid
     ? [vinDecode.model_year, vinDecode.make, vinDecode.model, vinDecode.trim].filter(Boolean).join(" ")
@@ -220,10 +238,14 @@ const VINDetail = () => {
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeView === item.key;
+                const isOwnerItem = item.key === "owner";
+                const hasVerifiedOwner =
+                  isOwnerItem && !!dossier &&
+                  dossier.contributors.some((c) => c.role === "owner_verified");
                 const showUnclaimed =
-                  item.key === "owner" &&
-                  !!dossier &&
+                  isOwnerItem && !!dossier && !hasVerifiedOwner && !hasMyPendingClaim &&
                   !dossier.contributors.some((c) => OWNER_ROLES.has(c.role));
+                const showPending = isOwnerItem && !hasVerifiedOwner && hasMyPendingClaim;
                 return (
                   <button
                     key={item.key}
@@ -237,6 +259,18 @@ const VINDetail = () => {
                   >
                     <Icon className="w-4 h-4 flex-shrink-0" />
                     <span className="flex-1 truncate">{item.sidebarLabel ?? item.label}</span>
+                    {hasVerifiedOwner && (
+                      <CheckCircle2
+                        className="w-3.5 h-3.5 text-[hsl(152,69%,55%)] flex-shrink-0"
+                        aria-label="Propriétaire vérifié"
+                      />
+                    )}
+                    {showPending && (
+                      <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 font-medium tracking-wide flex-shrink-0">
+                        <Clock className="w-2.5 h-2.5" />
+                        En cours
+                      </span>
+                    )}
                     {showUnclaimed && (
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/50 font-medium tracking-wide flex-shrink-0">
                         Non revendiqué

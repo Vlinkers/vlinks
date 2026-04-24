@@ -62,6 +62,7 @@ const VINDetail = () => {
   const [showUsernameDialog, setShowUsernameDialog] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [userHasUsername, setUserHasUsername] = useState(true);
+  const [hasMyPendingClaim, setHasMyPendingClaim] = useState(false);
 
   useEffect(() => {
     (async () => {

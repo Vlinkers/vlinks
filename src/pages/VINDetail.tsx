@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
 import {
   AlertTriangle, Loader2, Copy, LayoutDashboard, MessageSquare, Camera,
-  FileText, Gauge, Plus, FileDown, Share2, Shield,
+  FileText, Gauge, Plus, FileDown, Share2, Shield, CheckCircle2, Clock,
 } from "lucide-react";
 import { DashboardView } from "@/components/vin/DashboardView";
 import { ContributionsView } from "@/components/vin/ContributionsView";

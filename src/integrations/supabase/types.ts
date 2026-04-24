@@ -1356,6 +1356,10 @@ export type Database = {
         Returns: boolean
       }
       refresh_vin_scores: { Args: { p_vin_id: string }; Returns: undefined }
+      vin_has_active_owner_claim: {
+        Args: { p_vin_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

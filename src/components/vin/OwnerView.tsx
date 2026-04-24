@@ -70,11 +70,29 @@ interface OwnerViewProps {
 
 export function OwnerView({ dossier, vinId, vin }: OwnerViewProps) {
   const isMobile = useIsMobile();
+  const { user } = useAuth();
   const [claimOpen, setClaimOpen] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   const events = dossier?.events ?? [];
   const contributors = dossier?.contributors ?? [];
+
+  // Check if current user has a pending verification for this VIN
+  const { data: myPendingVerification } = useQuery({
+    queryKey: ["my-owner-verification", vinId, user?.id],
+    enabled: !!user?.id && !!vinId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("owner_verifications")
+        .select("id, verification_status, created_at")
+        .eq("vin_id", vinId)
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
 
   // Owner-related events: at least one fact whose contributor is an owner role
   const ownerEvents = useMemo<EventWithFacts[]>(() => {
@@ -90,6 +108,7 @@ export function OwnerView({ dossier, vinId, vin }: OwnerViewProps) {
 
   const hasVerifiedOwner = contributors.some((c) => c.role === "owner_verified");
   const hasAnyOwner = contributors.some((c) => OWNER_ROLES.has(c.role));
+  const hasPendingClaim = myPendingVerification?.verification_status === "pending";
 
   const selectedEwf = useMemo(
     () => events.find((e) => e.event.id === selectedEventId) ?? null,

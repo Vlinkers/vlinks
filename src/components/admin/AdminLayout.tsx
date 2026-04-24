@@ -15,6 +15,7 @@ import {
   Calendar,
   Flag,
   Menu,
+  KeyRound,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ const navItems = [
   { to: "/admin/events", icon: Calendar, label: "Événements" },
   { to: "/admin/red-flags", icon: AlertTriangle, label: "Red Flags" },
   { to: "/admin/reports", icon: Flag, label: "Signalements", showBadge: true },
+  { to: "/admin/owner-claims", icon: KeyRound, label: "Revendications", showClaimsBadge: true },
   { to: "/admin/vins", icon: Car, label: "VINs" },
   { to: "/admin/users", icon: Users, label: "Utilisateurs" },
   { to: "/admin/audit", icon: ClipboardList, label: "Journal" },
@@ -48,6 +50,19 @@ export function AdminLayout({ children }: { children: ReactNode }) {
         .from("content_reports")
         .select("*", { count: "exact", head: true })
         .eq("status", "pending");
+      if (error) throw error;
+      return count ?? 0;
+    },
+    refetchInterval: 30000,
+  });
+
+  const { data: pendingClaimsCount = 0 } = useQuery({
+    queryKey: ["admin-pending-owner-claims-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("owner_verifications")
+        .select("*", { count: "exact", head: true })
+        .eq("verification_status", "pending");
       if (error) throw error;
       return count ?? 0;
     },
@@ -91,6 +106,11 @@ export function AdminLayout({ children }: { children: ReactNode }) {
               {"showBadge" in item && item.showBadge && pendingReportsCount > 0 && (
                 <Badge variant="destructive" className="ml-auto text-[10px] h-5 min-w-5 px-1.5">
                   {pendingReportsCount}
+                </Badge>
+              )}
+              {"showClaimsBadge" in item && item.showClaimsBadge && pendingClaimsCount > 0 && (
+                <Badge variant="destructive" className="ml-auto text-[10px] h-5 min-w-5 px-1.5">
+                  {pendingClaimsCount}
                 </Badge>
               )}
             </Link>

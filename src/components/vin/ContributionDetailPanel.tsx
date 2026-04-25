@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { X, Calendar, Gauge, FileText, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { buildPhotoUrl } from "@/lib/photoUrl";
+import { buildPhotoUrl, buildPublicStorageUrl } from "@/lib/photoUrl";
+import { isDocumentEvidence, isVehiclePhotoEvidence } from "@/lib/mediaClassification";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PhotoLightbox } from "@/components/PhotoLightbox";
@@ -31,18 +32,9 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
   mileage_record: "Relevé kilométrique", other: "Autre",
 };
 
-const PHOTO_TYPES = ["photo", "image"];
-const DOC_TYPES = ["document", "invoice", "inspection_report", "insurance_doc", "registration", "listing_screenshot"];
-
-function isPhoto(ev: { evidence_type: string; file_type: string | null }) {
-  return PHOTO_TYPES.includes(ev.evidence_type) || (ev.file_type ?? "").startsWith("image/");
-}
-function isDoc(ev: { evidence_type: string; file_type: string | null }) {
-  return DOC_TYPES.includes(ev.evidence_type) || ev.file_type === "application/pdf";
-}
 // photoUrl now provided by shared buildPhotoUrl utility
 function docUrl(path: string) {
-  return supabase.storage.from("vin-documents").getPublicUrl(path).data.publicUrl;
+  return buildPublicStorageUrl(path, "vin-documents");
 }
 function initials(name: string | null | undefined, fallback = "?") {
   if (!name) return fallback;
@@ -99,7 +91,7 @@ export function ContributionDetailPanel({ ewf, open, onClose, profiles }: Contri
   const allPhotos = useMemo(() => {
     if (!ewf) return [];
     return ewf.facts.flatMap((fw) =>
-      fw.evidence.filter(isPhoto).map((ev) => ({
+      fw.evidence.filter(isVehiclePhotoEvidence).map((ev) => ({
         id: ev.id,
         url: buildPhotoUrl(ev.file_path),
         caption: ev.description ?? null,

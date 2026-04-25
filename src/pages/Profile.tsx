@@ -259,7 +259,7 @@ const Profile = () => {
     if (error) {
       toast({
         title: language === "fr" ? "Erreur" : "Error",
-        description: language === "fr" ? "Impossible de retirer le suivi" : "Failed to unfollow",
+        description: error.message || (language === "fr" ? "Impossible de retirer le suivi" : "Failed to unfollow"),
         variant: "destructive",
       });
     } else {

@@ -384,9 +384,9 @@ const Profile = () => {
     if (error) {
       toast({
         title: language === "fr" ? "Erreur" : "Error",
-        description: language === "fr" 
+        description: error.message || (language === "fr" 
           ? "Impossible de supprimer la contribution" 
-          : "Failed to delete contribution",
+          : "Failed to delete contribution"),
         variant: "destructive",
       });
     } else {

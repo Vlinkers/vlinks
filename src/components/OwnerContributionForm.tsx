@@ -518,11 +518,11 @@ export function OwnerContributionForm({
       onOpenChange(false);
       onSuccess?.();
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting verification:", error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'envoi",
+        description: error?.message || "Une erreur est survenue lors de l'envoi",
         variant: "destructive",
       });
     } finally {

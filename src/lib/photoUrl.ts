@@ -11,14 +11,6 @@ function safeDecode(value: string): string {
   }
 }
 
-function encodePath(path: string): string {
-  return path
-    .split("/")
-    .filter(Boolean)
-    .map((segment) => encodeURIComponent(safeDecode(segment)))
-    .join("/");
-}
-
 function parseStorageReference(filePath: string, defaultBucket: string) {
   const trimmed = filePath.trim();
 
@@ -53,7 +45,7 @@ export function buildPublicStorageUrl(filePath: string | null | undefined, defau
   if ("externalUrl" in ref) return ref.externalUrl;
   if (!ref.path) return "";
 
-  return supabase.storage.from(ref.bucket).getPublicUrl(encodePath(ref.path)).data.publicUrl;
+  return supabase.storage.from(ref.bucket).getPublicUrl(ref.path).data.publicUrl;
 }
 
 /**

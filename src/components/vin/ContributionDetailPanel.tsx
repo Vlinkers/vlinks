@@ -263,8 +263,8 @@ function FactBlock({
   const memberSince = profile && !contributor?.is_anonymous ? formatMonthYear(profile.created_at) : null;
   const dossiersCount = profile && !contributor?.is_anonymous ? profile.vins_contributed_to ?? 0 : null;
 
-  const photos = fact.evidence.filter(isPhoto);
-  const docs = fact.evidence.filter(isDoc);
+  const photos = fact.evidence.filter(isVehiclePhotoEvidence);
+  const docs = fact.evidence.filter(isDocumentEvidence);
 
   return (
     <div className="space-y-3">

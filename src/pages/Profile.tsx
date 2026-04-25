@@ -259,7 +259,7 @@ const Profile = () => {
     if (error) {
       toast({
         title: language === "fr" ? "Erreur" : "Error",
-        description: language === "fr" ? "Impossible de retirer le suivi" : "Failed to unfollow",
+        description: error.message || (language === "fr" ? "Impossible de retirer le suivi" : "Failed to unfollow"),
         variant: "destructive",
       });
     } else {
@@ -289,9 +289,9 @@ const Profile = () => {
     if (error) {
       toast({
         title: language === "fr" ? "Erreur" : "Error",
-        description: language === "fr" 
+        description: error.message || (language === "fr" 
           ? "Impossible de révoquer le claim" 
-          : "Failed to revoke claim",
+          : "Failed to revoke claim"),
         variant: "destructive",
       });
     } else {
@@ -345,9 +345,9 @@ const Profile = () => {
     if (error) {
       toast({
         title: language === "fr" ? "Erreur" : "Error",
-        description: language === "fr" 
+        description: error.message || (language === "fr" 
           ? "Impossible de sauvegarder le pseudonyme" 
-          : "Failed to save username",
+          : "Failed to save username"),
         variant: "destructive",
       });
     } else {
@@ -384,9 +384,9 @@ const Profile = () => {
     if (error) {
       toast({
         title: language === "fr" ? "Erreur" : "Error",
-        description: language === "fr" 
+        description: error.message || (language === "fr" 
           ? "Impossible de supprimer la contribution" 
-          : "Failed to delete contribution",
+          : "Failed to delete contribution"),
         variant: "destructive",
       });
     } else {

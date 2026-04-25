@@ -80,9 +80,9 @@ export function UsernameRequiredDialog({ open, onComplete }: UsernameRequiredDia
     if (updateError) {
       toast({
         title: language === "fr" ? "Erreur" : "Error",
-        description: language === "fr" 
+        description: updateError.message || (language === "fr" 
           ? "Impossible de sauvegarder le pseudonyme" 
-          : "Failed to save username",
+          : "Failed to save username"),
         variant: "destructive",
       });
     } else {

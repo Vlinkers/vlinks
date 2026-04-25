@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { buildPublicStorageUrl } from "@/lib/photoUrl";
 import { useAuth } from "@/hooks/useAuth";
 import { X, Download, FileText, Image, File, Loader2, Lock, ZoomIn, ZoomOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -50,15 +51,7 @@ export function DocumentViewer({ doc, open, onOpenChange }: DocumentViewerProps)
     setLoading(true);
     setZoom(1);
 
-    // If filePath is already a full URL, use it directly
-    if (doc.filePath.startsWith("http")) {
-      setViewUrl(doc.filePath);
-      setLoading(false);
-      return;
-    }
-
-    const { data } = supabase.storage.from("vin-documents").getPublicUrl(doc.filePath);
-    setViewUrl(data?.publicUrl || null);
+    setViewUrl(buildPublicStorageUrl(doc.filePath, "vin-documents") || null);
     setLoading(false);
   }, [open, doc?.filePath]);
 

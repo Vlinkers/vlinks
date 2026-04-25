@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { buildPhotoUrl } from "@/lib/photoUrl";
+import { isDocumentEvidence, isVehiclePhotoEvidence } from "@/lib/mediaClassification";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,15 +40,6 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
   other: "Autre",
 };
 
-const PHOTO_TYPES = ["photo", "image"];
-const DOC_TYPES = ["document", "invoice", "inspection_report", "insurance_doc", "registration", "listing_screenshot"];
-
-function isPhoto(ev: { evidence_type: string; file_type: string | null }) {
-  return PHOTO_TYPES.includes(ev.evidence_type) || (ev.file_type ?? "").startsWith("image/");
-}
-function isDoc(ev: { evidence_type: string; file_type: string | null }) {
-  return DOC_TYPES.includes(ev.evidence_type) || ev.file_type === "application/pdf";
-}
 // photoUrl now provided by shared buildPhotoUrl utility
 function initials(name: string | null | undefined) {
   if (!name) return "?";
@@ -255,8 +247,8 @@ function OwnerContributionCard({
   const isVerified = contributor?.role === "owner_verified";
 
   const allEvidence = ewf.facts.flatMap((f) => f.evidence);
-  const photos = allEvidence.filter(isPhoto);
-  const docs = allEvidence.filter(isDoc);
+  const photos = allEvidence.filter(isVehiclePhotoEvidence);
+  const docs = allEvidence.filter(isDocumentEvidence);
 
   const displayName = contributor?.is_anonymous
     ? "Propriétaire (anonyme)"

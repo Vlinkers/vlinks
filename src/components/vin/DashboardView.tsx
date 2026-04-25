@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { MessageSquare, Camera, FileText, Wrench, Users, Plus, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isDocumentEvidence, isVehiclePhotoEvidence } from "@/lib/mediaClassification";
 import type { VinDossier } from "@/hooks/useVinDossier";
 
 export type DashboardTarget = "contributions" | "photos" | "documents" | "contribute";
@@ -9,9 +10,6 @@ interface DashboardViewProps {
   dossier: VinDossier | undefined;
   onNavigate: (view: DashboardTarget) => void;
 }
-
-const PHOTO_TYPES = ["photo", "image"];
-const DOCUMENT_TYPES = ["document", "invoice", "inspection_report", "insurance_doc", "registration", "listing_screenshot"];
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
   purchase: "Achat",
@@ -47,10 +45,8 @@ export function DashboardView({ dossier, onNavigate }: DashboardViewProps) {
       if (ewf.event.event_type === "inspection") inspections++;
       for (const fw of ewf.facts) {
         for (const ev of fw.evidence) {
-          const t = (ev.evidence_type || "").toLowerCase();
-          const ft = (ev.file_type || "").toLowerCase();
-          if (PHOTO_TYPES.includes(t) || ft.startsWith("image/")) photos++;
-          else if (DOCUMENT_TYPES.includes(t) || ft === "application/pdf") documents++;
+          if (isVehiclePhotoEvidence(ev)) photos++;
+          else if (isDocumentEvidence(ev)) documents++;
         }
       }
     }

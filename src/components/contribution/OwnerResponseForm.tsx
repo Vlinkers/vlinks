@@ -112,10 +112,11 @@ export default function OwnerResponseForm({
       // 2. Upload evidence if present
       if (uploadedFile) {
         const safeName = sanitizeFileName(uploadedFile.file.name);
+        const bucket = uploadedFile.file.type.startsWith("image/") ? "vin-photos" : "vin-documents";
         const path = `${vinId}/${fact.id}/${safeName}`;
 
         const { error: storageErr } = await supabase.storage
-          .from("vin-documents")
+          .from(bucket)
           .upload(path, uploadedFile.file);
 
         if (storageErr) throw storageErr;
@@ -124,7 +125,7 @@ export default function OwnerResponseForm({
           fact_id: fact.id,
           evidence_type: uploadedFile.evidenceType,
           file_name: uploadedFile.file.name,
-          file_path: path,
+          file_path: `${bucket}/${path}`,
           file_type: uploadedFile.file.type,
           file_size: uploadedFile.file.size,
         });

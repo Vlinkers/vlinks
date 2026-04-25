@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Camera, Plus, X, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import { buildPhotoUrl } from "@/lib/photoUrl";
+import { isVehiclePhotoEvidence } from "@/lib/mediaClassification";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { VinDossier, Contributor } from "@/hooks/useVinDossier";
@@ -21,8 +22,6 @@ interface PhotoItem {
   eventTitle: string;
 }
 
-const PHOTO_TYPES = ["photo", "image"];
-
 const ROLE_LABELS: Record<string, string> = {
   owner_verified: "Propriétaire vérifié",
   owner_unverified: "Propriétaire",
@@ -34,10 +33,6 @@ const ROLE_LABELS: Record<string, string> = {
   witness: "Témoin",
   anonymous: "Anonyme",
 };
-
-function isPhoto(ev: { evidence_type: string; file_type: string | null }) {
-  return PHOTO_TYPES.includes(ev.evidence_type) || (ev.file_type ?? "").startsWith("image/");
-}
 
 // photoUrl now provided by shared buildPhotoUrl utility
 
@@ -64,7 +59,7 @@ export function PhotosView({ dossier, onNavigate }: PhotosViewProps) {
     for (const ewf of dossier.events) {
       for (const fw of ewf.facts) {
         for (const ev of fw.evidence) {
-          if (!isPhoto(ev)) continue;
+          if (!isVehiclePhotoEvidence(ev)) continue;
           items.push({
             id: ev.id,
             url: buildPhotoUrl(ev.file_path),

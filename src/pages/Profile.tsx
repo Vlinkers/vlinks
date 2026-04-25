@@ -289,9 +289,9 @@ const Profile = () => {
     if (error) {
       toast({
         title: language === "fr" ? "Erreur" : "Error",
-        description: language === "fr" 
+        description: error.message || (language === "fr" 
           ? "Impossible de révoquer le claim" 
-          : "Failed to revoke claim",
+          : "Failed to revoke claim"),
         variant: "destructive",
       });
     } else {

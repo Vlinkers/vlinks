@@ -3,6 +3,7 @@ import { FileText, FileSpreadsheet, FileImage, Plus, Eye, ClipboardCheck } from 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DocumentViewer } from "@/components/DocumentViewer";
+import { isDocumentEvidence } from "@/lib/mediaClassification";
 import type { VinDossier, Contributor } from "@/hooks/useVinDossier";
 import type { ContributionDocument } from "@/hooks/useVINData";
 
@@ -23,8 +24,6 @@ interface DocItem {
   isInspection: boolean;
 }
 
-const DOC_TYPES = ["document", "invoice", "inspection_report", "insurance_doc", "registration", "listing_screenshot"];
-
 const ROLE_LABELS: Record<string, string> = {
   owner_verified: "Propriétaire vérifié",
   owner_unverified: "Propriétaire",
@@ -36,10 +35,6 @@ const ROLE_LABELS: Record<string, string> = {
   witness: "Témoin",
   anonymous: "Anonyme",
 };
-
-function isDoc(ev: { evidence_type: string; file_type: string | null }) {
-  return DOC_TYPES.includes(ev.evidence_type) || ev.file_type === "application/pdf";
-}
 
 function formatDate(d: string | null | undefined) {
   if (!d) return "—";
@@ -78,7 +73,7 @@ export function DocumentsView({ dossier, onNavigate }: DocumentsViewProps) {
     for (const ewf of dossier.events) {
       for (const fw of ewf.facts) {
         for (const ev of fw.evidence) {
-          if (!isDoc(ev)) continue;
+          if (!isDocumentEvidence(ev)) continue;
           items.push({
             id: ev.id,
             filePath: ev.file_path,

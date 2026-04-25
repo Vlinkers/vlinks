@@ -345,9 +345,9 @@ const Profile = () => {
     if (error) {
       toast({
         title: language === "fr" ? "Erreur" : "Error",
-        description: language === "fr" 
+        description: error.message || (language === "fr" 
           ? "Impossible de sauvegarder le pseudonyme" 
-          : "Failed to save username",
+          : "Failed to save username"),
         variant: "destructive",
       });
     } else {

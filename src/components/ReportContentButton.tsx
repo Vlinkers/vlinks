@@ -75,8 +75,8 @@ export function ReportContentButton({
 
       if (error) throw error;
       setSubmitted(true);
-    } catch {
-      toast.error("Erreur lors de l'envoi du signalement.");
+    } catch (e: any) {
+      toast.error(e?.message || "Erreur lors de l'envoi du signalement.");
     } finally {
       setSubmitting(false);
     }

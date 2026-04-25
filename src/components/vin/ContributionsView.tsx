@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Camera, FileText, ClipboardCheck, Calendar, Gauge, ChevronRight, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { buildPhotoUrl } from "@/lib/photoUrl";
+import { isDocumentEvidence, isVehiclePhotoEvidence } from "@/lib/mediaClassification";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -41,15 +42,6 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
   other: "Autre",
 };
 
-const PHOTO_TYPES = ["photo", "image"];
-const DOC_TYPES = ["document", "invoice", "inspection_report", "insurance_doc", "registration", "listing_screenshot"];
-
-function isPhoto(ev: { evidence_type: string; file_type: string | null }) {
-  return PHOTO_TYPES.includes(ev.evidence_type) || (ev.file_type ?? "").startsWith("image/");
-}
-function isDoc(ev: { evidence_type: string; file_type: string | null }) {
-  return DOC_TYPES.includes(ev.evidence_type) || ev.file_type === "application/pdf";
-}
 // photoUrl now provided by shared buildPhotoUrl utility
 
 // ── Profile lookup ──────────────────────────────────────
@@ -249,8 +241,8 @@ function ContributionCard({
     ewf.facts.find((f) => f.fact.content && f.fact.content.trim().length > 0) ?? ewf.facts[0];
   const contributor = primaryFact?.contributor ?? null;
   const allEvidence = ewf.facts.flatMap((f) => f.evidence);
-  const photos = allEvidence.filter(isPhoto);
-  const docs = allEvidence.filter(isDoc);
+  const photos = allEvidence.filter(isVehiclePhotoEvidence);
+  const docs = allEvidence.filter(isDocumentEvidence);
 
   const isOwnerContribution = !!contributor && ["owner_verified", "owner_unverified", "former_owner"].includes(contributor.role);
   const isVerifiedOwner = contributor?.role === "owner_verified";

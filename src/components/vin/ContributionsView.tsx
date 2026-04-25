@@ -111,8 +111,8 @@ function eventMatchesFilter(ewf: EventWithFacts, filter: FilterKey): boolean {
   if (filter === "all") return true;
   if (filter === "inspections") return ewf.event.event_type === "inspection";
   const allEvidence = ewf.facts.flatMap((f) => f.evidence);
-  if (filter === "photos") return allEvidence.some(isPhoto);
-  if (filter === "documents") return allEvidence.some(isDoc);
+  if (filter === "photos") return allEvidence.some(isVehiclePhotoEvidence);
+  if (filter === "documents") return allEvidence.some(isDocumentEvidence);
   return true;
 }
 

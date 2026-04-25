@@ -215,8 +215,8 @@ export default function AdminDashboard() {
                 }
                 localStorage.setItem("vlinks_migration_done", "true");
                 setMigrated(true);
-              } catch (err) {
-                toast.error("Erreur lors de la migration.");
+              } catch (err: any) {
+                toast.error(err?.message || "Erreur lors de la migration.");
                 console.error(err);
               } finally {
                 setMigrating(false);

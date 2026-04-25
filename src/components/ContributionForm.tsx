@@ -339,9 +339,9 @@ export function ContributionForm({
       }
       if (isOwnerClaim && ownerVerificationStatus === "none") { setShowVerification(true); setIsSubmitting(false); return; }
       await submitContribution(actualVinId, user.id);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting contribution:", error);
-      toast({ title: "Erreur", description: "Une erreur est survenue", variant: "destructive" });
+      toast({ title: "Erreur", description: error?.message || "Une erreur est survenue", variant: "destructive" });
     } finally { setIsSubmitting(false); }
   };
 

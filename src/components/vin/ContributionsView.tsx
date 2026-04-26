@@ -280,24 +280,44 @@ function ContributionCard({
   void formatMonthYear;
 
   const isInspection = ewf.event.event_type === "inspection";
+  const isPurchase = ewf.event.event_type === "purchase";
+  const isSale = ewf.event.event_type === "sale";
+  const isTransaction = isPurchase || isSale;
   const askingPrice = (ewf.event as any).asking_price as number | null | undefined;
 
-  // Border-left semantic
-  const borderClass = isOwnerContribution
-    ? "border-l-[3px] border-l-[hsl(170,70%,35%)]"
-    : isInspection
-      ? "border-l-[3px] border-l-primary"
-      : "border-l border-l-border";
+  // Border-left semantic — transactions get a distinctive thick amber/blue border
+  const borderClass = isTransaction
+    ? "border-l-[5px] border-l-[hsl(35,85%,50%)]"
+    : isOwnerContribution
+      ? "border-l-[3px] border-l-[hsl(170,70%,35%)]"
+      : isInspection
+        ? "border-l-[3px] border-l-primary"
+        : "border-l border-l-border";
 
   return (
     <Card
       className={cn(
         "relative p-0 cursor-pointer transition-all hover:shadow-md hover:border-primary/40 overflow-hidden",
         borderClass,
+        isTransaction && "bg-[hsl(40,60%,98%)]",
         isActive && "shadow-md ring-1 ring-primary/30"
       )}
       onClick={onClick}
     >
+      {/* Transaction banner */}
+      {isTransaction && (
+        <div className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(35,85%,50%)]/10 border-b border-[hsl(35,85%,50%)]/20">
+          {isPurchase ? (
+            <KeyRound className="w-3.5 h-3.5 text-[hsl(35,85%,35%)]" />
+          ) : (
+            <ArrowLeftRight className="w-3.5 h-3.5 text-[hsl(35,85%,35%)]" />
+          )}
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-[hsl(35,85%,30%)]">
+            {isPurchase ? "Achat — Changement de propriétaire" : "Vente — Changement de propriétaire"}
+          </span>
+        </div>
+      )}
+
       {isAdmin && onEdit && (
         <button
           type="button"
@@ -313,15 +333,19 @@ function ContributionCard({
         {/* LEFT — Metadata block (~28%) */}
         <div className={cn(
           "sm:w-[28%] sm:max-w-[180px] p-3 flex flex-col gap-2 border-b sm:border-b-0 sm:border-r border-border/60",
-          isOwnerContribution ? "bg-[hsl(170,55%,97%)]" : isInspection ? "bg-primary/5" : "bg-muted/30"
+          isTransaction
+            ? "bg-[hsl(40,70%,95%)]"
+            : isOwnerContribution ? "bg-[hsl(170,55%,97%)]" : isInspection ? "bg-primary/5" : "bg-muted/30"
         )}>
           <div className="flex items-center gap-2.5">
             <Avatar className="w-9 h-9 flex-shrink-0">
               <AvatarFallback className={cn(
                 "text-[11px] font-semibold",
-                isOwnerContribution
-                  ? "bg-[hsl(170,55%,88%)] text-[hsl(170,70%,25%)]"
-                  : "bg-primary/15 text-primary"
+                isTransaction
+                  ? "bg-[hsl(35,85%,85%)] text-[hsl(35,85%,30%)]"
+                  : isOwnerContribution
+                    ? "bg-[hsl(170,55%,88%)] text-[hsl(170,70%,25%)]"
+                    : "bg-primary/15 text-primary"
               )}>
                 {contributor?.is_anonymous ? "?" : initials(displayName)}
               </AvatarFallback>
@@ -350,17 +374,26 @@ function ContributionCard({
                 Rapport
               </Badge>
             )}
-            {showEventBadge && (
+            {showEventBadge && !isTransaction && (
               <Badge variant="secondary" className="text-[10px] h-4 px-1.5 font-medium">
                 {eventLabel}
               </Badge>
             )}
+            {isTransaction && (
+              <Badge className="text-[10px] h-4 px-1.5 bg-[hsl(35,85%,50%)] text-white hover:bg-[hsl(35,85%,45%)] font-semibold">
+                {isPurchase ? "ACHAT" : "VENTE"}
+              </Badge>
+            )}
           </div>
 
+          {/* HIERARCHY: For transactions, the type badge above is dominant — date below is secondary */}
           {dateLabel && (
             <div className="mt-1">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">Date</p>
-              <p className="font-display text-base font-bold text-foreground leading-tight">{dateLabel}</p>
+              <p className={cn(
+                "font-display font-bold text-foreground leading-tight",
+                isTransaction ? "text-sm" : "text-base"
+              )}>{dateLabel}</p>
             </div>
           )}
 
@@ -378,8 +411,13 @@ function ContributionCard({
               )}
               {askingPrice != null && (
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">Prix</p>
-                  <p className="text-sm font-semibold text-foreground tabular-nums">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
+                    {isTransaction ? "Prix déclaré" : "Prix"}
+                  </p>
+                  <p className={cn(
+                    "text-sm font-semibold tabular-nums",
+                    isTransaction ? "text-[hsl(35,85%,30%)]" : "text-foreground"
+                  )}>
                     {askingPrice.toLocaleString("fr-CA")} $
                   </p>
                 </div>

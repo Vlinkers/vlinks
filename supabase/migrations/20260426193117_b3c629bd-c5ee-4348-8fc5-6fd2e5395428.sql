@@ -1,0 +1,2 @@
+ALTER TABLE public.public_contributions ADD COLUMN IF NOT EXISTS price_is_public boolean NOT NULL DEFAULT false;
+ALTER TABLE public.raw_contributions ADD COLUMN IF NOT EXISTS price_is_public boolean NOT NULL DEFAULT false;

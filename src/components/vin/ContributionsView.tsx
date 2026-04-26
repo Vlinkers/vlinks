@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Camera, FileText, ClipboardCheck, Calendar, Gauge, ChevronRight, ShieldCheck, Pencil } from "lucide-react";
+import { Camera, FileText, ClipboardCheck, Calendar, Gauge, ChevronRight, ShieldCheck, Pencil, ArrowLeftRight, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { buildPhotoUrl } from "@/lib/photoUrl";
 import { isDocumentEvidence, isVehiclePhotoEvidence } from "@/lib/mediaClassification";

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Camera, FileText, ClipboardCheck, Calendar, Gauge, ChevronRight, ShieldCheck } from "lucide-react";
+import { Camera, FileText, ClipboardCheck, Calendar, Gauge, ChevronRight, ShieldCheck, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { buildPhotoUrl } from "@/lib/photoUrl";
 import { isDocumentEvidence, isVehiclePhotoEvidence } from "@/lib/mediaClassification";
@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAdmin } from "@/hooks/useAdmin";
 import { ContributionDetailPanel, type ProfileMeta } from "@/components/vin/ContributionDetailPanel";
+import { AdminContributionEditDialog } from "@/components/vin/AdminContributionEditDialog";
 import type { EventWithFacts, FactWithEvidence, Contributor, VinDossier } from "@/hooks/useVinDossier";
 
 // ── Labels ──────────────────────────────────────────────
@@ -124,12 +126,15 @@ interface ContributionsViewProps {
 
 export function ContributionsView({ dossier }: ContributionsViewProps) {
   const isMobile = useIsMobile();
+  const { isAdmin } = useAdmin();
   const [filter, setFilter] = useState<FilterKey>("all");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [editingEwf, setEditingEwf] = useState<EventWithFacts | null>(null);
 
   const events = dossier?.events ?? [];
   const contributors = dossier?.contributors ?? [];
   const profiles = useContributorProfiles(contributors);
+  const vinId = dossier?.vin.id ?? "";
 
   const sorted = useMemo(() => {
     return [...events].sort((a, b) => {
@@ -206,6 +211,8 @@ export function ContributionsView({ dossier }: ContributionsViewProps) {
                   profile={userId ? profiles[userId] : undefined}
                   isActive={ewf.event.id === selectedEventId}
                   onClick={() => setSelectedEventId(ewf.event.id)}
+                  isAdmin={isAdmin}
+                  onEdit={() => setEditingEwf(ewf)}
                 />
               );
             })}
@@ -218,6 +225,15 @@ export function ContributionsView({ dossier }: ContributionsViewProps) {
         open={panelOpen}
         onClose={() => setSelectedEventId(null)}
         profiles={profiles}
+        isAdmin={isAdmin}
+        onAdminEdit={() => selectedEwf && setEditingEwf(selectedEwf)}
+      />
+
+      <AdminContributionEditDialog
+        ewf={editingEwf}
+        open={!!editingEwf}
+        onOpenChange={(o) => { if (!o) setEditingEwf(null); }}
+        vinId={vinId}
       />
     </div>
   );
@@ -230,11 +246,15 @@ function ContributionCard({
   profile,
   isActive,
   onClick,
+  isAdmin,
+  onEdit,
 }: {
   ewf: EventWithFacts;
   profile: ProfileMeta | undefined;
   isActive: boolean;
   onClick: () => void;
+  isAdmin?: boolean;
+  onEdit?: () => void;
 }) {
   // Primary fact = first non-empty content
   const primaryFact: FactWithEvidence | undefined =
@@ -272,12 +292,23 @@ function ContributionCard({
   return (
     <Card
       className={cn(
-        "p-0 cursor-pointer transition-all hover:shadow-md hover:border-primary/40 overflow-hidden",
+        "relative p-0 cursor-pointer transition-all hover:shadow-md hover:border-primary/40 overflow-hidden",
         borderClass,
         isActive && "shadow-md ring-1 ring-primary/30"
       )}
       onClick={onClick}
     >
+      {isAdmin && onEdit && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          className="absolute top-1.5 right-1.5 z-10 p-1.5 rounded-md bg-background/90 border border-border text-muted-foreground hover:text-primary hover:border-primary/50 shadow-sm"
+          title="Modifier (admin)"
+          aria-label="Modifier la contribution (admin)"
+        >
+          <Pencil className="w-3.5 h-3.5" />
+        </button>
+      )}
       <div className="flex flex-col sm:flex-row">
         {/* LEFT — Metadata block (~28%) */}
         <div className={cn(

@@ -383,10 +383,81 @@ export function TestimonyContributionForm({
                 </div>
                 <Input
                   type="number"
-                  placeholder="Kilométrage (optionnel)"
+                  placeholder={isTransactionEvent ? `Kilométrage à la ${isPurchaseEvent ? "réception" : "vente"} (obligatoire)` : "Kilométrage (optionnel)"}
                   value={newEventMileage}
                   onChange={(e) => setNewEventMileage(e.target.value)}
                 />
+
+                {/* Transaction-specific fields */}
+                {isTransactionEvent && (
+                  <div className="space-y-3 mt-2 p-3 rounded-md border border-[hsl(35,85%,50%)]/30 bg-[hsl(40,60%,98%)]">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-[hsl(35,85%,30%)]">
+                      Détails de la {isPurchaseEvent ? "transaction d'achat" : "transaction de vente"}
+                    </p>
+
+                    <div>
+                      <label className="text-xs font-medium text-foreground mb-1 block">
+                        {isPurchaseEvent ? "Vendu par" : "Vendu à"}
+                      </label>
+                      <Select value={txCounterparty} onValueChange={setTxCounterparty}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Sélectionner…" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="particulier">Particulier</SelectItem>
+                          <SelectItem value="concessionnaire">Concessionnaire</SelectItem>
+                          {isPurchaseEvent ? (
+                            <SelectItem value="encan">Encan</SelectItem>
+                          ) : (
+                            <SelectItem value="reprise">Reprise</SelectItem>
+                          )}
+                          <SelectItem value="autre">Autre</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {isPurchaseEvent && (
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-foreground block">
+                          Prix d'achat (optionnel)
+                        </label>
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          placeholder="ex. 28500"
+                          value={txPrice}
+                          onChange={(e) => setTxPrice(e.target.value)}
+                          className="h-9"
+                        />
+                        <div className="flex items-start justify-between gap-3 p-2 rounded bg-background/60 border border-border/40">
+                          <div className="text-[11px] text-muted-foreground leading-snug">
+                            <span className="font-medium text-foreground">Rendre le prix visible publiquement</span>
+                            <br />
+                            Le prix aide les futurs acheteurs à évaluer ce véhicule. Vous pourrez le masquer à tout moment depuis votre contribution.
+                          </div>
+                          <Switch
+                            checked={txPriceIsPublic}
+                            onCheckedChange={setTxPriceIsPublic}
+                            className="mt-0.5"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="text-xs font-medium text-foreground mb-1 block">
+                        Décrivez les circonstances {isPurchaseEvent ? "de l'achat" : "de la vente"} (optionnel)
+                      </label>
+                      <Textarea
+                        rows={2}
+                        placeholder={isPurchaseEvent ? "ex. Premier propriétaire, prise de possession en concession…" : "ex. Vendu rapidement, l'acheteur est venu chercher le véhicule…"}
+                        value={txCircumstances}
+                        onChange={(e) => setTxCircumstances(e.target.value)}
+                        className="resize-none text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

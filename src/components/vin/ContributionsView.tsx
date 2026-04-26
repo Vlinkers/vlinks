@@ -126,12 +126,15 @@ interface ContributionsViewProps {
 
 export function ContributionsView({ dossier }: ContributionsViewProps) {
   const isMobile = useIsMobile();
+  const { isAdmin } = useAdmin();
   const [filter, setFilter] = useState<FilterKey>("all");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [editingEwf, setEditingEwf] = useState<EventWithFacts | null>(null);
 
   const events = dossier?.events ?? [];
   const contributors = dossier?.contributors ?? [];
   const profiles = useContributorProfiles(contributors);
+  const vinId = dossier?.vin.id ?? "";
 
   const sorted = useMemo(() => {
     return [...events].sort((a, b) => {
@@ -208,6 +211,8 @@ export function ContributionsView({ dossier }: ContributionsViewProps) {
                   profile={userId ? profiles[userId] : undefined}
                   isActive={ewf.event.id === selectedEventId}
                   onClick={() => setSelectedEventId(ewf.event.id)}
+                  isAdmin={isAdmin}
+                  onEdit={() => setEditingEwf(ewf)}
                 />
               );
             })}
@@ -220,6 +225,15 @@ export function ContributionsView({ dossier }: ContributionsViewProps) {
         open={panelOpen}
         onClose={() => setSelectedEventId(null)}
         profiles={profiles}
+        isAdmin={isAdmin}
+        onAdminEdit={() => selectedEwf && setEditingEwf(selectedEwf)}
+      />
+
+      <AdminContributionEditDialog
+        ewf={editingEwf}
+        open={!!editingEwf}
+        onOpenChange={(o) => { if (!o) setEditingEwf(null); }}
+        vinId={vinId}
       />
     </div>
   );

@@ -188,11 +188,20 @@ export function TestimonyContributionForm({
     [vinId]
   );
 
+  const COUNTERPARTY_LABELS: Record<string, string> = {
+    particulier: "Particulier",
+    concessionnaire: "Concessionnaire",
+    encan: "Encan",
+    reprise: "Reprise",
+    autre: "Autre",
+  };
+
   const canProceed =
     factContent.trim().length >= 30 &&
     (eventChoice === "existing"
       ? selectedEventId !== ""
-      : newEventTitle.trim().length > 0);
+      : newEventTitle.trim().length > 0 &&
+        (!isTransactionEvent || (newEventDate !== "" && newEventMileage !== "")));
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -217,13 +226,36 @@ export function TestimonyContributionForm({
         eventId = evt.id;
       }
 
+      // For transactions, prepend a structured block so the data is preserved
+      // and visible in the fact body until dedicated columns are added.
+      let finalContent = factContent.trim();
+      if (isTransactionEvent) {
+        const lines: string[] = [];
+        if (txCounterparty) {
+          lines.push(`${isPurchaseEvent ? "Vendu par" : "Vendu à"} : ${COUNTERPARTY_LABELS[txCounterparty] ?? txCounterparty}`);
+        }
+        if (isPurchaseEvent && txPrice) {
+          const priceLabel = txPriceIsPublic
+            ? `Prix d'achat : ${parseInt(txPrice).toLocaleString("fr-CA")} $ (visible publiquement)`
+            : `Prix d'achat : ${parseInt(txPrice).toLocaleString("fr-CA")} $ (privé — non affiché publiquement)`;
+          lines.push(priceLabel);
+        }
+        if (txCircumstances.trim()) {
+          lines.push("");
+          lines.push(`Circonstances : ${txCircumstances.trim()}`);
+        }
+        if (lines.length > 0) {
+          finalContent = `${finalContent}\n\n— Détails de la transaction —\n${lines.join("\n")}`;
+        }
+      }
+
       const { data: fact, error: factErr } = await supabase
         .from("facts")
         .insert({
           event_id: eventId,
           contributor_id: contributor.id,
           face: contributor.face,
-          content: factContent.trim(),
+          content: finalContent,
           is_anonymous: isAnonymous,
         })
         .select("id")

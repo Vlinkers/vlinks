@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { MessageSquare, Camera, FileText, Wrench, Users, Plus, Clock } from "lucide-react";
+import { MessageSquare, Camera, FileText, Wrench, Users, Plus, Clock, KeyRound, ArrowLeftRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isDocumentEvidence, isVehiclePhotoEvidence } from "@/lib/mediaClassification";
 import type { VinDossier } from "@/hooks/useVinDossier";
@@ -212,30 +212,52 @@ export function DashboardView({ dossier, onNavigate }: DashboardViewProps) {
             Dernière activité
           </h3>
           <div className="space-y-2">
-            {recent.map((r) => (
-              <button
-                key={r.id}
-                onClick={() => onNavigate("contributions")}
-                className="w-full text-left rounded-lg border border-border bg-card p-3 hover:border-primary/40 hover:shadow-sm transition-all"
-              >
-                <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-1">
-                  <Clock className="w-3 h-3" />
-                  <span>{r.date ?? "Date inconnue"}</span>
-                  {r.type !== "other" && (
-                    <>
-                      <span>·</span>
-                      <span className="font-medium text-foreground/70">{translateEventType(r.type)}</span>
-                    </>
+            {recent.map((r) => {
+              const isPurchase = r.type === "purchase";
+              const isSale = r.type === "sale";
+              const isTransaction = isPurchase || isSale;
+              return (
+                <button
+                  key={r.id}
+                  onClick={() => onNavigate("contributions")}
+                  className={cn(
+                    "w-full text-left rounded-lg border p-3 hover:shadow-sm transition-all",
+                    isTransaction
+                      ? "border-l-[5px] border-l-[hsl(35,85%,50%)] border-y-border border-r-border bg-[hsl(40,60%,98%)] hover:border-[hsl(35,85%,50%)]/60"
+                      : "border-border bg-card hover:border-primary/40"
                   )}
-                  <span>·</span>
-                  <span>{r.author}</span>
-                </div>
-                <div className="text-sm font-medium text-foreground line-clamp-2">{r.title}</div>
-                {r.excerpt && r.excerpt.trim().toLowerCase() !== r.title.trim().toLowerCase() && (
-                  <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{r.excerpt}</div>
-                )}
-              </button>
-            ))}
+                >
+                  {isTransaction && (
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      {isPurchase ? (
+                        <KeyRound className="w-3 h-3 text-[hsl(35,85%,30%)]" />
+                      ) : (
+                        <ArrowLeftRight className="w-3 h-3 text-[hsl(35,85%,30%)]" />
+                      )}
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(35,85%,30%)]">
+                        {isPurchase ? "Achat" : "Vente"} — Changement de propriétaire
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-1">
+                    <Clock className="w-3 h-3" />
+                    <span>{r.date ?? "Date inconnue"}</span>
+                    {r.type !== "other" && !isTransaction && (
+                      <>
+                        <span>·</span>
+                        <span className="font-medium text-foreground/70">{translateEventType(r.type)}</span>
+                      </>
+                    )}
+                    <span>·</span>
+                    <span>{r.author}</span>
+                  </div>
+                  <div className="text-sm font-medium text-foreground line-clamp-2">{r.title}</div>
+                  {r.excerpt && r.excerpt.trim().toLowerCase() !== r.title.trim().toLowerCase() && (
+                    <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{r.excerpt}</div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </section>
       )}

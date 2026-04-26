@@ -246,11 +246,15 @@ function ContributionCard({
   profile,
   isActive,
   onClick,
+  isAdmin,
+  onEdit,
 }: {
   ewf: EventWithFacts;
   profile: ProfileMeta | undefined;
   isActive: boolean;
   onClick: () => void;
+  isAdmin?: boolean;
+  onEdit?: () => void;
 }) {
   // Primary fact = first non-empty content
   const primaryFact: FactWithEvidence | undefined =
@@ -288,12 +292,23 @@ function ContributionCard({
   return (
     <Card
       className={cn(
-        "p-0 cursor-pointer transition-all hover:shadow-md hover:border-primary/40 overflow-hidden",
+        "relative p-0 cursor-pointer transition-all hover:shadow-md hover:border-primary/40 overflow-hidden",
         borderClass,
         isActive && "shadow-md ring-1 ring-primary/30"
       )}
       onClick={onClick}
     >
+      {isAdmin && onEdit && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          className="absolute top-1.5 right-1.5 z-10 p-1.5 rounded-md bg-background/90 border border-border text-muted-foreground hover:text-primary hover:border-primary/50 shadow-sm"
+          title="Modifier (admin)"
+          aria-label="Modifier la contribution (admin)"
+        >
+          <Pencil className="w-3.5 h-3.5" />
+        </button>
+      )}
       <div className="flex flex-col sm:flex-row">
         {/* LEFT — Metadata block (~28%) */}
         <div className={cn(

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { X, Calendar, Gauge, FileText, Eye } from "lucide-react";
+import { X, Calendar, Gauge, FileText, Eye, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { buildPhotoUrl, buildPublicStorageUrl } from "@/lib/photoUrl";
 import { isDocumentEvidence, isVehiclePhotoEvidence } from "@/lib/mediaClassification";
@@ -63,9 +63,11 @@ interface ContributionDetailPanelProps {
   open: boolean;
   onClose: () => void;
   profiles: Record<string, ProfileMeta>;
+  isAdmin?: boolean;
+  onAdminEdit?: () => void;
 }
 
-export function ContributionDetailPanel({ ewf, open, onClose, profiles }: ContributionDetailPanelProps) {
+export function ContributionDetailPanel({ ewf, open, onClose, profiles, isAdmin, onAdminEdit }: ContributionDetailPanelProps) {
   const isMobile = useIsMobile();
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -188,13 +190,25 @@ export function ContributionDetailPanel({ ewf, open, onClose, profiles }: Contri
         {/* Close button */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-border flex-shrink-0">
           <h3 className="font-semibold text-sm text-foreground">Détails de la contribution</h3>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Fermer"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            {isAdmin && onAdminEdit && (
+              <button
+                onClick={onAdminEdit}
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-border hover:border-primary hover:text-primary transition-colors"
+                title="Modifier (admin)"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                Modifier
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Fermer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Scrollable content */}

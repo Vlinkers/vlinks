@@ -125,6 +125,12 @@ export function TestimonyContributionForm({
   const [newEventTitle, setNewEventTitle] = useState("");
   const [newEventMileage, setNewEventMileage] = useState("");
 
+  // Transaction-specific fields (purchase / sale)
+  const [txPrice, setTxPrice] = useState("");
+  const [txPriceIsPublic, setTxPriceIsPublic] = useState(false);
+  const [txCounterparty, setTxCounterparty] = useState<string>("");
+  const [txCircumstances, setTxCircumstances] = useState("");
+
   // Optional file
   const [attachOpen, setAttachOpen] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
@@ -134,6 +140,10 @@ export function TestimonyContributionForm({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isPurchaseEvent = eventChoice === "new" && newEventType === "purchase";
+  const isSaleEvent = eventChoice === "new" && newEventType === "sale";
+  const isTransactionEvent = isPurchaseEvent || isSaleEvent;
 
   const existingEvents = dossier?.events.map((e) => e.event) ?? [];
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Camera, FileText, ClipboardCheck, Calendar, Gauge, ChevronRight, ShieldCheck } from "lucide-react";
+import { Camera, FileText, ClipboardCheck, Calendar, Gauge, ChevronRight, ShieldCheck, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { buildPhotoUrl } from "@/lib/photoUrl";
 import { isDocumentEvidence, isVehiclePhotoEvidence } from "@/lib/mediaClassification";
@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAdmin } from "@/hooks/useAdmin";
 import { ContributionDetailPanel, type ProfileMeta } from "@/components/vin/ContributionDetailPanel";
+import { AdminContributionEditDialog } from "@/components/vin/AdminContributionEditDialog";
 import type { EventWithFacts, FactWithEvidence, Contributor, VinDossier } from "@/hooks/useVinDossier";
 
 // ── Labels ──────────────────────────────────────────────

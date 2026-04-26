@@ -16,6 +16,7 @@ import {
   Flag,
   Menu,
   KeyRound,
+  Wrench,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ const navItems = [
   { to: "/admin/vins", icon: Car, label: "VINs" },
   { to: "/admin/users", icon: Users, label: "Utilisateurs" },
   { to: "/admin/audit", icon: ClipboardList, label: "Journal" },
+  { to: "/admin/tools", icon: Wrench, label: "Outils" },
 ];
 
 export function AdminLayout({ children }: { children: ReactNode }) {

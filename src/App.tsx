@@ -28,6 +28,7 @@ import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import LegalNotice from "./pages/legal/LegalNotice";
 import AdminContentReports from "./pages/admin/AdminContentReports";
 import AdminOwnerClaims from "./pages/admin/AdminOwnerClaims";
+import AdminTools from "./pages/admin/AdminTools";
 import ConsentBanner from "./components/ConsentBanner";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,7 @@ const App = () => (
                 <Route path="/admin/audit" element={<AdminAuditLog />} />
                 <Route path="/admin/reports" element={<AdminContentReports />} />
                 <Route path="/admin/owner-claims" element={<AdminOwnerClaims />} />
+                <Route path="/admin/tools" element={<AdminTools />} />
                 {/* Legal pages */}
                 <Route path="/conditions-utilisation" element={<TermsOfService />} />
                 <Route path="/politique-confidentialite" element={<PrivacyPolicy />} />

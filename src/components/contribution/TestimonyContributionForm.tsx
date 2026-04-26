@@ -125,6 +125,12 @@ export function TestimonyContributionForm({
   const [newEventTitle, setNewEventTitle] = useState("");
   const [newEventMileage, setNewEventMileage] = useState("");
 
+  // Transaction-specific fields (purchase / sale)
+  const [txPrice, setTxPrice] = useState("");
+  const [txPriceIsPublic, setTxPriceIsPublic] = useState(false);
+  const [txCounterparty, setTxCounterparty] = useState<string>("");
+  const [txCircumstances, setTxCircumstances] = useState("");
+
   // Optional file
   const [attachOpen, setAttachOpen] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
@@ -134,6 +140,10 @@ export function TestimonyContributionForm({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isPurchaseEvent = eventChoice === "new" && newEventType === "purchase";
+  const isSaleEvent = eventChoice === "new" && newEventType === "sale";
+  const isTransactionEvent = isPurchaseEvent || isSaleEvent;
 
   const existingEvents = dossier?.events.map((e) => e.event) ?? [];
 
@@ -178,11 +188,20 @@ export function TestimonyContributionForm({
     [vinId]
   );
 
+  const COUNTERPARTY_LABELS: Record<string, string> = {
+    particulier: "Particulier",
+    concessionnaire: "Concessionnaire",
+    encan: "Encan",
+    reprise: "Reprise",
+    autre: "Autre",
+  };
+
   const canProceed =
     factContent.trim().length >= 30 &&
     (eventChoice === "existing"
       ? selectedEventId !== ""
-      : newEventTitle.trim().length > 0);
+      : newEventTitle.trim().length > 0 &&
+        (!isTransactionEvent || (newEventDate !== "" && newEventMileage !== "")));
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -207,13 +226,36 @@ export function TestimonyContributionForm({
         eventId = evt.id;
       }
 
+      // For transactions, prepend a structured block so the data is preserved
+      // and visible in the fact body until dedicated columns are added.
+      let finalContent = factContent.trim();
+      if (isTransactionEvent) {
+        const lines: string[] = [];
+        if (txCounterparty) {
+          lines.push(`${isPurchaseEvent ? "Vendu par" : "Vendu à"} : ${COUNTERPARTY_LABELS[txCounterparty] ?? txCounterparty}`);
+        }
+        if (isPurchaseEvent && txPrice) {
+          const priceLabel = txPriceIsPublic
+            ? `Prix d'achat : ${parseInt(txPrice).toLocaleString("fr-CA")} $ (visible publiquement)`
+            : `Prix d'achat : ${parseInt(txPrice).toLocaleString("fr-CA")} $ (privé — non affiché publiquement)`;
+          lines.push(priceLabel);
+        }
+        if (txCircumstances.trim()) {
+          lines.push("");
+          lines.push(`Circonstances : ${txCircumstances.trim()}`);
+        }
+        if (lines.length > 0) {
+          finalContent = `${finalContent}\n\n— Détails de la transaction —\n${lines.join("\n")}`;
+        }
+      }
+
       const { data: fact, error: factErr } = await supabase
         .from("facts")
         .insert({
           event_id: eventId,
           contributor_id: contributor.id,
           face: contributor.face,
-          content: factContent.trim(),
+          content: finalContent,
           is_anonymous: isAnonymous,
         })
         .select("id")
@@ -373,10 +415,81 @@ export function TestimonyContributionForm({
                 </div>
                 <Input
                   type="number"
-                  placeholder="Kilométrage (optionnel)"
+                  placeholder={isTransactionEvent ? `Kilométrage à la ${isPurchaseEvent ? "réception" : "vente"} (obligatoire)` : "Kilométrage (optionnel)"}
                   value={newEventMileage}
                   onChange={(e) => setNewEventMileage(e.target.value)}
                 />
+
+                {/* Transaction-specific fields */}
+                {isTransactionEvent && (
+                  <div className="space-y-3 mt-2 p-3 rounded-md border border-[hsl(35,85%,50%)]/30 bg-[hsl(40,60%,98%)]">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-[hsl(35,85%,30%)]">
+                      Détails de la {isPurchaseEvent ? "transaction d'achat" : "transaction de vente"}
+                    </p>
+
+                    <div>
+                      <label className="text-xs font-medium text-foreground mb-1 block">
+                        {isPurchaseEvent ? "Vendu par" : "Vendu à"}
+                      </label>
+                      <Select value={txCounterparty} onValueChange={setTxCounterparty}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Sélectionner…" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="particulier">Particulier</SelectItem>
+                          <SelectItem value="concessionnaire">Concessionnaire</SelectItem>
+                          {isPurchaseEvent ? (
+                            <SelectItem value="encan">Encan</SelectItem>
+                          ) : (
+                            <SelectItem value="reprise">Reprise</SelectItem>
+                          )}
+                          <SelectItem value="autre">Autre</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {isPurchaseEvent && (
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-foreground block">
+                          Prix d'achat (optionnel)
+                        </label>
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          placeholder="ex. 28500"
+                          value={txPrice}
+                          onChange={(e) => setTxPrice(e.target.value)}
+                          className="h-9"
+                        />
+                        <div className="flex items-start justify-between gap-3 p-2 rounded bg-background/60 border border-border/40">
+                          <div className="text-[11px] text-muted-foreground leading-snug">
+                            <span className="font-medium text-foreground">Rendre le prix visible publiquement</span>
+                            <br />
+                            Le prix aide les futurs acheteurs à évaluer ce véhicule. Vous pourrez le masquer à tout moment depuis votre contribution.
+                          </div>
+                          <Switch
+                            checked={txPriceIsPublic}
+                            onCheckedChange={setTxPriceIsPublic}
+                            className="mt-0.5"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="text-xs font-medium text-foreground mb-1 block">
+                        Décrivez les circonstances {isPurchaseEvent ? "de l'achat" : "de la vente"} (optionnel)
+                      </label>
+                      <Textarea
+                        rows={2}
+                        placeholder={isPurchaseEvent ? "ex. Premier propriétaire, prise de possession en concession…" : "ex. Vendu rapidement, l'acheteur est venu chercher le véhicule…"}
+                        value={txCircumstances}
+                        onChange={(e) => setTxCircumstances(e.target.value)}
+                        className="resize-none text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

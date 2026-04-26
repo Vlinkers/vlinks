@@ -84,18 +84,32 @@ export function MileageView({ dossier }: MileageViewProps) {
         }
       }
 
-      // Inspection events from events table
+      // Events table: inspections + ownership transactions (purchase / sale)
       if (dossier) {
         for (const ewf of dossier.events) {
-          if (ewf.event.event_type !== "inspection" || !ewf.event.event_date) continue;
+          if (!ewf.event.event_date) continue;
           const ts = new Date(ewf.event.event_date).getTime();
           if (Number.isNaN(ts)) continue;
-          markers.push({
-            id: `insp-ev-${ewf.event.id}`,
-            ts,
-            kind: "inspection",
-            label: `Rapport d'inspection — ${formatDate(ewf.event.event_date)}`,
-          });
+
+          if (ewf.event.event_type === "inspection") {
+            markers.push({
+              id: `insp-ev-${ewf.event.id}`,
+              ts,
+              kind: "inspection",
+              label: `Rapport d'inspection — ${formatDate(ewf.event.event_date)}`,
+            });
+          }
+
+          if (ewf.event.event_type === "purchase" || ewf.event.event_type === "sale") {
+            const kindLabel = ewf.event.event_type === "purchase" ? "Achat" : "Vente";
+            const km = ewf.event.mileage_at_event;
+            markers.push({
+              id: `tx-${ewf.event.id}`,
+              ts,
+              kind: "ownership",
+              label: `${kindLabel} — ${formatDate(ewf.event.event_date)}${km != null ? ` · ${km.toLocaleString("fr-CA")} km` : ""}`,
+            });
+          }
         }
       }
 

@@ -798,6 +798,7 @@ export type Database = {
           migrated_at: string | null
           mileage_at_intervention: number | null
           old_price: number | null
+          price_is_public: boolean
           province: string | null
           status: string
           summary: string | null
@@ -825,6 +826,7 @@ export type Database = {
           migrated_at?: string | null
           mileage_at_intervention?: number | null
           old_price?: number | null
+          price_is_public?: boolean
           province?: string | null
           status?: string
           summary?: string | null
@@ -852,6 +854,7 @@ export type Database = {
           migrated_at?: string | null
           mileage_at_intervention?: number | null
           old_price?: number | null
+          price_is_public?: boolean
           province?: string | null
           status?: string
           summary?: string | null
@@ -896,6 +899,7 @@ export type Database = {
           migrated_at: string | null
           mileage_at_intervention: number | null
           old_price: number | null
+          price_is_public: boolean
           province: string | null
           summary: string | null
           title: string
@@ -920,6 +924,7 @@ export type Database = {
           migrated_at?: string | null
           mileage_at_intervention?: number | null
           old_price?: number | null
+          price_is_public?: boolean
           province?: string | null
           summary?: string | null
           title: string
@@ -944,6 +949,7 @@ export type Database = {
           migrated_at?: string | null
           mileage_at_intervention?: number | null
           old_price?: number | null
+          price_is_public?: boolean
           province?: string | null
           summary?: string | null
           title?: string

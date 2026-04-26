@@ -341,6 +341,12 @@ export function MileageCurve({ events, phases, redFlags, onEventClick, markers =
         <span className="inline-flex items-center gap-1">
           <span className="w-4 h-0.5 border-t border-dashed border-muted-foreground inline-block" /> Corridor attendu (5k–25k km/an)
         </span>
+        {markers.some((m) => m.kind === "ownership") && (
+          <span className="inline-flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-[hsl(35,85%,50%)] border border-white inline-block" />
+            Changement de propriétaire
+          </span>
+        )}
         {points.some((p) => p.anomaly) && (
           <span className="inline-flex items-center gap-1 text-destructive">
             <AlertTriangle size={10} /> Anomalie détectée

@@ -280,21 +280,36 @@ export function MileageCurve({ events, phases, redFlags, onEventClick, markers =
               .filter((m) => m.ts >= domainMin && m.ts <= domainMax)
               .map((m) => {
                 const color =
-                  m.kind === "ownership" ? "hsl(262, 60%, 55%)"
+                  m.kind === "ownership" ? "hsl(35, 85%, 50%)"
                   : m.kind === "price" ? "hsl(32, 95%, 52%)"
                   : "hsl(152, 60%, 38%)";
+                const isOwnership = m.kind === "ownership";
                 return (
                   <ReferenceLine
                     key={m.id}
                     x={m.ts}
                     stroke={color}
-                    strokeDasharray="2 3"
-                    strokeOpacity={0.55}
+                    strokeDasharray={isOwnership ? "5 3" : "2 3"}
+                    strokeWidth={isOwnership ? 2 : 1}
+                    strokeOpacity={isOwnership ? 0.85 : 0.55}
                     ifOverflow="extendDomain"
                     label={(props: any) => {
                       const { viewBox } = props;
                       const cx = viewBox?.x ?? 0;
                       const cy = (viewBox?.y ?? 0) + 4;
+                      if (isOwnership) {
+                        return (
+                          <g>
+                            <title>{m.label}</title>
+                            {/* Outer halo */}
+                            <circle cx={cx} cy={cy} r={9} fill={color} fillOpacity={0.18} />
+                            {/* Solid marker */}
+                            <circle cx={cx} cy={cy} r={6} fill={color} stroke="white" strokeWidth={2} />
+                            {/* Inner dot for accent */}
+                            <circle cx={cx} cy={cy} r={2} fill="white" />
+                          </g>
+                        );
+                      }
                       return (
                         <g>
                           <title>{m.label}</title>

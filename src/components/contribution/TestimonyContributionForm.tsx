@@ -197,10 +197,10 @@ export function TestimonyContributionForm({
   };
 
   const canProceed =
-    factContent.trim().length >= 30 &&
     (eventChoice === "existing"
       ? selectedEventId !== ""
-      : newEventTitle.trim().length > 0 &&
+      : newEventType !== "" &&
+        newEventTitle.trim().length > 0 &&
         (!isTransactionEvent || (newEventDate !== "" && newEventMileage !== "")));
 
   const handleSubmit = async () => {

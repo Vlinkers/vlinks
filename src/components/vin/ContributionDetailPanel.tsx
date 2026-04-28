@@ -11,6 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { EventWithFacts, FactWithEvidence, Evidence } from "@/hooks/useVinDossier";
 import type { ContributionDocument } from "@/hooks/useVINData";
+import { formatMetadataForDisplay } from "@/lib/eventTypeMetadata";
 
 const ROLE_LABELS: Record<string, string> = {
   owner_verified: "Propriétaire vérifié",

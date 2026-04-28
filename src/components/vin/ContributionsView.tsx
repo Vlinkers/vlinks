@@ -482,16 +482,15 @@ function ContributionCard({
                 <span className="inline-flex items-center gap-1">
                   <Camera className="w-3.5 h-3.5" />
                   <span className="tabular-nums font-medium">{photos.length}</span>
+                  <span>photo{photos.length > 1 ? "s" : ""}</span>
                 </span>
               )}
               {docs.length > 0 && (
                 <span className="inline-flex items-center gap-1">
                   <FileText className="w-3.5 h-3.5" />
                   <span className="tabular-nums font-medium">{docs.length}</span>
+                  <span>document{docs.length > 1 ? "s" : ""}</span>
                 </span>
-              )}
-              {photos.length === 0 && docs.length === 0 && (
-                <span className="text-[11px] text-muted-foreground/50">Aucune pièce jointe</span>
               )}
             </div>
             <span className="inline-flex items-center gap-1 text-xs text-primary font-medium">

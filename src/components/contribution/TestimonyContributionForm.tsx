@@ -214,7 +214,7 @@ export function TestimonyContributionForm({
           .from("events")
           .insert({
             vin_id: vinId,
-            event_type: newEventType,
+            event_type: newEventType as EventType,
             title: newEventTitle.trim(),
             event_date: newEventDate || null,
             event_date_precision: newEventDateApprox ? "approximate" : "exact",

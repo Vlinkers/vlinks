@@ -428,13 +428,29 @@ function ContributionCard({
 
         {/* RIGHT — Content + indicators (70%) */}
         <div className="flex-1 p-4 flex flex-col min-w-0">
-          {content ? (
-            <p className="text-sm text-foreground/90 leading-relaxed line-clamp-2 flex-1">
-              {content}
-            </p>
-          ) : (
-            <p className="text-sm text-muted-foreground/60 italic flex-1">Aucune description</p>
-          )}
+          {(() => {
+            const title = ewf.event.title?.trim() || "";
+            // Strip the structured transaction block for excerpt clarity
+            const bodyClean = content.split("\n\n— Détails de la transaction —")[0].trim();
+            const hasTitle = title.length > 0;
+            const titleText = hasTitle ? title : (bodyClean.split("\n").slice(0, 2).join(" ") || "Sans titre");
+            return (
+              <>
+                <h3 className="font-display font-semibold text-[15px] text-foreground leading-snug line-clamp-2">
+                  {titleText}
+                </h3>
+                {hasTitle && bodyClean && (
+                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mt-1.5">
+                    {bodyClean}
+                  </p>
+                )}
+                {!hasTitle && !bodyClean && (
+                  <p className="text-sm text-muted-foreground/60 italic mt-1.5">Aucune description</p>
+                )}
+              </>
+            );
+          })()}
+
 
           {/* Photo thumbnails (max 4 + overflow badge) */}
           {photos.length > 0 && (

@@ -392,6 +392,7 @@ export type Database = {
           face: Database["public"]["Enums"]["contribution_face"]
           id: string
           is_anonymous: boolean | null
+          metadata: Json
           moderation_status:
             | Database["public"]["Enums"]["moderation_status"]
             | null
@@ -407,6 +408,7 @@ export type Database = {
           face: Database["public"]["Enums"]["contribution_face"]
           id?: string
           is_anonymous?: boolean | null
+          metadata?: Json
           moderation_status?:
             | Database["public"]["Enums"]["moderation_status"]
             | null
@@ -422,6 +424,7 @@ export type Database = {
           face?: Database["public"]["Enums"]["contribution_face"]
           id?: string
           is_anonymous?: boolean | null
+          metadata?: Json
           moderation_status?:
             | Database["public"]["Enums"]["moderation_status"]
             | null

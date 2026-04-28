@@ -197,11 +197,9 @@ export function TestimonyContributionForm({
   };
 
   const canProceed =
-    (eventChoice === "existing"
+    eventChoice === "existing"
       ? selectedEventId !== ""
-      : newEventType !== "" &&
-        newEventTitle.trim().length > 0 &&
-        (!isTransactionEvent || (newEventDate !== "" && newEventMileage !== "")));
+      : newEventType !== "" && newEventTitle.trim().length > 0;
 
   const handleSubmit = async () => {
     setSubmitting(true);

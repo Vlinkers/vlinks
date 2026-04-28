@@ -407,7 +407,7 @@ export function TestimonyContributionForm({
                 </div>
                 <Input
                   type="number"
-                  placeholder={isTransactionEvent ? `Kilométrage à la ${isPurchaseEvent ? "réception" : "vente"} (obligatoire)` : "Kilométrage (optionnel)"}
+                  placeholder="Kilométrage (optionnel)"
                   value={newEventMileage}
                   onChange={(e) => setNewEventMileage(e.target.value)}
                 />

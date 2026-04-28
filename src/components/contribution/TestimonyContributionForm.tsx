@@ -322,27 +322,15 @@ export function TestimonyContributionForm({
       {step === 1 && (
         <div className="space-y-5">
           <div>
-            <h3 className="font-display text-lg font-semibold">Votre témoignage</h3>
+            <h3 className="font-display text-lg font-semibold">Ajouter une contribution</h3>
             <p className="text-sm text-muted-foreground">
-              Décrivez ce que vous avez constaté, vu ou entendu concernant ce véhicule.
+              Partagez ce que vous savez sur ce véhicule.
             </p>
           </div>
 
-          {/* Testimony textarea */}
-          <Textarea
-            placeholder="Décrivez ce que vous avez constaté, vu ou entendu concernant ce véhicule..."
-            value={factContent}
-            onChange={(e) => setFactContent(e.target.value)}
-            rows={5}
-            className="resize-none min-h-[120px]"
-          />
-          {factContent.length > 0 && factContent.length < 30 && (
-            <p className="text-xs text-destructive">Minimum 30 caractères ({factContent.length}/30)</p>
-          )}
-
           {/* Event context */}
           <div className="space-y-3">
-            <p className="text-sm font-medium">Ce témoignage concerne :</p>
+            <p className="text-sm font-medium">Cette contribution concerne :</p>
             <div className="flex gap-2">
               <Button
                 variant={eventChoice === "existing" ? "default" : "outline"}
@@ -382,22 +370,34 @@ export function TestimonyContributionForm({
             )}
 
             {eventChoice === "new" && (
-              <div className="space-y-2 pl-2 border-l-2 border-primary/20">
-                <Select value={newEventType} onValueChange={(v) => setNewEventType(v as EventType)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Type d'événement" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EVENT_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  placeholder="Titre de l'événement"
-                  value={newEventTitle}
-                  onChange={(e) => setNewEventTitle(e.target.value)}
-                />
+              <div className="space-y-3 pl-2 border-l-2 border-primary/20">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground block">
+                    Type d'événement <span className="text-destructive">*</span>
+                  </label>
+                  <Select value={newEventType} onValueChange={(v) => setNewEventType(v as EventType)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionnez le type d'événement" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EVENT_TYPES.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground block">
+                    Titre de votre contribution <span className="text-destructive">*</span>
+                  </label>
+                  <Input
+                    placeholder="Résumez en une phrase (ex: Changement de courroie à 80 000 km)"
+                    value={newEventTitle}
+                    onChange={(e) => setNewEventTitle(e.target.value)}
+                  />
+                </div>
+
                 <div className="flex gap-2 items-center">
                   <Input
                     type="date"
@@ -492,6 +492,20 @@ export function TestimonyContributionForm({
                 )}
               </div>
             )}
+          </div>
+
+          {/* Description (last) */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-foreground block">
+              Description (optionnel)
+            </label>
+            <Textarea
+              placeholder="Détaillez les circonstances, ce que vous avez observé ou appris..."
+              value={factContent}
+              onChange={(e) => setFactContent(e.target.value)}
+              rows={5}
+              className="resize-none min-h-[120px]"
+            />
           </div>
 
           {/* Optional attachment */}

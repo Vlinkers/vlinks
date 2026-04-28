@@ -126,11 +126,10 @@ export function TestimonyContributionForm({
   const [newEventTitle, setNewEventTitle] = useState("");
   const [newEventMileage, setNewEventMileage] = useState("");
 
-  // Transaction-specific fields (purchase / sale)
-  const [txPrice, setTxPrice] = useState("");
-  const [txPriceIsPublic, setTxPriceIsPublic] = useState(false);
-  const [txCounterparty, setTxCounterparty] = useState<string>("");
-  const [txCircumstances, setTxCircumstances] = useState("");
+  // Per-event-type structured metadata (stored in facts.metadata jsonb)
+  const [metadata, setMetadata] = useState<Record<string, string | boolean>>({});
+  const setMetaField = (key: string, value: string | boolean) =>
+    setMetadata((m) => ({ ...m, [key]: value }));
 
   // Optional file
   const [attachOpen, setAttachOpen] = useState(false);

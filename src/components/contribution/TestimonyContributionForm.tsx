@@ -626,3 +626,80 @@ export function TestimonyContributionForm({
     </Card>
   );
 }
+
+function ConditionalFieldRow({
+  field,
+  value,
+  visibility,
+  onChange,
+  onVisibilityChange,
+}: {
+  field: FieldDef;
+  value: string | boolean | undefined;
+  visibility: boolean;
+  onChange: (v: string) => void;
+  onVisibilityChange: (v: boolean) => void;
+}) {
+  const labelEl = (
+    <label className="text-xs font-medium text-foreground block">
+      {field.label}
+      {!field.optional && <span className="text-destructive"> *</span>}
+      {field.optional && <span className="text-muted-foreground"> (optionnel)</span>}
+    </label>
+  );
+  const strVal = typeof value === "string" ? value : "";
+
+  return (
+    <div className="space-y-1.5">
+      {labelEl}
+      {field.kind === "select" && field.options && (
+        <Select value={strVal} onValueChange={onChange}>
+          <SelectTrigger className="h-9">
+            <SelectValue placeholder="Sélectionner…" />
+          </SelectTrigger>
+          <SelectContent>
+            {field.options.map((o) => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+      {field.kind === "text" && (
+        <Input
+          value={strVal}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={field.placeholder}
+          className="h-9"
+        />
+      )}
+      {field.kind === "number" && (
+        <>
+          <Input
+            type="number"
+            inputMode="numeric"
+            value={strVal}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={field.placeholder}
+            className="h-9"
+          />
+          {field.visibilityKey && (
+            <div className="flex items-start justify-between gap-3 p-2 rounded bg-background/60 border border-border/40">
+              <div className="text-[11px] text-muted-foreground leading-snug">
+                <span className="font-medium text-foreground">
+                  {field.visibilityLabel ?? "Rendre visible publiquement"}
+                </span>
+                <br />
+                Désactivé par défaut. Vous pourrez le modifier à tout moment.
+              </div>
+              <Switch
+                checked={visibility}
+                onCheckedChange={onVisibilityChange}
+                className="mt-0.5"
+              />
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

@@ -226,27 +226,20 @@ export function TestimonyContributionForm({
         eventId = evt.id;
       }
 
-      // For transactions, prepend a structured block so the data is preserved
-      // and visible in the fact body until dedicated columns are added.
-      let finalContent = factContent.trim();
-      if (isTransactionEvent) {
-        const lines: string[] = [];
-        if (txCounterparty) {
-          lines.push(`${isPurchaseEvent ? "Vendu par" : "Vendu à"} : ${COUNTERPARTY_LABELS[txCounterparty] ?? txCounterparty}`);
-        }
-        if (isPurchaseEvent && txPrice) {
-          const priceLabel = txPriceIsPublic
-            ? `Prix d'achat : ${parseInt(txPrice).toLocaleString("fr-CA")} $ (visible publiquement)`
-            : `Prix d'achat : ${parseInt(txPrice).toLocaleString("fr-CA")} $ (privé — non affiché publiquement)`;
-          lines.push(priceLabel);
-        }
-        if (txCircumstances.trim()) {
-          lines.push("");
-          lines.push(`Circonstances : ${txCircumstances.trim()}`);
-        }
-        if (lines.length > 0) {
-          finalContent = `${finalContent}\n\n— Détails de la transaction —\n${lines.join("\n")}`;
-        }
+      // Build clean metadata for the fact (only fields defined for the chosen event type)
+      const eventTypeForFields = eventChoice === "new"
+        ? (newEventType as string)
+        : (existingEvents.find((e) => e.id === eventId)?.event_type as string | undefined) ?? "";
+      const definedKeys = new Set<string>();
+      for (const f of getFieldsForEventType(eventTypeForFields)) {
+        definedKeys.add(f.key);
+        if (f.visibilityKey) definedKeys.add(f.visibilityKey);
+      }
+      const cleanedMetadata: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(metadata)) {
+        if (!definedKeys.has(k)) continue;
+        if (v === "" || v === null || v === undefined) continue;
+        cleanedMetadata[k] = v;
       }
 
       const { data: fact, error: factErr } = await supabase
@@ -255,8 +248,9 @@ export function TestimonyContributionForm({
           event_id: eventId,
           contributor_id: contributor.id,
           face: contributor.face,
-          content: finalContent,
+          content: factContent.trim(),
           is_anonymous: isAnonymous,
+          metadata: cleanedMetadata,
         })
         .select("id")
         .single();

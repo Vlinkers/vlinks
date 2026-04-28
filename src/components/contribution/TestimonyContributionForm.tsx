@@ -119,7 +119,7 @@ export function TestimonyContributionForm({
   // Event context
   const [eventChoice, setEventChoice] = useState<"existing" | "new">("existing");
   const [selectedEventId, setSelectedEventId] = useState("");
-  const [newEventType, setNewEventType] = useState<EventType>("other");
+  const [newEventType, setNewEventType] = useState<EventType | "">("");
   const [newEventDate, setNewEventDate] = useState("");
   const [newEventDateApprox, setNewEventDateApprox] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState("");

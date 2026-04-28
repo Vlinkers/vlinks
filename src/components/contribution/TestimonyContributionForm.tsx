@@ -119,7 +119,7 @@ export function TestimonyContributionForm({
   // Event context
   const [eventChoice, setEventChoice] = useState<"existing" | "new">("existing");
   const [selectedEventId, setSelectedEventId] = useState("");
-  const [newEventType, setNewEventType] = useState<EventType>("other");
+  const [newEventType, setNewEventType] = useState<EventType | "">("");
   const [newEventDate, setNewEventDate] = useState("");
   const [newEventDateApprox, setNewEventDateApprox] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState("");
@@ -197,10 +197,10 @@ export function TestimonyContributionForm({
   };
 
   const canProceed =
-    factContent.trim().length >= 30 &&
     (eventChoice === "existing"
       ? selectedEventId !== ""
-      : newEventTitle.trim().length > 0 &&
+      : newEventType !== "" &&
+        newEventTitle.trim().length > 0 &&
         (!isTransactionEvent || (newEventDate !== "" && newEventMileage !== "")));
 
   const handleSubmit = async () => {
@@ -214,7 +214,7 @@ export function TestimonyContributionForm({
           .from("events")
           .insert({
             vin_id: vinId,
-            event_type: newEventType,
+            event_type: newEventType as EventType,
             title: newEventTitle.trim(),
             event_date: newEventDate || null,
             event_date_precision: newEventDateApprox ? "approximate" : "exact",
@@ -292,7 +292,7 @@ export function TestimonyContributionForm({
     return (
       <Card className="p-6 text-center space-y-4 border-border bg-card">
         <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto" />
-        <h3 className="font-display text-lg font-semibold">Témoignage déposé avec succès</h3>
+        <h3 className="font-display text-lg font-semibold">Contribution déposée avec succès</h3>
         <p className="text-sm text-muted-foreground">Votre contribution sera examinée par notre équipe avant publication.</p>
       </Card>
     );
@@ -322,27 +322,15 @@ export function TestimonyContributionForm({
       {step === 1 && (
         <div className="space-y-5">
           <div>
-            <h3 className="font-display text-lg font-semibold">Votre témoignage</h3>
+            <h3 className="font-display text-lg font-semibold">Ajouter une contribution</h3>
             <p className="text-sm text-muted-foreground">
-              Décrivez ce que vous avez constaté, vu ou entendu concernant ce véhicule.
+              Partagez ce que vous savez sur ce véhicule.
             </p>
           </div>
 
-          {/* Testimony textarea */}
-          <Textarea
-            placeholder="Décrivez ce que vous avez constaté, vu ou entendu concernant ce véhicule..."
-            value={factContent}
-            onChange={(e) => setFactContent(e.target.value)}
-            rows={5}
-            className="resize-none min-h-[120px]"
-          />
-          {factContent.length > 0 && factContent.length < 30 && (
-            <p className="text-xs text-destructive">Minimum 30 caractères ({factContent.length}/30)</p>
-          )}
-
           {/* Event context */}
           <div className="space-y-3">
-            <p className="text-sm font-medium">Ce témoignage concerne :</p>
+            <p className="text-sm font-medium">Cette contribution concerne :</p>
             <div className="flex gap-2">
               <Button
                 variant={eventChoice === "existing" ? "default" : "outline"}
@@ -382,22 +370,34 @@ export function TestimonyContributionForm({
             )}
 
             {eventChoice === "new" && (
-              <div className="space-y-2 pl-2 border-l-2 border-primary/20">
-                <Select value={newEventType} onValueChange={(v) => setNewEventType(v as EventType)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Type d'événement" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EVENT_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  placeholder="Titre de l'événement"
-                  value={newEventTitle}
-                  onChange={(e) => setNewEventTitle(e.target.value)}
-                />
+              <div className="space-y-3 pl-2 border-l-2 border-primary/20">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground block">
+                    Type d'événement <span className="text-destructive">*</span>
+                  </label>
+                  <Select value={newEventType} onValueChange={(v) => setNewEventType(v as EventType)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionnez le type d'événement" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EVENT_TYPES.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground block">
+                    Titre de votre contribution <span className="text-destructive">*</span>
+                  </label>
+                  <Input
+                    placeholder="Résumez en une phrase (ex: Changement de courroie à 80 000 km)"
+                    value={newEventTitle}
+                    onChange={(e) => setNewEventTitle(e.target.value)}
+                  />
+                </div>
+
                 <div className="flex gap-2 items-center">
                   <Input
                     type="date"
@@ -494,6 +494,20 @@ export function TestimonyContributionForm({
             )}
           </div>
 
+          {/* Description (last) */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-foreground block">
+              Description (optionnel)
+            </label>
+            <Textarea
+              placeholder="Détaillez les circonstances, ce que vous avez observé ou appris..."
+              value={factContent}
+              onChange={(e) => setFactContent(e.target.value)}
+              rows={5}
+              className="resize-none min-h-[120px]"
+            />
+          </div>
+
           {/* Optional attachment */}
           <Collapsible open={attachOpen} onOpenChange={setAttachOpen}>
             <CollapsibleTrigger asChild>
@@ -508,7 +522,7 @@ export function TestimonyContributionForm({
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-3 space-y-3">
               <p className="text-xs text-muted-foreground">
-                Ajouter un document (facture, photo, rapport) renforce la crédibilité de votre témoignage.
+                Ajouter un document (facture, photo, rapport) renforce la crédibilité de votre contribution.
               </p>
 
               {!uploadedFile && (
@@ -614,7 +628,7 @@ export function TestimonyContributionForm({
       {/* STEP 2 - Review */}
       {step === 2 && (
         <div className="space-y-4">
-          <h3 className="font-display text-lg font-semibold">Vérifiez votre témoignage</h3>
+          <h3 className="font-display text-lg font-semibold">Vérifiez votre contribution</h3>
 
           <div className="space-y-3 text-sm">
             <div className="p-3 rounded-lg bg-muted/20 border border-border space-y-1">
@@ -632,7 +646,7 @@ export function TestimonyContributionForm({
             </div>
 
             <div className="p-3 rounded-lg bg-muted/20 border border-border">
-              <p className="font-medium mb-1">Témoignage :</p>
+              <p className="font-medium mb-1">Contribution :</p>
               <p className="text-muted-foreground whitespace-pre-wrap">{factContent}</p>
             </div>
 
@@ -663,7 +677,7 @@ export function TestimonyContributionForm({
 
           <Button className="w-full" disabled={submitting} onClick={handleSubmit}>
             {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-            Déposer mon témoignage
+            Déposer ma contribution
           </Button>
         </div>
       )}

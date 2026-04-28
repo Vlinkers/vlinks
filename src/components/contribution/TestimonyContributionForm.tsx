@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVinDossier } from "@/hooks/useVinDossier";
+import { getFieldsForEventType, type FieldDef } from "@/lib/eventTypeMetadata";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 
 type Contributor = Tables<"contributors">;
@@ -125,11 +126,10 @@ export function TestimonyContributionForm({
   const [newEventTitle, setNewEventTitle] = useState("");
   const [newEventMileage, setNewEventMileage] = useState("");
 
-  // Transaction-specific fields (purchase / sale)
-  const [txPrice, setTxPrice] = useState("");
-  const [txPriceIsPublic, setTxPriceIsPublic] = useState(false);
-  const [txCounterparty, setTxCounterparty] = useState<string>("");
-  const [txCircumstances, setTxCircumstances] = useState("");
+  // Per-event-type structured metadata (stored in facts.metadata jsonb)
+  const [metadata, setMetadata] = useState<Record<string, string | boolean>>({});
+  const setMetaField = (key: string, value: string | boolean) =>
+    setMetadata((m) => ({ ...m, [key]: value }));
 
   // Optional file
   const [attachOpen, setAttachOpen] = useState(false);
@@ -197,11 +197,9 @@ export function TestimonyContributionForm({
   };
 
   const canProceed =
-    (eventChoice === "existing"
+    eventChoice === "existing"
       ? selectedEventId !== ""
-      : newEventType !== "" &&
-        newEventTitle.trim().length > 0 &&
-        (!isTransactionEvent || (newEventDate !== "" && newEventMileage !== "")));
+      : newEventType !== "" && newEventTitle.trim().length > 0;
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -226,27 +224,20 @@ export function TestimonyContributionForm({
         eventId = evt.id;
       }
 
-      // For transactions, prepend a structured block so the data is preserved
-      // and visible in the fact body until dedicated columns are added.
-      let finalContent = factContent.trim();
-      if (isTransactionEvent) {
-        const lines: string[] = [];
-        if (txCounterparty) {
-          lines.push(`${isPurchaseEvent ? "Vendu par" : "Vendu à"} : ${COUNTERPARTY_LABELS[txCounterparty] ?? txCounterparty}`);
-        }
-        if (isPurchaseEvent && txPrice) {
-          const priceLabel = txPriceIsPublic
-            ? `Prix d'achat : ${parseInt(txPrice).toLocaleString("fr-CA")} $ (visible publiquement)`
-            : `Prix d'achat : ${parseInt(txPrice).toLocaleString("fr-CA")} $ (privé — non affiché publiquement)`;
-          lines.push(priceLabel);
-        }
-        if (txCircumstances.trim()) {
-          lines.push("");
-          lines.push(`Circonstances : ${txCircumstances.trim()}`);
-        }
-        if (lines.length > 0) {
-          finalContent = `${finalContent}\n\n— Détails de la transaction —\n${lines.join("\n")}`;
-        }
+      // Build clean metadata for the fact (only fields defined for the chosen event type)
+      const eventTypeForFields = eventChoice === "new"
+        ? (newEventType as string)
+        : (existingEvents.find((e) => e.id === eventId)?.event_type as string | undefined) ?? "";
+      const definedKeys = new Set<string>();
+      for (const f of getFieldsForEventType(eventTypeForFields)) {
+        definedKeys.add(f.key);
+        if (f.visibilityKey) definedKeys.add(f.visibilityKey);
+      }
+      const cleanedMetadata: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(metadata)) {
+        if (!definedKeys.has(k)) continue;
+        if (v === "" || v === null || v === undefined) continue;
+        cleanedMetadata[k] = v;
       }
 
       const { data: fact, error: factErr } = await supabase
@@ -255,8 +246,9 @@ export function TestimonyContributionForm({
           event_id: eventId,
           contributor_id: contributor.id,
           face: contributor.face,
-          content: finalContent,
+          content: factContent.trim(),
           is_anonymous: isAnonymous,
+          metadata: cleanedMetadata as any,
         })
         .select("id")
         .single();
@@ -415,79 +407,27 @@ export function TestimonyContributionForm({
                 </div>
                 <Input
                   type="number"
-                  placeholder={isTransactionEvent ? `Kilométrage à la ${isPurchaseEvent ? "réception" : "vente"} (obligatoire)` : "Kilométrage (optionnel)"}
+                  placeholder="Kilométrage (optionnel)"
                   value={newEventMileage}
                   onChange={(e) => setNewEventMileage(e.target.value)}
                 />
 
-                {/* Transaction-specific fields */}
-                {isTransactionEvent && (
-                  <div className="space-y-3 mt-2 p-3 rounded-md border border-[hsl(35,85%,50%)]/30 bg-[hsl(40,60%,98%)]">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-[hsl(35,85%,30%)]">
-                      Détails de la {isPurchaseEvent ? "transaction d'achat" : "transaction de vente"}
+                {/* Conditional fields per event type */}
+                {newEventType !== "" && getFieldsForEventType(newEventType).length > 0 && (
+                  <div className="space-y-3 mt-2 p-3 rounded-md border border-border/60 bg-muted/30">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Détails complémentaires
                     </p>
-
-                    <div>
-                      <label className="text-xs font-medium text-foreground mb-1 block">
-                        {isPurchaseEvent ? "Vendu par" : "Vendu à"}
-                      </label>
-                      <Select value={txCounterparty} onValueChange={setTxCounterparty}>
-                        <SelectTrigger className="h-9">
-                          <SelectValue placeholder="Sélectionner…" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="particulier">Particulier</SelectItem>
-                          <SelectItem value="concessionnaire">Concessionnaire</SelectItem>
-                          {isPurchaseEvent ? (
-                            <SelectItem value="encan">Encan</SelectItem>
-                          ) : (
-                            <SelectItem value="reprise">Reprise</SelectItem>
-                          )}
-                          <SelectItem value="autre">Autre</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {isPurchaseEvent && (
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-foreground block">
-                          Prix d'achat (optionnel)
-                        </label>
-                        <Input
-                          type="number"
-                          inputMode="numeric"
-                          placeholder="ex. 28500"
-                          value={txPrice}
-                          onChange={(e) => setTxPrice(e.target.value)}
-                          className="h-9"
-                        />
-                        <div className="flex items-start justify-between gap-3 p-2 rounded bg-background/60 border border-border/40">
-                          <div className="text-[11px] text-muted-foreground leading-snug">
-                            <span className="font-medium text-foreground">Rendre le prix visible publiquement</span>
-                            <br />
-                            Le prix aide les futurs acheteurs à évaluer ce véhicule. Vous pourrez le masquer à tout moment depuis votre contribution.
-                          </div>
-                          <Switch
-                            checked={txPriceIsPublic}
-                            onCheckedChange={setTxPriceIsPublic}
-                            className="mt-0.5"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="text-xs font-medium text-foreground mb-1 block">
-                        Décrivez les circonstances {isPurchaseEvent ? "de l'achat" : "de la vente"} (optionnel)
-                      </label>
-                      <Textarea
-                        rows={2}
-                        placeholder={isPurchaseEvent ? "ex. Premier propriétaire, prise de possession en concession…" : "ex. Vendu rapidement, l'acheteur est venu chercher le véhicule…"}
-                        value={txCircumstances}
-                        onChange={(e) => setTxCircumstances(e.target.value)}
-                        className="resize-none text-sm"
+                    {getFieldsForEventType(newEventType).map((f) => (
+                      <ConditionalFieldRow
+                        key={f.key}
+                        field={f}
+                        value={metadata[f.key]}
+                        visibility={f.visibilityKey ? !!metadata[f.visibilityKey] : false}
+                        onChange={(v) => setMetaField(f.key, v)}
+                        onVisibilityChange={(v) => f.visibilityKey && setMetaField(f.visibilityKey, v)}
                       />
-                    </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -682,5 +622,82 @@ export function TestimonyContributionForm({
         </div>
       )}
     </Card>
+  );
+}
+
+function ConditionalFieldRow({
+  field,
+  value,
+  visibility,
+  onChange,
+  onVisibilityChange,
+}: {
+  field: FieldDef;
+  value: string | boolean | undefined;
+  visibility: boolean;
+  onChange: (v: string) => void;
+  onVisibilityChange: (v: boolean) => void;
+}) {
+  const labelEl = (
+    <label className="text-xs font-medium text-foreground block">
+      {field.label}
+      {!field.optional && <span className="text-destructive"> *</span>}
+      {field.optional && <span className="text-muted-foreground"> (optionnel)</span>}
+    </label>
+  );
+  const strVal = typeof value === "string" ? value : "";
+
+  return (
+    <div className="space-y-1.5">
+      {labelEl}
+      {field.kind === "select" && field.options && (
+        <Select value={strVal} onValueChange={onChange}>
+          <SelectTrigger className="h-9">
+            <SelectValue placeholder="Sélectionner…" />
+          </SelectTrigger>
+          <SelectContent>
+            {field.options.map((o) => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+      {field.kind === "text" && (
+        <Input
+          value={strVal}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={field.placeholder}
+          className="h-9"
+        />
+      )}
+      {field.kind === "number" && (
+        <>
+          <Input
+            type="number"
+            inputMode="numeric"
+            value={strVal}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={field.placeholder}
+            className="h-9"
+          />
+          {field.visibilityKey && (
+            <div className="flex items-start justify-between gap-3 p-2 rounded bg-background/60 border border-border/40">
+              <div className="text-[11px] text-muted-foreground leading-snug">
+                <span className="font-medium text-foreground">
+                  {field.visibilityLabel ?? "Rendre visible publiquement"}
+                </span>
+                <br />
+                Désactivé par défaut. Vous pourrez le modifier à tout moment.
+              </div>
+              <Switch
+                checked={visibility}
+                onCheckedChange={onVisibilityChange}
+                className="mt-0.5"
+              />
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 }

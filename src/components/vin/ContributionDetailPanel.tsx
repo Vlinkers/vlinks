@@ -11,6 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { EventWithFacts, FactWithEvidence, Evidence } from "@/hooks/useVinDossier";
 import type { ContributionDocument } from "@/hooks/useVINData";
+import { formatMetadataForDisplay } from "@/lib/eventTypeMetadata";
 
 const ROLE_LABELS: Record<string, string> = {
   owner_verified: "Propriétaire vérifié",
@@ -340,6 +341,23 @@ function FactBlock({
           {fact.fact.content}
         </p>
       )}
+
+      {/* Structured metadata */}
+      {(() => {
+        const meta = (fact.fact as { metadata?: Record<string, unknown> | null }).metadata;
+        const rows = formatMetadataForDisplay(ewf.event.event_type, meta);
+        if (rows.length === 0) return null;
+        return (
+          <dl className="rounded-md border border-border bg-muted/30 p-3 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-sm">
+            {rows.map((r) => (
+              <div key={r.label} className="contents">
+                <dt className="text-xs uppercase tracking-wide text-muted-foreground self-center">{r.label}</dt>
+                <dd className="text-foreground font-medium">{r.value}</dd>
+              </div>
+            ))}
+          </dl>
+        );
+      })()}
 
       {/* Photos grid */}
       {photos.length > 0 && (

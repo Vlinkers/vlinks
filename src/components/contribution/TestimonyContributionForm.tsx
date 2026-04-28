@@ -250,7 +250,7 @@ export function TestimonyContributionForm({
           face: contributor.face,
           content: factContent.trim(),
           is_anonymous: isAnonymous,
-          metadata: cleanedMetadata,
+          metadata: cleanedMetadata as any,
         })
         .select("id")
         .single();

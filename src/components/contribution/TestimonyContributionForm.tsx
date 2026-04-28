@@ -292,7 +292,7 @@ export function TestimonyContributionForm({
     return (
       <Card className="p-6 text-center space-y-4 border-border bg-card">
         <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto" />
-        <h3 className="font-display text-lg font-semibold">Témoignage déposé avec succès</h3>
+        <h3 className="font-display text-lg font-semibold">Contribution déposée avec succès</h3>
         <p className="text-sm text-muted-foreground">Votre contribution sera examinée par notre équipe avant publication.</p>
       </Card>
     );
@@ -522,7 +522,7 @@ export function TestimonyContributionForm({
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-3 space-y-3">
               <p className="text-xs text-muted-foreground">
-                Ajouter un document (facture, photo, rapport) renforce la crédibilité de votre témoignage.
+                Ajouter un document (facture, photo, rapport) renforce la crédibilité de votre contribution.
               </p>
 
               {!uploadedFile && (
@@ -628,7 +628,7 @@ export function TestimonyContributionForm({
       {/* STEP 2 - Review */}
       {step === 2 && (
         <div className="space-y-4">
-          <h3 className="font-display text-lg font-semibold">Vérifiez votre témoignage</h3>
+          <h3 className="font-display text-lg font-semibold">Vérifiez votre contribution</h3>
 
           <div className="space-y-3 text-sm">
             <div className="p-3 rounded-lg bg-muted/20 border border-border space-y-1">
@@ -646,7 +646,7 @@ export function TestimonyContributionForm({
             </div>
 
             <div className="p-3 rounded-lg bg-muted/20 border border-border">
-              <p className="font-medium mb-1">Témoignage :</p>
+              <p className="font-medium mb-1">Contribution :</p>
               <p className="text-muted-foreground whitespace-pre-wrap">{factContent}</p>
             </div>
 
@@ -677,7 +677,7 @@ export function TestimonyContributionForm({
 
           <Button className="w-full" disabled={submitting} onClick={handleSubmit}>
             {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-            Déposer mon témoignage
+            Déposer ma contribution
           </Button>
         </div>
       )}

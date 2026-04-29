@@ -348,6 +348,7 @@ export type Database = {
           file_type: string
           id: string
           is_redacted: boolean | null
+          media_type: string | null
         }
         Insert: {
           created_at?: string | null
@@ -360,6 +361,7 @@ export type Database = {
           file_type: string
           id?: string
           is_redacted?: boolean | null
+          media_type?: string | null
         }
         Update: {
           created_at?: string | null
@@ -372,6 +374,7 @@ export type Database = {
           file_type?: string
           id?: string
           is_redacted?: boolean | null
+          media_type?: string | null
         }
         Relationships: [
           {

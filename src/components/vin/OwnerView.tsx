@@ -243,6 +243,12 @@ export function OwnerView({ dossier, vinId, vin }: OwnerViewProps) {
             panelOpen && !isMobile ? "lg:max-w-[55%] lg:pr-4" : "max-w-full"
           )}
         >
+          {/* Mechanical health dashboard — only renders if maintenance entries exist */}
+          <VehicleHealthDashboard
+            events={ownerEvents}
+            onSelectEvent={(id) => setSelectedEventId(id)}
+          />
+
           {/* SECTION 1 — After purchase */}
           {afterPurchase.length > 0 && (
             <section className="space-y-3">

@@ -24,9 +24,18 @@ const STATUS_BG: Record<HealthStatus, string> = {
 
 function indicator(sh: SystemHealth): string {
   if (sh.status === "grey") return "--";
+  // Problem-based alerts override wear display
+  if (sh.alertReason === "unresolved_problem") return "⚠️";
+  if (sh.alertReason === "overdue") return "À prévoir";
+  if (sh.status === "red") {
+    if (sh.wearPercentage != null) return `${sh.wearPercentage}%`;
+    return "⚠️";
+  }
+  if (sh.status === "yellow") {
+    if (sh.wearPercentage != null) return `${sh.wearPercentage}%`;
+    return "À surveiller";
+  }
   if (sh.wearPercentage != null) return `${sh.wearPercentage}%`;
-  if (sh.status === "red") return "⚠️";
-  if (sh.status === "yellow") return "À surveiller";
   return "OK";
 }
 

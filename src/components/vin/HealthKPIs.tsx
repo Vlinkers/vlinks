@@ -73,19 +73,27 @@ export function HealthKPIs({ kpis }: HealthKPIsProps) {
         <KPIItem
           icon={<CalendarPlus className="w-3.5 h-3.5" />}
           label="Prochaine échéance"
-          value={
-            next
-              ? next.km
-                ? `${next.systemLabel} · ${next.km.toLocaleString("fr-CA")} km`
-                : next.date
-                  ? `${next.systemLabel} · ${fmtDate(next.date)}`
-                  : next.systemLabel
-              : "—"
-          }
+          value={formatNext(next)}
         />
       </div>
     </div>
   );
+}
+
+function formatNext(next: HealthKPIsProps["kpis"]["nextScheduled"]): string {
+  if (!next) return "—";
+  const parts: string[] = [];
+  if (next.date) {
+    const dateStr = fmtDate(next.date);
+    const days = Math.round((next.date.getTime() - Date.now()) / 86400000);
+    if (days >= 0 && days <= 30) parts.push(`${dateStr} (dans ${days}j)`);
+    else parts.push(dateStr);
+  }
+  if (next.km != null) {
+    parts.push(`${next.km.toLocaleString("fr-CA")} km`);
+  }
+  if (parts.length === 0) return next.systemLabel;
+  return `${next.systemLabel} · ${parts.join(" / ")}`;
 }
 
 function KPIItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {

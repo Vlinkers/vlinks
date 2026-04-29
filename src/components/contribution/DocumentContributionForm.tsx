@@ -433,27 +433,26 @@ export function DocumentContributionForm({
                   )}
                   <span className="text-sm font-medium truncate flex-1">{f.file.name}</span>
                 </div>
-                <Select
-                  value={f.evidenceType}
-                  onValueChange={(v) => updateFile(f.id, { evidenceType: v })}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Type de document" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EVIDENCE_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  placeholder="Description optionnelle"
-                  value={f.description}
-                  onChange={(e) => updateFile(f.id, { description: e.target.value })}
-                  className="h-9"
-                />
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground block">
+                    Type de fichier <span className="text-destructive">*</span>
+                  </label>
+                  <Select
+                    value={f.evidenceType}
+                    onValueChange={(v) => updateFile(f.id, { evidenceType: v })}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Sélectionnez le type de fichier" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EVIDENCE_TYPES.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
                   <Checkbox
                     checked={f.isRedacted}

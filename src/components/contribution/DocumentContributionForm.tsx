@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVinDossier } from "@/hooks/useVinDossier";
+import { EVIDENCE_MEDIA_TYPE } from "@/lib/mediaClassification";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 
 type Contributor = Tables<"contributors">;
@@ -246,13 +247,14 @@ export function DocumentContributionForm({
         const { error: evErr } = await supabase.from("evidence").insert({
           fact_id: fact.id,
           evidence_type: f.evidenceType,
+          media_type: EVIDENCE_MEDIA_TYPE.document,
           file_type: f.file.type,
           file_name: f.file.name,
           file_path: `${bucket}/${f.storagePath}`,
           file_size: f.file.size,
           description: f.description || null,
           is_redacted: f.isRedacted,
-        });
+        } as never);
         if (evErr) console.error("Evidence insert error:", evErr);
       }
 

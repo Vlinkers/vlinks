@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { MessageSquare, Camera, FileText, Wrench, Users, Plus, Clock, KeyRound, ArrowLeftRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { isDocumentEvidence, isVehiclePhotoEvidence } from "@/lib/mediaClassification";
+import { isDossierDocumentEvidence, isVehiclePhotoEvidence } from "@/lib/mediaClassification";
 import type { VinDossier } from "@/hooks/useVinDossier";
 
 export type DashboardTarget = "contributions" | "photos" | "documents" | "contribute";
@@ -46,7 +46,7 @@ export function DashboardView({ dossier, onNavigate }: DashboardViewProps) {
       for (const fw of ewf.facts) {
         for (const ev of fw.evidence) {
           if (isVehiclePhotoEvidence(ev)) photos++;
-          else if (isDocumentEvidence(ev)) documents++;
+          else if (isDossierDocumentEvidence(ev)) documents++;
         }
       }
     }

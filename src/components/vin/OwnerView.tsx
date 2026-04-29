@@ -1,58 +1,22 @@
 import { useMemo, useState } from "react";
-import { Shield, ShieldCheck, Calendar, Gauge, FileText, Camera, ChevronRight, Home, Lock, Clock } from "lucide-react";
+import { Shield, ShieldCheck, Home, Lock, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { buildPhotoUrl } from "@/lib/photoUrl";
-import { isDocumentEvidence, isVehiclePhotoEvidence } from "@/lib/mediaClassification";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { OwnerClaimForm } from "@/components/OwnerClaimForm";
 import { ContributionDetailPanel, type ProfileMeta } from "@/components/vin/ContributionDetailPanel";
-import type { EventWithFacts, FactWithEvidence, VinDossier } from "@/hooks/useVinDossier";
+import { AdminContributionEditDialog } from "@/components/vin/AdminContributionEditDialog";
+import { VinContributionCard } from "@/components/vin/VinContributionCard";
+import type { EventWithFacts, VinDossier } from "@/hooks/useVinDossier";
 
 const OWNER_ROLES = new Set(["owner_verified", "owner_unverified", "former_owner"]);
 
-const ROLE_LABELS: Record<string, string> = {
-  owner_verified: "Propriétaire vérifié",
-  owner_unverified: "Propriétaire",
-  former_owner: "Ancien propriétaire",
-};
-
-const EVENT_TYPE_LABELS: Record<string, string> = {
-  purchase: "Achat",
-  sale: "Vente",
-  accident: "Accident",
-  repair: "Réparation",
-  maintenance: "Entretien",
-  inspection: "Inspection",
-  modification: "Modification",
-  recall: "Rappel",
-  insurance_claim: "Réclamation d'assurance",
-  listing: "Mise en vente",
-  import_export: "Import / Export",
-  registration: "Immatriculation",
-  mileage_record: "Relevé kilométrique",
-  other: "Autre",
-};
-
-// photoUrl now provided by shared buildPhotoUrl utility
-function initials(name: string | null | undefined) {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-function formatDate(d: string | null | undefined) {
-  if (!d) return null;
-  try {
-    return new Date(d).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" });
-  } catch { return null; }
-}
 
 interface OwnerViewProps {
   dossier: VinDossier | null | undefined;
@@ -63,8 +27,10 @@ interface OwnerViewProps {
 export function OwnerView({ dossier, vinId, vin }: OwnerViewProps) {
   const isMobile = useIsMobile();
   const { user } = useAuth();
+  const { isAdmin } = useAdmin();
   const [claimOpen, setClaimOpen] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [editingEwf, setEditingEwf] = useState<EventWithFacts | null>(null);
 
   const events = dossier?.events ?? [];
   const contributors = dossier?.contributors ?? [];
@@ -201,11 +167,14 @@ export function OwnerView({ dossier, vinId, vin }: OwnerViewProps) {
         >
           <div className="space-y-3">
             {ownerEvents.map((ewf) => (
-              <OwnerContributionCard
+              <VinContributionCard
                 key={ewf.event.id}
                 ewf={ewf}
                 isActive={ewf.event.id === selectedEventId}
                 onClick={() => setSelectedEventId(ewf.event.id)}
+                isAdmin={isAdmin}
+                onEdit={() => setEditingEwf(ewf)}
+                preferOwnerFact
               />
             ))}
           </div>
@@ -217,6 +186,15 @@ export function OwnerView({ dossier, vinId, vin }: OwnerViewProps) {
         open={panelOpen}
         onClose={() => setSelectedEventId(null)}
         profiles={{} as Record<string, ProfileMeta>}
+        isAdmin={isAdmin}
+        onAdminEdit={() => selectedEwf && setEditingEwf(selectedEwf)}
+      />
+
+      <AdminContributionEditDialog
+        ewf={editingEwf}
+        open={!!editingEwf}
+        onOpenChange={(o) => { if (!o) setEditingEwf(null); }}
+        vinId={vinId}
       />
 
       <OwnerClaimForm
@@ -230,160 +208,3 @@ export function OwnerView({ dossier, vinId, vin }: OwnerViewProps) {
   );
 }
 
-// ── Card with teal left border ─────────────────────────────
-
-function OwnerContributionCard({
-  ewf,
-  isActive,
-  onClick,
-}: {
-  ewf: EventWithFacts;
-  isActive: boolean;
-  onClick: () => void;
-}) {
-  const ownerFact: FactWithEvidence | undefined =
-    ewf.facts.find((f) => f.contributor && OWNER_ROLES.has(f.contributor.role)) ?? ewf.facts[0];
-  const contributor = ownerFact?.contributor ?? null;
-  const isVerified = contributor?.role === "owner_verified";
-
-  const allEvidence = ewf.facts.flatMap((f) => f.evidence);
-  const photos = allEvidence.filter(isVehiclePhotoEvidence);
-  const docs = allEvidence.filter(isDocumentEvidence);
-
-  const displayName = contributor?.is_anonymous
-    ? "Propriétaire (anonyme)"
-    : contributor?.display_name ?? "Propriétaire";
-  const roleLabel = contributor ? ROLE_LABELS[contributor.role] ?? "Propriétaire" : "Propriétaire";
-  const eventLabel = EVENT_TYPE_LABELS[ewf.event.event_type] ?? "Autre";
-  const dateLabel = formatDate(ewf.event.event_date);
-  const content = ownerFact?.fact.content ?? ewf.event.description ?? "";
-
-  const askingPrice = (ewf.event as any).asking_price as number | null | undefined;
-
-  return (
-    <Card
-      className={cn(
-        "p-0 cursor-pointer transition-all hover:shadow-md overflow-hidden border-l-[3px] border-l-[hsl(170,70%,35%)]",
-        isActive ? "shadow-md ring-1 ring-[hsl(170,70%,35%)]/40" : ""
-      )}
-      onClick={onClick}
-    >
-      <div className="flex flex-col sm:flex-row">
-        {/* LEFT — Metadata block (30%) */}
-        <div className="sm:w-[34%] sm:max-w-[220px] p-4 flex flex-col gap-2 border-b sm:border-b-0 sm:border-r border-border/60 bg-[hsl(170,55%,97%)]">
-          <div className="flex items-center gap-2.5">
-            <Avatar className="w-9 h-9 flex-shrink-0">
-              <AvatarFallback className="bg-[hsl(170,55%,88%)] text-[hsl(170,70%,25%)] text-[11px] font-semibold">
-                {contributor?.is_anonymous ? "?" : initials(displayName)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold text-sm text-foreground truncate leading-tight">{displayName}</p>
-              <p className="text-[10px] text-muted-foreground truncate leading-tight mt-0.5">{roleLabel}</p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-1">
-            <Badge className={cn(
-              "text-[10px] h-4 px-1.5",
-              isVerified
-                ? "bg-[hsl(170,70%,35%)] text-white hover:bg-[hsl(170,70%,30%)]"
-                : "bg-[hsl(170,40%,90%)] text-[hsl(170,70%,25%)] hover:bg-[hsl(170,40%,85%)]"
-            )}>
-              {isVerified && <ShieldCheck className="w-2.5 h-2.5 mr-0.5" />}
-              Propriétaire
-            </Badge>
-            <Badge variant="secondary" className="text-[10px] h-4 px-1.5 font-medium">{eventLabel}</Badge>
-          </div>
-
-          {dateLabel && (
-            <div className="mt-1">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">Date</p>
-              <p className="font-display text-base font-bold text-foreground leading-tight">{dateLabel}</p>
-            </div>
-          )}
-
-          {(ewf.event.mileage_at_event != null || askingPrice != null) && (
-            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-0.5">
-              {ewf.event.mileage_at_event != null && (
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium inline-flex items-center gap-1">
-                    <Gauge className="w-2.5 h-2.5" />Km
-                  </p>
-                  <p className="text-sm font-semibold text-foreground tabular-nums">
-                    {ewf.event.mileage_at_event.toLocaleString("fr-CA")}
-                  </p>
-                </div>
-              )}
-              {askingPrice != null && (
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">Prix</p>
-                  <p className="text-sm font-semibold text-foreground tabular-nums">
-                    {askingPrice.toLocaleString("fr-CA")} $
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT — Content + indicators (70%) */}
-        <div className="flex-1 p-4 flex flex-col min-w-0">
-          {content ? (
-            <p className="text-sm text-foreground/90 leading-relaxed line-clamp-2 flex-1">{content}</p>
-          ) : (
-            <p className="text-sm text-muted-foreground/60 italic flex-1">Aucune description</p>
-          )}
-
-          {/* Photo thumbnails */}
-          {photos.length > 0 && (
-            <div className="flex items-center gap-1.5 mt-3">
-              {photos.slice(0, 4).map((p) => (
-                <div
-                  key={p.id}
-                  className="relative w-14 h-14 rounded-md overflow-hidden border border-[hsl(170,40%,80%)] bg-muted flex-shrink-0"
-                >
-                  <img
-                    src={buildPhotoUrl(p.file_path)}
-                    alt={p.description ?? p.file_name}
-                    loading="lazy"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
-              {photos.length > 4 && (
-                <div className="w-14 h-14 rounded-md border border-[hsl(170,40%,80%)] bg-[hsl(170,40%,92%)] flex items-center justify-center text-xs font-semibold text-[hsl(170,70%,30%)] flex-shrink-0">
-                  +{photos.length - 4}
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-border/60">
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              {photos.length > 0 && (
-                <span className="inline-flex items-center gap-1">
-                  <Camera className="w-3.5 h-3.5" />
-                  <span className="tabular-nums font-medium">{photos.length}</span>
-                </span>
-              )}
-              {docs.length > 0 && (
-                <span className="inline-flex items-center gap-1">
-                  <FileText className="w-3.5 h-3.5" />
-                  <span className="tabular-nums font-medium">{docs.length}</span>
-                </span>
-              )}
-              {photos.length === 0 && docs.length === 0 && (
-                <span className="text-[11px] text-muted-foreground/50">Aucune pièce jointe</span>
-              )}
-            </div>
-            <span className="inline-flex items-center gap-1 text-xs text-[hsl(170,70%,30%)] font-medium">
-              Lire la suite
-              <ChevronRight className="w-3.5 h-3.5" />
-            </span>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-}

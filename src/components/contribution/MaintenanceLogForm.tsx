@@ -211,7 +211,7 @@ export function MaintenanceLogForm({ vinId, contributor, onComplete, onBack }: M
           file_name: f.file.name,
           file_path: `${f.bucket}/${f.storagePath}`,
           file_size: f.file.size,
-        });
+        } as never);
       }
 
       setSubmitted(true);

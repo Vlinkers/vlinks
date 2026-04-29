@@ -37,6 +37,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useVinDossier } from "@/hooks/useVinDossier";
 import { getFieldsForEventType, type FieldDef } from "@/lib/eventTypeMetadata";
+import { classifyUploadMediaType } from "@/lib/mediaClassification";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 
 type Contributor = Tables<"contributors">;
@@ -259,12 +260,13 @@ export function TestimonyContributionForm({
         await supabase.from("evidence").insert({
           fact_id: fact.id,
           evidence_type: uploadedFile.evidenceType,
+          media_type: classifyUploadMediaType("testimony", uploadedFile.evidenceType, uploadedFile.file.type),
           file_type: uploadedFile.file.type,
           file_name: uploadedFile.file.name,
           file_path: `${bucket}/${uploadedFile.storagePath}`,
           file_size: uploadedFile.file.size,
           description: uploadedFile.description || null,
-        });
+        } as never);
       }
 
       setSubmitted(true);

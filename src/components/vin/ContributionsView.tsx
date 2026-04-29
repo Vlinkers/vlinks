@@ -7,7 +7,7 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { ContributionDetailPanel, type ProfileMeta } from "@/components/vin/ContributionDetailPanel";
 import { AdminContributionEditDialog } from "@/components/vin/AdminContributionEditDialog";
 import { VinContributionCard } from "@/components/vin/VinContributionCard";
-import { isDocumentEvidence, isVehiclePhotoEvidence } from "@/lib/mediaClassification";
+import { isDossierDocumentEvidence, isVehiclePhotoEvidence } from "@/lib/mediaClassification";
 import type { EventWithFacts, Contributor, VinDossier } from "@/hooks/useVinDossier";
 
 // ── Profile lookup ──────────────────────────────────────
@@ -57,7 +57,7 @@ function eventMatchesFilter(ewf: EventWithFacts, filter: FilterKey): boolean {
   if (filter === "inspections") return ewf.event.event_type === "inspection";
   const allEvidence = ewf.facts.flatMap((f) => f.evidence);
   if (filter === "photos") return allEvidence.some(isVehiclePhotoEvidence);
-  if (filter === "documents") return allEvidence.some(isDocumentEvidence);
+  if (filter === "documents") return allEvidence.some(isDossierDocumentEvidence);
   return true;
 }
 

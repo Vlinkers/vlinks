@@ -3,7 +3,7 @@ import { FileText, FileSpreadsheet, FileImage, Plus, Eye, ClipboardCheck } from 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DocumentViewer } from "@/components/DocumentViewer";
-import { isDocumentEvidence } from "@/lib/mediaClassification";
+import { isDossierDocumentEvidence } from "@/lib/mediaClassification";
 import type { VinDossier, Contributor } from "@/hooks/useVinDossier";
 import type { ContributionDocument } from "@/hooks/useVINData";
 
@@ -73,7 +73,7 @@ export function DocumentsView({ dossier, onNavigate }: DocumentsViewProps) {
     for (const ewf of dossier.events) {
       for (const fw of ewf.facts) {
         for (const ev of fw.evidence) {
-          if (!isDocumentEvidence(ev)) continue;
+          if (!isDossierDocumentEvidence(ev)) continue;
           items.push({
             id: ev.id,
             filePath: ev.file_path,

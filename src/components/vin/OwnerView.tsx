@@ -203,11 +203,14 @@ export function OwnerView({ dossier, vinId, vin }: OwnerViewProps) {
         >
           <div className="space-y-3">
             {ownerEvents.map((ewf) => (
-              <OwnerContributionCard
+              <VinContributionCard
                 key={ewf.event.id}
                 ewf={ewf}
                 isActive={ewf.event.id === selectedEventId}
                 onClick={() => setSelectedEventId(ewf.event.id)}
+                isAdmin={isAdmin}
+                onEdit={() => setEditingEwf(ewf)}
+                preferOwnerFact
               />
             ))}
           </div>
@@ -219,6 +222,15 @@ export function OwnerView({ dossier, vinId, vin }: OwnerViewProps) {
         open={panelOpen}
         onClose={() => setSelectedEventId(null)}
         profiles={{} as Record<string, ProfileMeta>}
+        isAdmin={isAdmin}
+        onAdminEdit={() => selectedEwf && setEditingEwf(selectedEwf)}
+      />
+
+      <AdminContributionEditDialog
+        ewf={editingEwf}
+        open={!!editingEwf}
+        onOpenChange={(o) => { if (!o) setEditingEwf(null); }}
+        vinId={vinId}
       />
 
       <OwnerClaimForm

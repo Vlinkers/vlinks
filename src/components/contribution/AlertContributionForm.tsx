@@ -45,6 +45,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { EVIDENCE_MEDIA_TYPE } from "@/lib/mediaClassification";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 
 type Contributor = Tables<"contributors">;
@@ -263,12 +264,13 @@ export function AlertContributionForm({
         await supabase.from("evidence").insert({
           fact_id: fact.id,
           evidence_type: successFile.evidenceType,
+          media_type: EVIDENCE_MEDIA_TYPE.diagnostic,
           file_type: successFile.file.type,
           file_name: successFile.file.name,
           file_path: `${bucket}/${successFile.storagePath}`,
           file_size: successFile.file.size,
           description: successFile.description || null,
-        });
+        } as never);
       }
 
       // 4. Create red_flag

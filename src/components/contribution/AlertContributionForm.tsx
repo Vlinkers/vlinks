@@ -41,6 +41,7 @@ import {
   GitBranch,
   Search,
   UserCheck,
+  EyeOff,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -133,7 +134,7 @@ export function AlertContributionForm({
   const [flagType, setFlagType] = useState<RedFlagType | null>(null);
   const [severity, setSeverity] = useState("");
   const [description, setDescription] = useState("");
-  const [isAnonymous, setIsAnonymous] = useState(true);
+  const [isAnonymous, setIsAnonymous] = useState(false);
 
   // Optional file
   const [attachOpen, setAttachOpen] = useState(false);
@@ -476,20 +477,16 @@ export function AlertContributionForm({
           {/* Anonymity */}
           <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border">
             <div className="flex items-center gap-2">
-              <UserCheck className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm">M'identifier (augmente la crédibilité)</span>
+              <EyeOff className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm">Déposer anonymement</span>
             </div>
-            <Switch
-              checked={!isAnonymous}
-              onCheckedChange={(v) => {
-                if (v && !user) {
-                  window.location.href = "/auth";
-                  return;
-                }
-                setIsAnonymous(!v);
-              }}
-            />
+            <Switch checked={isAnonymous} onCheckedChange={setIsAnonymous} />
           </div>
+          {isAnonymous && (
+            <p className="text-xs text-muted-foreground -mt-2 pl-1">
+              Votre identité ne sera pas visible mais sera conservée par VLINKS.
+            </p>
+          )}
 
           <Button
             className="w-full"

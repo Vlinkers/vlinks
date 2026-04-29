@@ -201,11 +201,11 @@ export function ContributionsView({ dossier }: ContributionsViewProps) {
           <div className="space-y-3">
             {filtered.map((ewf) => {
               const userId = ewf.facts[0]?.contributor?.user_id;
+              void userId;
               return (
-                <ContributionCard
+                <VinContributionCard
                   key={ewf.event.id}
                   ewf={ewf}
-                  profile={userId ? profiles[userId] : undefined}
                   isActive={ewf.event.id === selectedEventId}
                   onClick={() => setSelectedEventId(ewf.event.id)}
                   isAdmin={isAdmin}

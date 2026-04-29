@@ -111,7 +111,7 @@ export function DocumentContributionForm({
   // Step 2
   const [eventChoice, setEventChoice] = useState<"existing" | "new">("existing");
   const [selectedEventId, setSelectedEventId] = useState("");
-  const [newEventType, setNewEventType] = useState<EventType>("other");
+  const [newEventType, setNewEventType] = useState<EventType | "">("");
   const [newEventDate, setNewEventDate] = useState("");
   const [newEventDateApprox, setNewEventDateApprox] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState("");
@@ -199,7 +199,7 @@ export function DocumentContributionForm({
     factContent.trim().length >= 20 &&
     (eventChoice === "existing"
       ? selectedEventId !== ""
-      : newEventTitle.trim().length > 0);
+      : newEventType !== "" && newEventTitle.trim().length > 0);
 
   // ── Submit ──
   const handleSubmit = async () => {
@@ -214,7 +214,7 @@ export function DocumentContributionForm({
           .from("events")
           .insert({
             vin_id: vinId,
-            event_type: newEventType,
+            event_type: newEventType as EventType,
             title: newEventTitle.trim(),
             event_date: newEventDate || null,
             event_date_precision: newEventDateApprox ? "approximate" : "exact",

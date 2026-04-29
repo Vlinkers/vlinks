@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { EventWithFacts, FactWithEvidence } from "@/hooks/useVinDossier";
+import { getMaintenanceData } from "@/lib/maintenanceLogTypes";
+import { MaintenanceCardSummary } from "@/components/vin/MaintenanceCardSummary";
 
 const ROLE_LABELS: Record<string, string> = {
   owner_verified: "Propriétaire vérifié",
@@ -238,6 +240,7 @@ export function VinContributionCard({
 
         <div className="flex-1 p-4 flex flex-col min-w-0">
           {(() => {
+            const maintenance = primaryFact ? getMaintenanceData(primaryFact.fact.metadata) : null;
             const title = ewf.event.title?.trim() || "";
             const bodyClean = content.split("\n\n— Détails de la transaction —")[0].trim();
             const hasTitle = title.length > 0;
@@ -247,14 +250,15 @@ export function VinContributionCard({
                 <h3 className="font-display font-semibold text-[15px] text-foreground leading-snug line-clamp-2">
                   {titleText}
                 </h3>
-                {hasTitle && bodyClean && (
+                {hasTitle && bodyClean && !maintenance && (
                   <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mt-1.5">
                     {bodyClean}
                   </p>
                 )}
-                {!hasTitle && !bodyClean && (
+                {!hasTitle && !bodyClean && !maintenance && (
                   <p className="text-sm text-muted-foreground/60 italic mt-1.5">Aucune description</p>
                 )}
+                {maintenance && <MaintenanceCardSummary data={maintenance} />}
               </>
             );
           })()}

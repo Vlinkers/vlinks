@@ -15,6 +15,7 @@ import { OwnerClaimForm } from "@/components/OwnerClaimForm";
 import { ContributionDetailPanel, type ProfileMeta } from "@/components/vin/ContributionDetailPanel";
 import { AdminContributionEditDialog } from "@/components/vin/AdminContributionEditDialog";
 import { VinContributionCard } from "@/components/vin/VinContributionCard";
+import { VehicleHealthDashboard } from "@/components/vin/VehicleHealthDashboard";
 import { MaintenanceLogForm } from "@/components/contribution/MaintenanceLogForm";
 import type { EventWithFacts, VinDossier } from "@/hooks/useVinDossier";
 

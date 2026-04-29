@@ -111,7 +111,7 @@ export function DocumentContributionForm({
   // Step 2
   const [eventChoice, setEventChoice] = useState<"existing" | "new">("existing");
   const [selectedEventId, setSelectedEventId] = useState("");
-  const [newEventType, setNewEventType] = useState<EventType>("other");
+  const [newEventType, setNewEventType] = useState<EventType | "">("");
   const [newEventDate, setNewEventDate] = useState("");
   const [newEventDateApprox, setNewEventDateApprox] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState("");
@@ -199,7 +199,7 @@ export function DocumentContributionForm({
     factContent.trim().length >= 20 &&
     (eventChoice === "existing"
       ? selectedEventId !== ""
-      : newEventTitle.trim().length > 0);
+      : newEventType !== "" && newEventTitle.trim().length > 0);
 
   // ── Submit ──
   const handleSubmit = async () => {
@@ -214,7 +214,7 @@ export function DocumentContributionForm({
           .from("events")
           .insert({
             vin_id: vinId,
-            event_type: newEventType,
+            event_type: newEventType as EventType,
             title: newEventTitle.trim(),
             event_date: newEventDate || null,
             event_date_precision: newEventDateApprox ? "approximate" : "exact",
@@ -433,27 +433,26 @@ export function DocumentContributionForm({
                   )}
                   <span className="text-sm font-medium truncate flex-1">{f.file.name}</span>
                 </div>
-                <Select
-                  value={f.evidenceType}
-                  onValueChange={(v) => updateFile(f.id, { evidenceType: v })}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Type de document" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EVIDENCE_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  placeholder="Description optionnelle"
-                  value={f.description}
-                  onChange={(e) => updateFile(f.id, { description: e.target.value })}
-                  className="h-9"
-                />
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground block">
+                    Type de fichier <span className="text-destructive">*</span>
+                  </label>
+                  <Select
+                    value={f.evidenceType}
+                    onValueChange={(v) => updateFile(f.id, { evidenceType: v })}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Sélectionnez le type de fichier" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EVIDENCE_TYPES.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
                   <Checkbox
                     checked={f.isRedacted}
@@ -509,27 +508,39 @@ export function DocumentContributionForm({
             )}
 
             {eventChoice === "new" && (
-              <div className="space-y-2 pl-2 border-l-2 border-primary/20">
-                <Select
-                  value={newEventType}
-                  onValueChange={(v) => setNewEventType(v as EventType)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Type d'événement" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EVENT_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  placeholder="Titre de l'événement"
-                  value={newEventTitle}
-                  onChange={(e) => setNewEventTitle(e.target.value)}
-                />
+              <div className="space-y-3 pl-2 border-l-2 border-primary/20">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground block">
+                    Type d'événement <span className="text-destructive">*</span>
+                  </label>
+                  <Select
+                    value={newEventType}
+                    onValueChange={(v) => setNewEventType(v as EventType)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionnez le type d'événement" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EVENT_TYPES.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground block">
+                    Titre de votre contribution <span className="text-destructive">*</span>
+                  </label>
+                  <Input
+                    placeholder="Résumez en une phrase..."
+                    value={newEventTitle}
+                    onChange={(e) => setNewEventTitle(e.target.value)}
+                  />
+                </div>
+
                 <div className="flex gap-2 items-center">
                   <Input
                     type="date"
@@ -558,7 +569,7 @@ export function DocumentContributionForm({
           {/* Fact content */}
           <div className="space-y-2">
             <label className="text-sm font-medium">
-              Décrivez brièvement ce que ce document montre
+              Décrivez brièvement ce que ce document montre (optionnel)
             </label>
             <Textarea
               placeholder="Ex: Facture d'entretien chez le concessionnaire, remplacement des freins avant à 142 000 km..."

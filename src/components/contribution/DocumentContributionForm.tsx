@@ -569,7 +569,7 @@ export function DocumentContributionForm({
           {/* Fact content */}
           <div className="space-y-2">
             <label className="text-sm font-medium">
-              Décrivez brièvement ce que ce document montre
+              Décrivez brièvement ce que ce document montre (optionnel)
             </label>
             <Textarea
               placeholder="Ex: Facture d'entretien chez le concessionnaire, remplacement des freins avant à 142 000 km..."

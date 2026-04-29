@@ -63,8 +63,10 @@ interface OwnerViewProps {
 export function OwnerView({ dossier, vinId, vin }: OwnerViewProps) {
   const isMobile = useIsMobile();
   const { user } = useAuth();
+  const { isAdmin } = useAdmin();
   const [claimOpen, setClaimOpen] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [editingEwf, setEditingEwf] = useState<EventWithFacts | null>(null);
 
   const events = dossier?.events ?? [];
   const contributors = dossier?.contributors ?? [];

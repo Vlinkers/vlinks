@@ -9,6 +9,7 @@ import { MessageSquareReply, Upload, X, FileText, Image, Shield, ShieldAlert, Ch
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 import { sanitizeFileName } from "@/lib/sanitizeFileName";
+import { classifyUploadMediaType } from "@/lib/mediaClassification";
 
 type Fact = Tables<"facts">;
 type Contributor = Tables<"contributors">;
@@ -124,11 +125,12 @@ export default function OwnerResponseForm({
         const { error: evidenceErr } = await supabase.from("evidence").insert({
           fact_id: fact.id,
           evidence_type: uploadedFile.evidenceType,
+          media_type: classifyUploadMediaType("owner_response", uploadedFile.evidenceType, uploadedFile.file.type),
           file_name: uploadedFile.file.name,
           file_path: `${bucket}/${path}`,
           file_type: uploadedFile.file.type,
           file_size: uploadedFile.file.size,
-        });
+        } as never);
 
         if (evidenceErr) throw evidenceErr;
       }

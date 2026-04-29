@@ -10,39 +10,6 @@ import { VinContributionCard } from "@/components/vin/VinContributionCard";
 import { isDocumentEvidence, isVehiclePhotoEvidence } from "@/lib/mediaClassification";
 import type { EventWithFacts, Contributor, VinDossier } from "@/hooks/useVinDossier";
 
-// ── Labels ──────────────────────────────────────────────
-
-const ROLE_LABELS: Record<string, string> = {
-  owner_verified: "Propriétaire vérifié",
-  owner_unverified: "Propriétaire",
-  former_owner: "Ancien propriétaire",
-  buyer: "Acheteur",
-  mechanic: "Mécanicien",
-  inspector: "Inspecteur",
-  dealer: "Concessionnaire",
-  witness: "Témoin",
-  anonymous: "Anonyme",
-};
-
-const EVENT_TYPE_LABELS: Record<string, string> = {
-  purchase: "Achat",
-  sale: "Vente",
-  accident: "Accident",
-  repair: "Réparation",
-  maintenance: "Entretien",
-  inspection: "Inspection",
-  modification: "Modification",
-  recall: "Rappel",
-  insurance_claim: "Réclamation d'assurance",
-  listing: "Mise en vente",
-  import_export: "Import / Export",
-  registration: "Immatriculation",
-  mileage_record: "Relevé kilométrique",
-  other: "Autre",
-};
-
-// photoUrl now provided by shared buildPhotoUrl utility
-
 // ── Profile lookup ──────────────────────────────────────
 
 function useContributorProfiles(contributors: Contributor[]) {
@@ -73,27 +40,6 @@ function useContributorProfiles(contributors: Contributor[]) {
   return profiles;
 }
 
-// ── Helpers ─────────────────────────────────────────────
-
-function initials(name: string | null | undefined, fallback = "?") {
-  if (!name) return fallback;
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function formatDate(d: string | null | undefined) {
-  if (!d) return null;
-  try {
-    return new Date(d).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" });
-  } catch { return null; }
-}
-function formatMonthYear(d: string | null | undefined) {
-  if (!d) return null;
-  try {
-    return new Date(d).toLocaleDateString("fr-CA", { month: "long", year: "numeric" });
-  } catch { return null; }
-}
 
 // ── Filters ─────────────────────────────────────────────
 

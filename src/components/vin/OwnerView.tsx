@@ -1,19 +1,19 @@
 import { useMemo, useState } from "react";
-import { Shield, ShieldCheck, Calendar, Gauge, FileText, Camera, ChevronRight, Home, Lock, Clock } from "lucide-react";
+import { Shield, ShieldCheck, Home, Lock, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { buildPhotoUrl } from "@/lib/photoUrl";
-import { isDocumentEvidence, isVehiclePhotoEvidence } from "@/lib/mediaClassification";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { OwnerClaimForm } from "@/components/OwnerClaimForm";
 import { ContributionDetailPanel, type ProfileMeta } from "@/components/vin/ContributionDetailPanel";
-import type { EventWithFacts, FactWithEvidence, VinDossier } from "@/hooks/useVinDossier";
+import { AdminContributionEditDialog } from "@/components/vin/AdminContributionEditDialog";
+import { VinContributionCard } from "@/components/vin/VinContributionCard";
+import type { EventWithFacts, VinDossier } from "@/hooks/useVinDossier";
 
 const OWNER_ROLES = new Set(["owner_verified", "owner_unverified", "former_owner"]);
 

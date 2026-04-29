@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { EVIDENCE_MEDIA_TYPE } from "@/lib/mediaClassification";
 import {
   VISIT_TYPE_OPTIONS, SYSTEM_GROUPS, SYSTEM_LABELS, SYSTEM_SCHEMAS,
   PERFORMED_BY_OPTIONS, buildMaintenanceTitle,
@@ -208,7 +207,6 @@ export function MaintenanceLogForm({ vinId, contributor, onComplete, onBack }: M
         await supabase.from("evidence").insert({
           fact_id: fact.id,
           evidence_type: f.evidenceType,
-          media_type: EVIDENCE_MEDIA_TYPE.maintenanceEvidence,
           file_type: f.file.type,
           file_name: f.file.name,
           file_path: `${f.bucket}/${f.storagePath}`,

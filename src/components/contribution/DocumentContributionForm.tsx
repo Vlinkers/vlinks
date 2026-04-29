@@ -508,27 +508,39 @@ export function DocumentContributionForm({
             )}
 
             {eventChoice === "new" && (
-              <div className="space-y-2 pl-2 border-l-2 border-primary/20">
-                <Select
-                  value={newEventType}
-                  onValueChange={(v) => setNewEventType(v as EventType)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Type d'événement" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EVENT_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  placeholder="Titre de l'événement"
-                  value={newEventTitle}
-                  onChange={(e) => setNewEventTitle(e.target.value)}
-                />
+              <div className="space-y-3 pl-2 border-l-2 border-primary/20">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground block">
+                    Type d'événement <span className="text-destructive">*</span>
+                  </label>
+                  <Select
+                    value={newEventType}
+                    onValueChange={(v) => setNewEventType(v as EventType)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionnez le type d'événement" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EVENT_TYPES.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground block">
+                    Titre de votre contribution <span className="text-destructive">*</span>
+                  </label>
+                  <Input
+                    placeholder="Résumez en une phrase..."
+                    value={newEventTitle}
+                    onChange={(e) => setNewEventTitle(e.target.value)}
+                  />
+                </div>
+
                 <div className="flex gap-2 items-center">
                   <Input
                     type="date"
